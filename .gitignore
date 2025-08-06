@@ -122,11 +122,8 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
-# VS Code workspace settings (keep personal settings private)
-.vscode/settings.json
-.vscode/launch.json
-.vscode/tasks.json
-.vscode/*.code-workspace
+# VS Code workspace settings (keep all VS Code settings private)
+.vscode/
 
 # Optimization planning documents (development only)
 OPTIMIZATION_PHASE_*.md
