@@ -74,4 +74,10 @@ const orderSchema = new Schema({
   },
 });
 
+// Performance Indexes for frequent queries
+orderSchema.index({ status: 1, date: -1 }); // Orders by status and date (newest first)
+orderSchema.index({ orderNumber: 1 }); // Unique order number lookup
+orderSchema.index({ date: -1 }); // Recent orders
+orderSchema.index({ "address.zip": 1 }); // Orders by location
+
 export default orderSchema;

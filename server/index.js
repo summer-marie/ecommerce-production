@@ -18,6 +18,13 @@ import "./strategies/localStrategy.js";
 // Security Middleware
 import { securityHeaders, generalRateLimit } from "./middleware/security.js";
 import { requestLogger, errorLogger, logInfo, logError, logWarn } from "./middleware/logger.js";
+// Performance Middleware
+import { 
+  compressionMiddleware, 
+  cacheMiddleware, 
+  performanceMiddleware,
+  dbOptimizationMiddleware 
+} from "./middleware/performance.js";
 // Routes
 import authRouter from "./auth/authIndex.js";
 import userRouter from "./user/userIndex.js";
@@ -25,6 +32,7 @@ import orderIndex from "./orders/orderIndex.js";
 import ingredientsIndex from "./ingredients/ingredientsIndex.js";
 import builderIndex from "./builders/builderIndex.js";
 import msgIndex from "./messages/msgIndex.js";
+import monitoringRouter from "./monitoring/index.js";
 
 // Replace console.log with proper logging
 logInfo('Environment check', { mongodbUrl: process.env.MONGODB_URL ? 'Set' : 'Missing' });
@@ -45,6 +53,10 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 const app = express();
+
+// Performance Middleware (apply early)
+app.use(compressionMiddleware);
+app.use(performanceMiddleware);
 
 // Security Middleware (apply early)
 app.use(securityHeaders);
@@ -93,13 +105,14 @@ app.use(
   })
 );
 
-// register routes
+// register routes with caching for appropriate endpoints
 app.use("/auth", authRouter);
 app.use("/users", userRouter);
 app.use("/orders", orderIndex);
-app.use("/ingredients", ingredientsIndex);
-app.use("/builders", builderIndex);
+app.use("/ingredients", cacheMiddleware(600), ingredientsIndex); // Cache ingredients for 10 minutes
+app.use("/builders", cacheMiddleware(300), builderIndex); // Cache pizza builders for 5 minutes
 app.use("/messages", msgIndex);
+app.use("/monitoring", monitoringRouter); // Performance monitoring endpoints
 
 app.use("/uploads", express.static(uploadsDir));
 

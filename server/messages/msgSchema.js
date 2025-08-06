@@ -25,4 +25,8 @@ const messageSchema = new Schema({
   }
 });
 
+// Performance Indexes for message queries
+messageSchema.index({ date: -1, isRead: 1 }); // Recent messages, unread first
+messageSchema.index({ isRead: 1 }); // Filter by read status
+
 export default messageSchema;
