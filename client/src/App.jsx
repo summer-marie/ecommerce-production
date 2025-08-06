@@ -1,26 +1,44 @@
 import { Routes, Route } from "react-router";
 import { useDispatch } from "react-redux";
-import { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { setAuthFromStorage } from "./redux/authSlice";
 import PrivateRoute from "./PrivateRoute";
-import NoMatch from "./components/NoMatch";
-import About from "./customer/About";
-import OrderMenu from "./customer/OrderMenu";
-import Contact from "./customer/Contact";
-import Checkout from "./customer/Checkout";
-import AdminOpenOrders from "./admin/AdminOpenOrders";
-import AdminCompletedOrders from "./admin/AdminCompletedOrders";
-import AdminMenu from "./admin/AdminMenu";
-import AdminLogin from "./admin/AdminLogin";
-import BuildYourOwn from "./customer/BuildYourOwn";
-import AdminUpdateOne from "./admin/AdminUpdateOne";
-import AdminInbox from "./admin/AdminInbox";
-import IngredientsTable from "./admin/IngredientsTable";
-import AdminBuilderCreate from "./admin/AdminBuilderCreate";
-import OrderSuccess from "./customer/OrderSuccess";
-import AdminLayout from "./admin/AdminLayout";
-import CustomerLayout from "./customer/CustomerLayout";
+import { logBundlePerformance } from "./utils/performance";
 import "./App.css";
+
+// Immediately needed components (above the fold)
+import CustomerLayout from "./customer/CustomerLayout";
+import AdminLayout from "./admin/AdminLayout";
+import PerformanceMonitor from "./components/PerformanceMonitor";
+
+// Lazy load components for better code splitting
+const About = lazy(() => import("./customer/About"));
+const OrderMenu = lazy(() => import("./customer/OrderMenu"));
+const Contact = lazy(() => import("./customer/Contact"));
+const Checkout = lazy(() => import("./customer/Checkout"));
+const BuildYourOwn = lazy(() => import("./customer/BuildYourOwn"));
+const OrderSuccess = lazy(() => import("./customer/OrderSuccess"));
+
+// Admin components (only loaded when accessing admin)
+const AdminOpenOrders = lazy(() => import("./admin/AdminOpenOrders"));
+const AdminCompletedOrders = lazy(() => import("./admin/AdminCompletedOrders"));
+const AdminMenu = lazy(() => import("./admin/AdminMenu"));
+const AdminLogin = lazy(() => import("./admin/AdminLogin"));
+const AdminUpdateOne = lazy(() => import("./admin/AdminUpdateOne"));
+const AdminInbox = lazy(() => import("./admin/AdminInbox"));
+const IngredientsTable = lazy(() => import("./admin/IngredientsTable"));
+const AdminBuilderCreate = lazy(() => import("./admin/AdminBuilderCreate"));
+
+// Error boundary and fallback components
+const NoMatch = lazy(() => import("./components/NoMatch"));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[200px]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+    <span className="ml-2 text-gray-600">Loading...</span>
+  </div>
+);
 
 function App() {
   const dispatch = useDispatch();
@@ -38,41 +56,106 @@ function App() {
         user: user || null,
       })
     );
+
+    // Log performance metrics in development
+    if (import.meta.env.MODE === 'development') {
+      logBundlePerformance();
+    }
   }, [dispatch]);
 
   return (
-    <>
+    <Suspense fallback={<LoadingFallback />}>
       <Routes>
         {/* Public/customer routes */}
         <Route element={<CustomerLayout />}>
-          <Route path="/" element={<About />} />
-          <Route path="/order-menu" element={<OrderMenu />} />
-          <Route path="/order-create" element={<BuildYourOwn />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <About />
+            </Suspense>
+          } />
+          <Route path="/order-menu" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <OrderMenu />
+            </Suspense>
+          } />
+          <Route path="/order-create" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <BuildYourOwn />
+            </Suspense>
+          } />
+          <Route path="/contact" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Contact />
+            </Suspense>
+          } />
+          <Route path="/checkout" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <Checkout />
+            </Suspense>
+          } />
+          <Route path="/order-success" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <OrderSuccess />
+            </Suspense>
+          } />
         </Route>
 
         {/* Protected routes */}
         <Route element={<PrivateRoute />}>
           <Route element={<AdminLayout />}>
-            <Route path="/pizza-builder" element={<AdminBuilderCreate />} />
-            <Route path="/open-orders" element={<AdminOpenOrders />} />
-            <Route
-              path="/completed-orders"
-              element={<AdminCompletedOrders />}
-            />
-            <Route path="/admin-menu/:id?" element={<AdminMenu />} />
-            <Route path="/admin-update-one/:id" element={<AdminUpdateOne />} />
-            <Route path="/ingredient-table" element={<IngredientsTable />} />
-            <Route path="/admin-inbox" element={<AdminInbox />} />
+            <Route path="/pizza-builder" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <AdminBuilderCreate />
+              </Suspense>
+            } />
+            <Route path="/open-orders" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <AdminOpenOrders />
+              </Suspense>
+            } />
+            <Route path="/completed-orders" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <AdminCompletedOrders />
+              </Suspense>
+            } />
+            <Route path="/admin-menu/:id?" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <AdminMenu />
+              </Suspense>
+            } />
+            <Route path="/admin-update-one/:id" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <AdminUpdateOne />
+              </Suspense>
+            } />
+            <Route path="/ingredient-table" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <IngredientsTable />
+              </Suspense>
+            } />
+            <Route path="/admin-inbox" element={
+              <Suspense fallback={<LoadingFallback />}>
+                <AdminInbox />
+              </Suspense>
+            } />
           </Route>
         </Route>
 
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="*" element={<NoMatch />} />
+        <Route path="/admin-login" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminLogin />
+          </Suspense>
+        } />
+        <Route path="*" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <NoMatch />
+          </Suspense>
+        } />
       </Routes>
-    </>
+      
+      {/* Performance monitoring in development */}
+      <PerformanceMonitor />
+    </Suspense>
   );
 }
 

@@ -1,25 +1,30 @@
 import Jumbotron from "../components/Jumbotron";
+import { LazyImage } from "../utils/performance";
 
 const gardenImg = (
-  <img
+  <LazyImage
     className="object-cover w-full rounded-lg h-full"
     src={new URL("../assets/gardenTomato.jpg", import.meta.url).href}
-    alt=""
+    alt="Fresh garden tomatoes"
+    loading="lazy"
   />
 );
+
 const doughImg = (
-  <img
+  <LazyImage
     className="object-cover w-full rounded-lg h-full"
     src={new URL("../assets/dough.jpg", import.meta.url).href}
-    alt=""
+    alt="Fresh pizza dough"
+    loading="lazy"
   />
 );
 
 const herbsImg = (
-  <img
+  <LazyImage
     className="object-cover w-full rounded-lg h-full"
     src={new URL("../assets/herbs.jpg", import.meta.url).href}
-    alt=""
+    alt="Fresh herbs"
+    loading="lazy"
   />
 );
 // const peppersImg = (
