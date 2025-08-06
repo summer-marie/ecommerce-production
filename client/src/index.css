@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  /* display: static; */
+  color-scheme: light dark;
+  color: #091034;
+  background-color: #e0ebe0;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Google Fonts */
+.amitaFont {
+  font-family: "Amita";
+  font-style: italic;
+}
+.barriecitoFont {
+  font-family: "Barriecito";
+}
+.berkshireSwashFont {
+  font-family: "Berkshire Swash";
+}
+.benthamFont {
+  font-family: "Bentham";
+}
+.cursiveFont {
+  font-family: "Calligraffitti";
+}
+
+.charmFont {
+  font-family: "Charm";
+}
+
+.letterSpace1{
+  letter-spacing: 2px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f3f4f7;
+  /* background: none; */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #04a341;
+  box-shadow: 2px 0px 5px 0px rgb(18, 78, 6) inset;
+  border-radius: 4px;
+  /* height: 50px; */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #bbf0bb;
+}
+
+/* 404 page */
+.tomato {
+  background-image: url("./assets/tomato.jpg");
+  background-size: cover;
+  mix-blend-mode: multiply;
+  height: 100vh;
+  /* filter: brightness(0.6) contrast(1); */
+}
+
+.myText {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.header-text2 {
+  /* Todo: make bg color gradient 3 colors to look like italian flag */
+  background-color: white;
+  /* background: linear-gradient(to bottom, red, white 45%, green 100%); */
+  color: black;
+  /* Responsive font size */
+  font-size: 9vw;
+  font-weight: bold;
+  /* Center the text container */
+  margin: 0 auto;
+  padding: 10px;
+  width: 55%;
+  text-align: center;
+  /* Position text */
+  position: absolute;
+  /* Position text in the middle */
+  top: 35%;
+  /* Position text in the middle */
+  left: 50%;
+  /* Position text in the middle */
+  transform: translate(-50%, -50%);
+  /* mix-blend-mode: screen; */
+}
+
+/*  Custom box shadow Smokey */
+.smokeShadow {
+  box-shadow: 0px 0px 30px 20px rgb(59, 4, 0) inset;
+}
+/* Nested flexbox on Admin builder */
+.nested-flex-veggie,
+.nested-flex-meat {
+  display: flex;
+  justify-content: space-between;
+    flex-wrap: wrap;
+}
+.nested-flex-veggie div {
+  /* This sets each child to take up half the width of the container and maintain its original
+  size, if it has one set */
+  flex: 1 0 50%;
+}
+
+.nested-flex-meat div {
+  flex: 1 0 33%;
+}
+
+/* Custom footer position */
+.footerCustom {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 2rem 0;
+}
+
+/* Custom img aspect ratio for cards */
+.aspect-ratio {
+  --aspect-ratio: 3/4; /* Adjust the aspect ratio by changing the values */
+  padding-bottom: calc(var(--aspect-ratio) * 100%);
+}
+
+#customModalEditing {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; 
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+select option:disabled {
+  color:black;
+  background-color: #d1d5db; /* Tailwind gray-300 */
+}
+
+#contactSection {
+  background-color: #d1d5db; /* Tailwind gray-300 */
+}
