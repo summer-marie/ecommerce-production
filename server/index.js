@@ -15,10 +15,24 @@ import mongoose from "mongoose";
 import passport from "passport";
 import "./strategies/jwtStrategy.js";
 import "./strategies/localStrategy.js";
-// Security Middleware
+// Security Middleware (Phase 1)
 import { securityHeaders, generalRateLimit } from "./middleware/security.js";
 import { requestLogger, errorLogger, logInfo, logError, logWarn } from "./middleware/logger.js";
-// Performance Middleware
+// Advanced Security Middleware (Phase 4)
+import {
+  advancedHelmet,
+  mongoSanitizer,
+  xssProtection,
+  hppProtection,
+  speedLimiter,
+  securityLogger,
+  authRateLimit,
+  adminRateLimit,
+  orderRateLimit,
+  contactRateLimit
+} from "./middleware/advancedSecurity.js";
+import { requireApiKey, createApiKeyRoutes } from "./middleware/apiKeyAuth.js";
+// Performance Middleware (Phase 2)
 import { 
   compressionMiddleware, 
   cacheMiddleware, 
@@ -54,18 +68,25 @@ if (!fs.existsSync(uploadsDir)) {
 
 const app = express();
 
-// Performance Middleware (apply early)
+// Phase 4: Advanced Security Middleware (apply first)
+app.use(advancedHelmet); // Advanced Helmet configuration
+app.use(securityLogger); // Security-focused request logging
+app.use(speedLimiter); // Request speed limiting
+
+// Phase 2: Performance Middleware 
 app.use(compressionMiddleware);
 app.use(performanceMiddleware);
 
-// Security Middleware (apply early)
+// Phase 1 & 4: Security Middleware 
 app.use(securityHeaders);
 app.use(generalRateLimit);
 app.use(requestLogger);
 
+// Phase 4: Input Sanitization & Protection
 app.use(express.json({ limit: '10mb' })); // Add size limit
-
-// const upload = multer({ dest: "uploads/" });
+app.use(mongoSanitizer); // MongoDB injection protection
+app.use(xssProtection); // XSS protection
+app.use(hppProtection); // HTTP Parameter Pollution protection
 
 app.use(cookieParser(cookieSecret));
 
@@ -105,14 +126,46 @@ app.use(
   })
 );
 
-// register routes with caching for appropriate endpoints
-app.use("/auth", authRouter);
-app.use("/users", userRouter);
-app.use("/orders", orderIndex);
+// register routes with advanced security and caching
+app.use("/auth", authRateLimit, authRouter); // Rate limit auth endpoints
+app.use("/users", adminRateLimit, userRouter); // Rate limit user management
+app.use("/orders", orderRateLimit, orderIndex); // Rate limit order creation
 app.use("/ingredients", cacheMiddleware(600), ingredientsIndex); // Cache ingredients for 10 minutes
 app.use("/builders", cacheMiddleware(300), builderIndex); // Cache pizza builders for 5 minutes
-app.use("/messages", msgIndex);
-app.use("/monitoring", monitoringRouter); // Performance monitoring endpoints
+app.use("/messages", contactRateLimit, msgIndex); // Rate limit contact messages
+app.use("/monitoring", adminRateLimit, monitoringRouter); // Performance monitoring endpoints
+
+// Phase 4: API Key Management Routes (Admin only)
+createApiKeyRoutes(app);
+
+// API Documentation endpoint
+app.get("/api/docs", (req, res) => {
+  res.json({
+    title: "Arizona Pizza Business API",
+    version: "1.0.0",
+    description: "Secure, high-performance pizza ordering API",
+    security: {
+      apiKey: "Required for most endpoints - use X-API-Key header",
+      jwt: "Required for admin operations - use Authorization header"
+    },
+    endpoints: {
+      auth: "/auth/* - Authentication endpoints",
+      orders: "/orders/* - Order management", 
+      ingredients: "/ingredients/* - Pizza ingredients",
+      builders: "/builders/* - Pizza templates",
+      messages: "/messages/* - Contact messages",
+      monitoring: "/monitoring/* - Health & performance",
+      apiKeys: "/api/admin/keys/* - API key management (admin only)"
+    },
+    rateLimits: {
+      auth: "5 requests per 15 minutes",
+      admin: "50 requests per 5 minutes", 
+      orders: "10 requests per 10 minutes",
+      contact: "3 requests per hour",
+      general: "100 requests per 15 minutes"
+    }
+  });
+});
 
 app.use("/uploads", express.static(uploadsDir));
 

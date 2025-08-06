@@ -130,6 +130,12 @@ OPTIMIZATION_PHASE_*.md
 optimization-*.md
 *-optimization.md
 
+# Phase documentation files (development only - not for GitHub)
+server/PHASE*.md
+client/PHASE*.md
+test/PHASE*.md
+**/PHASE*_*.md
+
 # yarn v2
 .yarn/cache
 .yarn/unplugged
