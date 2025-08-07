@@ -50,9 +50,9 @@ export const adminRateLimit = createRateLimiter({
 });
 
 export const orderRateLimit = createRateLimiter({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 10, // Limit order creation
-  message: 'Too many orders created, please wait before creating another.'
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 30, // More reasonable for admin viewing/managing orders
+  message: 'Too many order requests, please wait before trying again.'
 });
 
 export const contactRateLimit = createRateLimiter({

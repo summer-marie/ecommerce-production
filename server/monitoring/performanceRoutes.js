@@ -1,6 +1,6 @@
 // Performance monitoring and health check endpoints
 import mongoose from 'mongoose';
-import { redisClient } from '../middleware/performance.js';
+import { memoryCache } from '../middleware/performance.js';
 import { logInfo, logError } from '../middleware/logger.js';
 
 export const healthCheck = async (req, res) => {
@@ -28,17 +28,9 @@ export const healthCheck = async (req, res) => {
       healthStatus.status = 'DEGRADED';
     }
 
-    // Check Redis connection
-    if (redisClient) {
-      try {
-        await redisClient.ping();
-        healthStatus.services.cache = 'OK';
-      } catch (error) {
-        healthStatus.services.cache = 'ERROR';
-      }
-    } else {
-      healthStatus.services.cache = 'DISABLED';
-    }
+    // Check in-memory cache
+    const cacheSize = memoryCache.size;
+    healthStatus.services.cache = cacheSize >= 0 ? 'OK' : 'ERROR';
 
     const statusCode = healthStatus.status === 'OK' ? 200 : 503;
     res.status(statusCode).json(healthStatus);
@@ -73,22 +65,22 @@ export const performanceMetrics = async (req, res) => {
       }
     };
 
-    // Add cache metrics if Redis is available
-    if (redisClient) {
-      try {
-        const info = await redisClient.info('memory');
-        metrics.cache = {
-          status: 'connected',
-          memoryUsage: info.split('\r\n')
-            .find(line => line.startsWith('used_memory_human:'))
-            ?.split(':')[1] || 'N/A'
-        };
-      } catch (error) {
-        metrics.cache = { status: 'error', error: error.message };
-      }
-    } else {
-      metrics.cache = { status: 'disabled' };
-    }
+    // Add memory cache metrics
+    const cacheSize = memoryCache.size;
+    const cacheKeys = Array.from(memoryCache.keys());
+    const now = Date.now();
+    const activeKeys = cacheKeys.filter(key => {
+      const cached = memoryCache.get(key);
+      return cached && cached.expires > now;
+    });
+
+    metrics.cache = {
+      status: 'in-memory',
+      totalKeys: cacheSize,
+      activeKeys: activeKeys.length,
+      expiredKeys: cacheSize - activeKeys.length,
+      memoryEstimate: `${(JSON.stringify([...memoryCache.entries()]).length / 1024).toFixed(2)} KB`
+    };
 
     logInfo('Performance metrics requested');
     res.json(metrics);
@@ -103,19 +95,28 @@ export const performanceMetrics = async (req, res) => {
 };
 
 export const cacheStats = async (req, res) => {
-  if (!redisClient) {
-    return res.json({ 
-      status: 'disabled',
-      message: 'Cache is not available' 
-    });
-  }
-
   try {
-    const keys = await redisClient.keys('api:*');
+    const cacheKeys = Array.from(memoryCache.keys());
+    const now = Date.now();
+    const activeKeys = [];
+    const expiredKeys = [];
+
+    cacheKeys.forEach(key => {
+      const cached = memoryCache.get(key);
+      if (cached && cached.expires > now) {
+        activeKeys.push(key);
+      } else {
+        expiredKeys.push(key);
+      }
+    });
+
     const stats = {
-      totalKeys: keys.length,
-      keys: keys.slice(0, 10), // Show first 10 keys
-      status: 'active'
+      status: 'in-memory',
+      totalKeys: memoryCache.size,
+      activeKeys: activeKeys.length,
+      expiredKeys: expiredKeys.length,
+      sampleKeys: activeKeys.slice(0, 10), // Show first 10 active keys
+      memoryEstimate: `${(JSON.stringify([...memoryCache.entries()]).length / 1024).toFixed(2)} KB`
     };
 
     res.json(stats);

@@ -1,5 +1,5 @@
 import Jumbotron from "../components/Jumbotron";
-import { LazyImage } from "../utils/performance";
+import { LazyImage } from "../utils/performance.jsx";
 
 const gardenImg = (
   <LazyImage

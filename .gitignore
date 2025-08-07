@@ -136,6 +136,16 @@ client/PHASE*.md
 test/PHASE*.md
 **/PHASE*_*.md
 
+# Session TODO files and development notes
+TODO-SESSION-*.md
+**/TODO-SESSION-*.md
+session-*.md
+**/session-*.md
+
+# Production planning documents (development working files)
+PRODUCTION_DEPLOYMENT_GUIDE.md
+OPTIMIZATION_PHASES_SUMMARY.md
+
 # yarn v2
 .yarn/cache
 .yarn/unplugged

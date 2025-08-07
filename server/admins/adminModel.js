@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import userSchema from "./userSchema.js";
+import adminSchema from "./adminSchema.js";
 
-userSchema.set("toJSON", {
+adminSchema.set("toJSON", {
   transform: (doc, ret, options) => {
     ret.id = ret._id;
     delete ret._id;
@@ -12,6 +12,6 @@ userSchema.set("toJSON", {
   },
 });
 
-const userModel = mongoose.model("User", userSchema);
+const adminModel = mongoose.model("Admin", adminSchema, "admins"); // Force collection name to "admins"
 
-export default userModel;
+export default adminModel;

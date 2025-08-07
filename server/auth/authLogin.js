@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
-import userModel from "../user/userModel.js";
+import adminModel from "../admins/adminModel.js";
 
 const jwtSecret = process.env.JWT_SECRET || "secret";
 const tokenExpiration = process.env.TOKEN_EXPIRATION || 60 * 60 * 24 * 30; // 30 days
@@ -29,7 +29,7 @@ const authLogin = async (req, res, next) => {
   const token = createToken({ _id });
   console.log("authLogin/token", token);
   try {
-    const user = await userModel.findOne({ _id });
+    const user = await adminModel.findOne({ _id });
     console.log("authLogin/user", user);
     //Lets you be logged in from multiple places at once
     if (user.token) {

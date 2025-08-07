@@ -9,7 +9,7 @@ const sessionSchema = new Schema({
   },
 });
 
-const userSchema = new Schema({
+const adminSchema = new Schema({
   firstName: {
     type: String,
     default: "",
@@ -38,4 +38,4 @@ const userSchema = new Schema({
   },
 });
 
-export default userSchema;
+export default adminSchema;

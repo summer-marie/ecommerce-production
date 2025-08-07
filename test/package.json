@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "user": "node users.js",
-    "admin": "node seedAdmin.js"
+    "admin": "node seedAdmin.js",
+    "orders": "node seedOrders.js",
+    "builders": "node seedBuilders.js",
+    "messages": "node seedMessages.js"
   },
   "keywords": [],
   "author": "",

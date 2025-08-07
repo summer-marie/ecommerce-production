@@ -1,4 +1,4 @@
-import userModel from "../user/userModel.js";
+import adminModel from "../admins/adminModel.js";
 
 const authLogout = async (req, res) => {
   console.log("auth logout", req.user);
@@ -9,7 +9,7 @@ const authLogout = async (req, res) => {
 
   try {
     // Remove user token
-    await userModel.findByIdAndUpdate(
+    await adminModel.findByIdAndUpdate(
       req.user._id,
       { $set: { token: [] } },
       { new: true }

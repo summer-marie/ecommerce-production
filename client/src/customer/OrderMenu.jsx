@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useCallback } from "react";
 import { builderGetMany } from "../redux/builderSlice";
 import { addToCart } from "../redux/cartSlice";
-import { LazyImage } from "../utils/performance";
+import { LazyImage } from "../utils/performance.jsx";
 
 const Order = () => {
   const navigate = useNavigate();

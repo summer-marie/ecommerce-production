@@ -6,7 +6,10 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: 3005
+    port: 3005,
+    hmr: {
+      port: 3005  // Ensure HMR uses the same port
+    }
   },
   build: {
     // Performance optimizations
@@ -35,9 +38,6 @@ export default defineConfig({
     }
   },
   // Asset optimization
-  assetsInclude: ['**/*.jpg', '**/*.png', '**/*.webp'],
-  // Preview server optimization
-  preview: {
-    port: 3006
-  }
+  assetsInclude: ['**/*.jpg', '**/*.png', '**/*.webp']
+  // Removed preview port config to avoid conflicts
 })

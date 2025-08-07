@@ -1,40 +1,22 @@
 // API Performance and Caching Middleware
-import compression from 'compression';
-import Redis from 'ioredis';
-import { logInfo, logWarn, logError } from './logger.js';
+import compression from "compression";
+import { logInfo, logWarn, logError } from "./logger.js";
 
-// Initialize Redis client for caching
-let redisClient = null;
+// Simple in-memory cache for small applications
+const memoryCache = new Map();
 
-// Try to connect to Redis (optional - graceful degradation)
-const initializeRedis = async () => {
-  try {
-    // Try local Redis first
-    redisClient = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: process.env.REDIS_PORT || 6379,
-      retryDelayOnFailover: 100,
-      maxRetriesPerRequest: 3,
-      lazyConnect: true
-    });
-
-    await redisClient.ping();
-    logInfo('Redis cache initialized', { host: process.env.REDIS_HOST || 'localhost' });
-    
-    // Set up error handling
-    redisClient.on('error', (err) => {
-      logWarn('Redis connection error - operating without cache', { error: err.message });
-      redisClient = null;
-    });
-
-  } catch (error) {
-    logWarn('Redis not available - operating without cache', { error: error.message });
-    redisClient = null;
+// Cache cleanup function to prevent memory leaks
+const cleanupExpiredCache = () => {
+  const now = Date.now();
+  for (const [key, value] of memoryCache.entries()) {
+    if (value.expires < now) {
+      memoryCache.delete(key);
+    }
   }
 };
 
-// Initialize Redis on startup
-initializeRedis();
+// Run cleanup every 5 minutes
+setInterval(cleanupExpiredCache, 5 * 60 * 1000);
 
 // Compression middleware
 export const compressionMiddleware = compression({
@@ -42,102 +24,107 @@ export const compressionMiddleware = compression({
   threshold: 1024, // Only compress responses > 1KB
   filter: (req, res) => {
     // Don't compress if no-compression header is present
-    if (req.headers['x-no-compression']) {
+    if (req.headers["x-no-compression"]) {
       return false;
     }
     // Use compression for all other responses
     return compression.filter(req, res);
-  }
+  },
 });
 
-// Cache middleware factory
-export const cacheMiddleware = (duration = 300) => { // 5 minutes default
+// In-memory cache middleware factory (perfect for your scale)
+export const cacheMiddleware = (duration = 300) => {
+  // 5 minutes default
   return async (req, res, next) => {
     // Skip caching for POST, PUT, DELETE requests
-    if (req.method !== 'GET') {
-      return next();
-    }
-
-    // Skip if Redis is not available
-    if (!redisClient) {
+    if (req.method !== "GET") {
       return next();
     }
 
     const cacheKey = `api:${req.originalUrl}`;
+    const now = Date.now();
 
     try {
-      // Try to get from cache
-      const cachedData = await redisClient.get(cacheKey);
-      
-      if (cachedData) {
-        logInfo('Cache hit', { url: req.originalUrl });
-        res.setHeader('X-Cache', 'HIT');
-        return res.json(JSON.parse(cachedData));
+      // Check in-memory cache
+      const cached = memoryCache.get(cacheKey);
+
+      if (cached && cached.expires > now) {
+        logInfo("Memory cache hit", { url: req.originalUrl });
+        res.setHeader("X-Cache", "HIT");
+        res.setHeader("X-Cache-Type", "Memory");
+        return res.json(cached.data);
       }
 
       // Cache miss - store original res.json
       const originalJson = res.json;
-      res.json = function(data) {
-        // Store in cache for future requests
+      res.json = function (data) {
+        // Store in memory cache for future requests
         if (res.statusCode === 200) {
-          redisClient.setex(cacheKey, duration, JSON.stringify(data))
-            .catch(err => logWarn('Cache store failed', { error: err.message }));
+          memoryCache.set(cacheKey, {
+            data: data,
+            expires: now + (duration * 1000) // Convert seconds to milliseconds
+          });
         }
-        
-        res.setHeader('X-Cache', 'MISS');
-        logInfo('Cache miss', { url: req.originalUrl });
+
+        res.setHeader("X-Cache", "MISS");
+        res.setHeader("X-Cache-Type", "Memory");
+        logInfo("Memory cache miss", { url: req.originalUrl });
         return originalJson.call(this, data);
       };
 
       next();
-
     } catch (error) {
-      logWarn('Cache middleware error', { error: error.message });
+      logWarn("Cache middleware error", { error: error.message });
       next();
     }
   };
 };
 
-// Cache invalidation helper
+// Cache invalidation helper for in-memory cache
 export const invalidateCache = async (pattern) => {
-  if (!redisClient) return;
-  
   try {
-    const keys = await redisClient.keys(pattern);
-    if (keys.length > 0) {
-      await redisClient.del(...keys);
-      logInfo('Cache invalidated', { pattern, keysRemoved: keys.length });
+    let removed = 0;
+    for (const key of memoryCache.keys()) {
+      if (key.includes(pattern.replace('*', ''))) {
+        memoryCache.delete(key);
+        removed++;
+      }
+    }
+    if (removed > 0) {
+      logInfo("Memory cache invalidated", { pattern, keysRemoved: removed });
     }
   } catch (error) {
-    logWarn('Cache invalidation failed', { error: error.message });
+    logWarn("Cache invalidation failed", { error: error.message });
   }
 };
 
 // Performance monitoring middleware
 export const performanceMiddleware = (req, res, next) => {
   const startTime = Date.now();
-  
+
   // Override res.end to capture response time
   const originalEnd = res.end;
-  res.end = function(...args) {
+  res.end = function (...args) {
     const duration = Date.now() - startTime;
-    
+
     // Log slow requests
     if (duration > 1000) {
-      logWarn('Slow API request detected', {
+      logWarn("Slow API request detected", {
         method: req.method,
         url: req.originalUrl,
         duration: `${duration}ms`,
-        userAgent: req.get('user-agent')
+        userAgent: req.get("user-agent"),
       });
     }
-    
-    // Add performance header
-    res.setHeader('X-Response-Time', `${duration}ms`);
-    
+
+    // Add performance header (only if headers haven't been sent)
+    if (!res.headersSent) {
+      res.setHeader("X-Response-Time", `${duration}ms`);
+    }
+
     return originalEnd.apply(this, args);
   };
-  
+
   next();
 };
 
@@ -146,11 +133,11 @@ export const dbOptimizationMiddleware = (req, res, next) => {
   // Add lean() to mongoose queries for better performance
   req.mongooseOptions = {
     lean: true, // Return plain objects instead of mongoose documents
-    maxTimeMS: 5000 // 5 second timeout for queries
+    maxTimeMS: 5000, // 5 second timeout for queries
   };
-  
+
   next();
 };
 
-// Export Redis client for manual cache operations
-export { redisClient };
+// Export memory cache for manual operations if needed
+export { memoryCache };

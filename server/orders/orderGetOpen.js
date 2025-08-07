@@ -20,7 +20,7 @@ const orderGetOpen = async (req, res) => {
       {
         $limit: 100 // Limit to most recent 100 open orders
       }
-    ]).allowDiskUse(true).maxTimeMS(5000);
+    ]).maxTimeMS(5000).allowDiskUse(true);
 
     logInfo('Open orders retrieved', { count: getOrders.length });
 

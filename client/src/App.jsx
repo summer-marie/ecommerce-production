@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { useEffect, Suspense, lazy } from "react";
 import { setAuthFromStorage } from "./redux/authSlice";
 import PrivateRoute from "./PrivateRoute";
-import { logBundlePerformance } from "./utils/performance";
+import { logBundlePerformance } from "./utils/performance.jsx";
 import "./App.css";
 
 // Immediately needed components (above the fold)
