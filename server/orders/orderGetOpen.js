@@ -3,26 +3,15 @@ import { logInfo, logError } from "../middleware/logger.js";
 
 const orderGetOpen = async (req, res) => {
   try {
-    // Optimized aggregation pipeline for open orders
-    const getOrders = await orderModel.aggregate([
-      {
-        $match: {
-          isArchived: { $ne: true },
-          status: { $ne: "archived" },
-        },
-      },
-      {
-        $sort: { 
-          date: -1, // Newest orders first
-          status: 1  // Then by status (processing before completed)
-        }
-      },
-      {
-        $limit: 100 // Limit to most recent 100 open orders
-      }
-    ]).maxTimeMS(5000).allowDiskUse(true);
+    logInfo('Attempting to get open orders');
+    
+    // Simplified query first to test database connection
+    const getOrders = await orderModel.find({
+      isArchived: { $ne: true },
+      status: { $ne: "archived" }
+    }).sort({ date: -1 }).limit(100);
 
-    logInfo('Open orders retrieved', { count: getOrders.length });
+    logInfo('Open orders retrieved successfully', { count: getOrders.length });
 
     res.status(200).json({ 
       success: true, 
@@ -30,10 +19,14 @@ const orderGetOpen = async (req, res) => {
       count: getOrders.length
     });
   } catch (error) {
-    logError('Error getting open orders', { error: error.message });
+    logError('Error getting open orders', { 
+      error: error.message,
+      stack: error.stack 
+    });
     res.status(500).json({ 
       success: false, 
-      message: 'Failed to retrieve open orders' 
+      message: 'Failed to retrieve open orders',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

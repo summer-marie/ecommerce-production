@@ -160,7 +160,7 @@ app.use(
 // API route registration with appropriate security and caching middleware
 app.use("/auth", authRateLimit, authRouter); // Authentication: 5 login attempts per 15 minutes
 app.use("/admins", adminRateLimit, adminRouter); // Admin operations: 100 requests per 5 minutes
-app.use("/orders", orderIndex); // Order management: protected by general rate limit
+app.use("/orders", orderIndex); // Order management: individual routes have specific rate limits
 app.use("/ingredients", cacheMiddleware(600), ingredientsIndex); // Pizza ingredients: cached for 10 minutes
 app.use("/builders", cacheMiddleware(300), builderIndex); // Pizza templates: cached for 5 minutes
 app.use("/messages", contactRateLimit, msgIndex); // Contact forms: 5 messages per hour
