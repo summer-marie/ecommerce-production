@@ -26,30 +26,47 @@ const createToken = (user) => {
 const authLogin = async (req, res, next) => {
   const { _id } = req.user;
   console.log("authLogin _id", _id);
-  const token = createToken({ _id });
-  console.log("authLogin/token", token);
+  
   try {
     const user = await adminModel.findOne({ _id });
     console.log("authLogin/user", user);
-    //Lets you be logged in from multiple places at once
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    const token = createToken({ _id });
+    console.log("authLogin/token", token);
+    
+    // Lets you be logged in from multiple places at once
     if (user.token) {
       user.token.push({ token });
     } else {
       user.token = [{ token }];
     }
-    user.save();
+    
+    await user.save();
     res.cookie("token", token, cookieOptions);
+    
     res.status(200).json({
       success: true,
       token,
       user: {
         firstName: user.firstName,
         role: user.role,
+        id: user._id,
       },
     });
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "authLogin: There was an error." });
+    console.error("authLogin error:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Authentication failed",
+      error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    });
   }
 };
 

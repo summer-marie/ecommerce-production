@@ -1,14 +1,13 @@
-// API Key Management System - Phase 4
+// API key management and authentication system
 import crypto from 'crypto';
 import { logInfo, logWarn, logError } from './logger.js';
 
 class ApiKeyManager {
   constructor() {
-    this.keys = new Map(); // In production, this should be stored in database
+    this.keys = new Map(); // In production, store in database
     this.initializeDefaultKeys();
   }
 
-  // Initialize default API keys for the pizza business
   initializeDefaultKeys() {
     // Admin API key for management operations
     const adminKey = this.generateApiKey('admin');
@@ -53,7 +52,7 @@ class ApiKeyManager {
       totalKeys: this.keys.size
     });
 
-    // Log keys for initial setup (remove in production)
+    // Development logging only
     if (process.env.NODE_ENV !== 'production') {
       console.log('\n🔑 API Keys Generated for Development:');
       console.log(`Admin Key: ${adminKey}`);
@@ -62,7 +61,7 @@ class ApiKeyManager {
     }
   }
 
-  // Generate a secure API key
+  // Generate secure API key with prefix
   generateApiKey(prefix = 'pizza') {
     const timestamp = Date.now().toString(36);
     const randomBytes = crypto.randomBytes(16).toString('hex');
@@ -99,7 +98,7 @@ class ApiKeyManager {
     };
   }
 
-  // Check if key has specific permission
+  // Check if key has required permission
   hasPermission(keyData, permission) {
     if (keyData.permissions.includes('admin')) {
       return true; // Admin has all permissions
@@ -109,7 +108,7 @@ class ApiKeyManager {
            keyData.permissions.some(p => p.startsWith(permission.split(':')[0]));
   }
 
-  // Get all active keys (for management)
+  // Get all active keys for management interface
   getAllKeys() {
     const keys = [];
     for (const [apiKey, keyData] of this.keys.entries()) {
@@ -127,7 +126,7 @@ class ApiKeyManager {
     return keys;
   }
 
-  // Deactivate a key
+  // Deactivate API key by key value
   deactivateKey(apiKey) {
     const keyData = this.keys.get(apiKey);
     if (keyData) {
@@ -138,7 +137,7 @@ class ApiKeyManager {
     return false;
   }
 
-  // Create new API key
+  // Create new API key with custom permissions
   createKey(name, permissions = ['public']) {
     const apiKey = this.generateApiKey();
     const keyData = {

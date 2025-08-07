@@ -1,8 +1,8 @@
-// Security middleware configuration
+// Basic security middleware configuration
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
-// Security Headers Middleware
+// Security headers with CSP configuration
 export const securityHeaders = helmet({
   contentSecurityPolicy: {
     directives: {
@@ -14,21 +14,21 @@ export const securityHeaders = helmet({
       connectSrc: ["'self'"],
     },
   },
-  crossOriginEmbedderPolicy: false, // Disable for file uploads
+  crossOriginEmbedderPolicy: false, // Disabled for file uploads
 });
 
-// Rate Limiting Middleware
+// General rate limiting for all endpoints
 export const generalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
   message: {
     error: 'Too many requests from this IP, please try again later.',
   },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  standardHeaders: true, // Return rate limit info in RateLimit-* headers
+  legacyHeaders: false, // Disable X-RateLimit-* headers
 });
 
-// Strict rate limiting for auth endpoints
+// Strict rate limiting for authentication endpoints
 export const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // Limit each IP to 5 login attempts per windowMs
@@ -39,7 +39,7 @@ export const authRateLimit = rateLimit({
   legacyHeaders: false,
 });
 
-// API rate limiting
+// API endpoint rate limiting
 export const apiRateLimit = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 30, // Limit each IP to 30 API calls per minute

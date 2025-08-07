@@ -1,11 +1,11 @@
-// API Performance and Caching Middleware
+// Performance optimization and caching middleware
 import compression from "compression";
 import { logInfo, logWarn, logError } from "./logger.js";
 
-// Simple in-memory cache for small applications
+// In-memory cache for small-scale applications
 const memoryCache = new Map();
 
-// Cache cleanup function to prevent memory leaks
+// Automatic cache cleanup to prevent memory leaks
 const cleanupExpiredCache = () => {
   const now = Date.now();
   for (const [key, value] of memoryCache.entries()) {
@@ -18,12 +18,12 @@ const cleanupExpiredCache = () => {
 // Run cleanup every 5 minutes
 setInterval(cleanupExpiredCache, 5 * 60 * 1000);
 
-// Compression middleware
+// Response compression middleware
 export const compressionMiddleware = compression({
-  level: 6, // Good balance between compression and CPU usage
-  threshold: 1024, // Only compress responses > 1KB
+  level: 6, // Balance between compression and CPU usage
+  threshold: 1024, // Only compress responses larger than 1KB
   filter: (req, res) => {
-    // Don't compress if no-compression header is present
+    // Skip compression if no-compression header present
     if (req.headers["x-no-compression"]) {
       return false;
     }
@@ -32,9 +32,9 @@ export const compressionMiddleware = compression({
   },
 });
 
-// In-memory cache middleware factory (perfect for your scale)
+// In-memory cache middleware factory
 export const cacheMiddleware = (duration = 300) => {
-  // 5 minutes default
+  // Default 5 minutes
   return async (req, res, next) => {
     // Skip caching for POST, PUT, DELETE requests
     if (req.method !== "GET") {
@@ -45,7 +45,7 @@ export const cacheMiddleware = (duration = 300) => {
     const now = Date.now();
 
     try {
-      // Check in-memory cache
+      // Check memory cache for existing data
       const cached = memoryCache.get(cacheKey);
 
       if (cached && cached.expires > now) {
@@ -55,10 +55,10 @@ export const cacheMiddleware = (duration = 300) => {
         return res.json(cached.data);
       }
 
-      // Cache miss - store original res.json
+      // Cache miss - store response for future requests
       const originalJson = res.json;
       res.json = function (data) {
-        // Store in memory cache for future requests
+        // Store successful responses in memory cache
         if (res.statusCode === 200) {
           memoryCache.set(cacheKey, {
             data: data,
@@ -80,7 +80,7 @@ export const cacheMiddleware = (duration = 300) => {
   };
 };
 
-// Cache invalidation helper for in-memory cache
+// Cache invalidation helper for pattern-based clearing
 export const invalidateCache = async (pattern) => {
   try {
     let removed = 0;
@@ -98,16 +98,16 @@ export const invalidateCache = async (pattern) => {
   }
 };
 
-// Performance monitoring middleware
+// Response time monitoring middleware
 export const performanceMiddleware = (req, res, next) => {
   const startTime = Date.now();
 
-  // Override res.end to capture response time
+  // Override response end to capture timing
   const originalEnd = res.end;
   res.end = function (...args) {
     const duration = Date.now() - startTime;
 
-    // Log slow requests
+    // Alert on slow requests (>1 second)
     if (duration > 1000) {
       logWarn("Slow API request detected", {
         method: req.method,
@@ -117,7 +117,7 @@ export const performanceMiddleware = (req, res, next) => {
       });
     }
 
-    // Add performance header (only if headers haven't been sent)
+    // Add response time header for debugging
     if (!res.headersSent) {
       res.setHeader("X-Response-Time", `${duration}ms`);
     }
@@ -128,7 +128,7 @@ export const performanceMiddleware = (req, res, next) => {
   next();
 };
 
-// Database query optimization middleware
+// Database query optimization settings
 export const dbOptimizationMiddleware = (req, res, next) => {
   // Add lean() to mongoose queries for better performance
   req.mongooseOptions = {
@@ -139,5 +139,5 @@ export const dbOptimizationMiddleware = (req, res, next) => {
   next();
 };
 
-// Export memory cache for manual operations if needed
+// Export memory cache for direct access if needed
 export { memoryCache };

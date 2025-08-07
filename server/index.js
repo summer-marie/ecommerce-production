@@ -9,6 +9,26 @@ const __dirname = path.dirname(__filename);
 
 // Load .env file from the same directory as this script
 dotenv.config({ path: path.join(__dirname, ".env") });
+
+// Verify critical environment variables are loaded
+if (!process.env.JWT_SECRET) {
+  console.error('❌ JWT_SECRET environment variable is required');
+  console.error('Please check your .env file and ensure JWT_SECRET is set');
+  console.error('Current JWT_SECRET value:', process.env.JWT_SECRET ? '[SET]' : '[MISSING]');
+  process.exit(1);
+}
+
+if (!process.env.MONGODB_URL) {
+  console.error('❌ MONGODB_URL environment variable is required');
+  process.exit(1);
+}
+
+console.log('✅ Environment variables loaded successfully');
+
+// Dynamically import authentication strategies after environment is validated
+await import("./strategies/jwtStrategy.js");
+await import("./strategies/localStrategy.js");
+
 // Express and Middleware
 import express from "express";
 import cors from "cors";
@@ -20,9 +40,8 @@ import fs from "fs";
 import mongoose from "mongoose";
 // Authentication
 import passport from "passport";
-import "./strategies/jwtStrategy.js";
-import "./strategies/localStrategy.js";
-// Security Middleware (Phase 1)
+
+// Security Middleware
 import { securityHeaders, generalRateLimit } from "./middleware/security.js";
 import {
   requestLogger,
@@ -31,7 +50,7 @@ import {
   logError,
   logWarn,
 } from "./middleware/logger.js";
-// Advanced Security Middleware (Phase 4)
+// Advanced Security Middleware 
 import {
   advancedHelmet,
   mongoSanitizer,
@@ -45,7 +64,7 @@ import {
   contactRateLimit,
 } from "./middleware/advancedSecurity.js";
 import { requireApiKey, createApiKeyRoutes } from "./middleware/apiKeyAuth.js";
-// Performance Middleware (Phase 2)
+// Performance Middleware 
 import {
   compressionMiddleware,
   cacheMiddleware,
@@ -79,34 +98,34 @@ if (!fs.existsSync(uploadsDir)) {
 
 const app = express();
 
-// Phase 4: Advanced Security Middleware (apply first)
-app.use(advancedHelmet); // Advanced Helmet configuration
-app.use(securityLogger); // Security-focused request logging
-app.use(speedLimiter); // Request speed limiting
+// Core security middleware - apply before any request processing
+app.use(advancedHelmet); // Enhanced security headers (CSP, HSTS, etc.)
+app.use(securityLogger); // Security-focused request logging with threat detection
+app.use(speedLimiter); // Prevent rapid-fire requests from same IP
 
-// Phase 2: Performance Middleware
-app.use(compressionMiddleware);
-app.use(performanceMiddleware);
+// Performance optimization - compress responses early in the pipeline
+app.use(compressionMiddleware); // Gzip compression for faster response times
+app.use(performanceMiddleware); // Response time tracking and monitoring
 
-// Phase 1 & 4: Security Middleware
-app.use(securityHeaders);
-app.use(generalRateLimit);
-app.use(requestLogger);
+// Additional security layers and general rate limiting
+app.use(securityHeaders); // Extra security headers for older browsers
+app.use(generalRateLimit); // Global rate limit: 100 requests per 15 minutes
+// Note: requestLogger removed to avoid duplicate logging with securityLogger
 
-// Phase 4: Input Sanitization & Protection
-app.use(express.json({ limit: "10mb" })); // Add size limit
-app.use(mongoSanitizer); // MongoDB injection protection
-app.use(xssProtection); // XSS protection
-app.use(hppProtection); // HTTP Parameter Pollution protection
+// Input sanitization and protection against common attacks
+app.use(express.json({ limit: "10mb" })); // JSON parser with size limit for image uploads
+app.use(mongoSanitizer); // Prevent MongoDB injection attacks (e.g., $gt, $ne)
+app.use(xssProtection); // Sanitize HTML input to prevent XSS attacks
+app.use(hppProtection); // Prevent HTTP Parameter Pollution attacks
 
 app.use(cookieParser(cookieSecret));
 
-// Express CORS
-// Get whitelisted domains from env
+// Cross-Origin Resource Sharing configuration for frontend communication
+// Get whitelisted domains from environment variables
 const whitelist = process.env.WHITELISTED_DOMAINS
   ? process.env.WHITELISTED_DOMAINS.split(",")
   : [];
-// Set CORS options
+// Configure CORS to only allow requests from approved domains
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || whitelist.indexOf(origin) !== -1) {
@@ -117,17 +136,18 @@ const corsOptions = {
   },
   credentials: true,
 };
-// Use CORS
+// Apply CORS middleware with security restrictions
 app.use(cors(corsOptions));
 
-// Make the "uploads" folder publicly accessible
+// Static file serving for pizza images and other uploads
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
+// Simple health check endpoint
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-// Add Passport
+// Authentication middleware setup
 app.use(passport.initialize());
 app.use(
   session({
@@ -137,22 +157,22 @@ app.use(
   })
 );
 
-// register routes with advanced security and caching
-app.use("/auth", authRateLimit, authRouter); // Rate limit auth endpoints
-app.use("/admins", adminRateLimit, adminRouter); // Rate limit admin management
-app.use("/orders", orderIndex); // No rate limiting for order viewing/management
-app.use("/ingredients", cacheMiddleware(600), ingredientsIndex); // Cache ingredients for 10 minutes
-app.use("/builders", cacheMiddleware(300), builderIndex); // Cache pizza builders for 5 minutes
-app.use("/messages", contactRateLimit, msgIndex); // Rate limit contact messages
-app.use("/monitoring", adminRateLimit, monitoringRouter); // Performance monitoring endpoints
+// API route registration with appropriate security and caching middleware
+app.use("/auth", authRateLimit, authRouter); // Authentication: 5 login attempts per 15 minutes
+app.use("/admins", adminRateLimit, adminRouter); // Admin operations: 100 requests per 5 minutes
+app.use("/orders", orderIndex); // Order management: protected by general rate limit
+app.use("/ingredients", cacheMiddleware(600), ingredientsIndex); // Pizza ingredients: cached for 10 minutes
+app.use("/builders", cacheMiddleware(300), builderIndex); // Pizza templates: cached for 5 minutes
+app.use("/messages", contactRateLimit, msgIndex); // Contact forms: 5 messages per hour
+app.use("/monitoring", adminRateLimit, monitoringRouter); // System monitoring: admin-only access
 
-// Phase 4: API Key Management Routes (Admin only)
+// Administrative API key management (requires admin authentication)
 createApiKeyRoutes(app);
 
-// API Documentation endpoint
+// Self-documenting API endpoint for developers and integration partners
 app.get("/api/docs", (req, res) => {
   res.json({
-    title: "Arizona Pizza Business API",
+    title: "Pizza Business API",
     version: "1.0.0",
     description: "Secure, high-performance pizza ordering API",
     security: {
@@ -170,20 +190,21 @@ app.get("/api/docs", (req, res) => {
     },
     rateLimits: {
       auth: "5 requests per 15 minutes",
-      admin: "50 requests per 5 minutes",
+      admin: "100 requests per 5 minutes",
       orders: "10 requests per 10 minutes",
-      contact: "3 requests per hour",
+      contact: "5 requests per hour",
       general: "100 requests per 15 minutes",
     },
   });
 });
 
+// Additional static file serving (backup path for uploads)
 app.use("/uploads", express.static(uploadsDir));
 
-// Error handling middleware (add at the end)
+// Global error handling middleware (must be last middleware)
 app.use(errorLogger);
 
-// MongoDB Setup
+// Database connection and server startup
 try {
   const mongoURL = process.env.MONGODB_URL || "";
   // Connect to MongoDB

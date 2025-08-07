@@ -1,13 +1,24 @@
 const authStatus = (req, res, next) => {
+  console.log('AUTH STATUS CHECK');
+  console.log('req.user', req.user);
 
-  console.log('LETS TALK ABOUT STATUS BABY')
-  console.log('req.user', req.user)
-
-  
   if (!req.user) {
-    res.status(401).json({ message: 'Not authenticated' })
+    return res.status(401).json({ 
+      success: false,
+      message: 'Not authenticated',
+      user: null 
+    });
   } else {
-    res.status(200).json({ message: 'You did it!' })
+    return res.status(200).json({ 
+      success: true,
+      message: 'Authenticated successfully',
+      user: {
+        firstName: req.user.firstName,
+        role: req.user.role,
+        id: req.user._id,
+      }
+    });
   }
-}
-export default authStatus
+};
+
+export default authStatus;

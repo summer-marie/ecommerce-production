@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { memoryCache } from '../middleware/performance.js';
 import { logInfo, logError } from '../middleware/logger.js';
 
+// Health check endpoint for monitoring service status
 export const healthCheck = async (req, res) => {
   const healthStatus = {
     status: 'OK',
@@ -20,7 +21,7 @@ export const healthCheck = async (req, res) => {
   };
 
   try {
-    // Check MongoDB connection
+    // Check MongoDB connection status
     if (mongoose.connection.readyState === 1) {
       healthStatus.services.database = 'OK';
     } else {
@@ -28,7 +29,7 @@ export const healthCheck = async (req, res) => {
       healthStatus.status = 'DEGRADED';
     }
 
-    // Check in-memory cache
+    // Verify in-memory cache is accessible
     const cacheSize = memoryCache.size;
     healthStatus.services.cache = cacheSize >= 0 ? 'OK' : 'ERROR';
 
@@ -42,6 +43,7 @@ export const healthCheck = async (req, res) => {
   }
 };
 
+// Detailed performance metrics for system monitoring
 export const performanceMetrics = async (req, res) => {
   try {
     const dbStats = await mongoose.connection.db.stats();
@@ -65,7 +67,7 @@ export const performanceMetrics = async (req, res) => {
       }
     };
 
-    // Add memory cache metrics
+    // Calculate cache efficiency metrics
     const cacheSize = memoryCache.size;
     const cacheKeys = Array.from(memoryCache.keys());
     const now = Date.now();
@@ -94,6 +96,7 @@ export const performanceMetrics = async (req, res) => {
   }
 };
 
+// Cache statistics and active key analysis
 export const cacheStats = async (req, res) => {
   try {
     const cacheKeys = Array.from(memoryCache.keys());

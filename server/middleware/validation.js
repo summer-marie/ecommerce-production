@@ -1,7 +1,7 @@
 // Input validation middleware using express-validator
 import { body, param, query, validationResult } from 'express-validator';
 
-// Helper function to handle validation results
+// Handle validation errors and return structured response
 export const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -14,7 +14,7 @@ export const handleValidationErrors = (req, res, next) => {
   next();
 };
 
-// Order validation rules
+// Pizza order validation
 export const validateOrder = [
   body('orderDetails')
     .isArray({ min: 1 })
@@ -72,7 +72,7 @@ export const validateOrder = [
   handleValidationErrors,
 ];
 
-// Ingredient validation rules
+// Ingredient validation
 export const validateIngredient = [
   body('name')
     .isString()
@@ -94,7 +94,7 @@ export const validateIngredient = [
   handleValidationErrors,
 ];
 
-// Message validation rules
+// Contact message validation
 export const validateMessage = [
   body('email')
     .isEmail()
@@ -113,7 +113,7 @@ export const validateMessage = [
   handleValidationErrors,
 ];
 
-// Auth validation rules
+// Admin login validation
 export const validateLogin = [
   body('email')
     .isEmail()
@@ -126,7 +126,7 @@ export const validateLogin = [
   handleValidationErrors,
 ];
 
-// User validation rules
+// User account validation
 export const validateUser = [
   body('email')
     .isEmail()

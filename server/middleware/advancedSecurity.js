@@ -1,4 +1,4 @@
-// Advanced Security Middleware - Phase 4
+// Advanced security middleware for API protection
 import rateLimit from 'express-rate-limit';
 import slowDown from 'express-slow-down';
 import helmet from 'helmet';
@@ -7,7 +7,7 @@ import hpp from 'hpp';
 import xss from 'xss-clean';
 import { logInfo, logWarn, logError } from './logger.js';
 
-// Advanced Rate Limiting Configuration
+// Configurable rate limiting factory
 export const createRateLimiter = (options = {}) => {
   const defaults = {
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -36,7 +36,7 @@ export const createRateLimiter = (options = {}) => {
   return rateLimit({ ...defaults, ...options });
 };
 
-// Specific Rate Limiters for Different Endpoints
+// Endpoint-specific rate limiters
 export const authRateLimit = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // Limit auth attempts
@@ -45,28 +45,28 @@ export const authRateLimit = createRateLimiter({
 
 export const adminRateLimit = createRateLimiter({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 50, // More restrictive for admin endpoints
+  max: 100, // Reasonable for admin operations during busy periods
   message: 'Too many admin requests, please slow down.'
 });
 
 export const orderRateLimit = createRateLimiter({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 30, // More reasonable for admin viewing/managing orders
+  max: 30, // Reasonable for admin viewing/managing orders
   message: 'Too many order requests, please wait before trying again.'
 });
 
 export const contactRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // Very restrictive for contact form
+  max: 5, // Multiple messages for customer support
   message: 'Too many messages sent, please wait before sending another.'
 });
 
-// Speed Limiting (Slow Down Middleware)
+// Progressive request speed limiting
 export const speedLimiter = slowDown({
   windowMs: 15 * 60 * 1000, // 15 minutes
   delayAfter: 50, // Allow 50 requests per windowMs without delay
   delayMs: (used, req) => {
-    const delay = (used - 50) * 100; // Add 100ms delay for each request over the limit
+    const delay = (used - 50) * 100; // Add 100ms delay for each request over limit
     
     if (delay > 0) {
       logWarn('Request speed limited', {
@@ -82,7 +82,7 @@ export const speedLimiter = slowDown({
   maxDelayMs: 5000, // Maximum delay of 5 seconds
 });
 
-// Advanced Helmet Configuration
+// Security headers with CSP configuration
 export const advancedHelmet = helmet({
   contentSecurityPolicy: {
     directives: {
@@ -97,7 +97,7 @@ export const advancedHelmet = helmet({
       upgradeInsecureRequests: [],
     },
   },
-  crossOriginEmbedderPolicy: false, // Disable for compatibility
+  crossOriginEmbedderPolicy: false, // Disabled for compatibility
   hsts: {
     maxAge: 31536000, // 1 year
     includeSubDomains: true,
@@ -109,7 +109,7 @@ export const advancedHelmet = helmet({
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 });
 
-// MongoDB Injection Protection - Safe configuration
+// MongoDB injection protection with safe sanitization
 export const mongoSanitizer = (req, res, next) => {
   try {
     // Only sanitize if the object is modifiable
@@ -126,7 +126,7 @@ export const mongoSanitizer = (req, res, next) => {
   }
 };
 
-// XSS Protection - Temporarily disabled due to Express compatibility
+// XSS protection with object cloning
 export const xssProtection = (req, res, next) => {
   // Simple XSS protection without modifying immutable objects
   if (req.body && typeof req.body === 'object') {
@@ -140,12 +140,12 @@ export const xssProtection = (req, res, next) => {
   next();
 };
 
-// HTTP Parameter Pollution Protection
+// HTTP parameter pollution protection
 export const hppProtection = hpp({
   whitelist: ['tags', 'ingredients'] // Allow array parameters for these fields
 });
 
-// API Key Authentication Middleware
+// API key authentication middleware factory
 export const createApiKeyAuth = (validKeys = []) => {
   return (req, res, next) => {
     const apiKey = req.header('X-API-Key') || req.query.apiKey;
@@ -186,7 +186,7 @@ export const createApiKeyAuth = (validKeys = []) => {
   };
 };
 
-// Security Headers Middleware
+// Additional security headers middleware
 export const securityHeaders = (req, res, next) => {
   // Additional security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -202,7 +202,7 @@ export const securityHeaders = (req, res, next) => {
   next();
 };
 
-// IP Whitelist/Blacklist Middleware
+// IP filtering middleware factory
 export const createIpFilter = (options = {}) => {
   const { whitelist = [], blacklist = [], trustProxy = true } = options;
   
@@ -239,7 +239,7 @@ export const createIpFilter = (options = {}) => {
   };
 };
 
-// Request Logging with Security Context
+// Security-focused request logging middleware
 export const securityLogger = (req, res, next) => {
   const startTime = Date.now();
   
@@ -284,7 +284,7 @@ export const securityLogger = (req, res, next) => {
   next();
 };
 
-// Export all middleware for easy import
+// Export middleware collection for easy importing
 export default {
   createRateLimiter,
   authRateLimit,

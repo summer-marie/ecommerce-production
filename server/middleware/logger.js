@@ -1,7 +1,7 @@
-// Professional logging middleware using Winston
+// Structured logging system using Winston
 import winston from 'winston';
 
-// Create logger instance
+// Configure logger with file rotation and formatting
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
@@ -27,7 +27,7 @@ const logger = winston.createLogger({
   ],
 });
 
-// Add console transport for development
+// Add console output for development
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
     format: winston.format.combine(
@@ -37,11 +37,11 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
-// Request logging middleware
+// Request logging middleware with timing
 export const requestLogger = (req, res, next) => {
   const start = Date.now();
   
-  // Log the request
+  // Log incoming request
   logger.info('Incoming request', {
     method: req.method,
     url: req.url,
@@ -50,7 +50,7 @@ export const requestLogger = (req, res, next) => {
     timestamp: new Date().toISOString(),
   });
 
-  // Override res.end to log response
+  // Override response end to capture timing
   const originalEnd = res.end;
   res.end = function(chunk, encoding) {
     const duration = Date.now() - start;
@@ -69,9 +69,9 @@ export const requestLogger = (req, res, next) => {
   next();
 };
 
-// Error logging middleware
+// Global error logging middleware
 export const errorLogger = (err, req, res, next) => {
-  // Log the error
+  // Log error with request context
   logger.error('Application error', {
     error: err.message,
     stack: err.stack,
@@ -82,7 +82,7 @@ export const errorLogger = (err, req, res, next) => {
     timestamp: new Date().toISOString(),
   });
 
-  // Don't expose error details in production
+  // Secure error responses for production
   const isDevelopment = process.env.NODE_ENV === 'development';
   
   res.status(err.status || 500).json({
@@ -92,7 +92,7 @@ export const errorLogger = (err, req, res, next) => {
   });
 };
 
-// Replace console.log with proper logging
+// Structured logging helper functions
 export const logInfo = (message, meta = {}) => {
   logger.info(message, meta);
 };
