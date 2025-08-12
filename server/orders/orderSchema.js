@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-// top level is good for small ammounts of data, but if it grows may need to nest the info
 
 const Schema = mongoose.Schema;
 
@@ -60,11 +59,58 @@ const orderSchema = new Schema({
   orderTotal: {
     type: Number,
   },
+
+  // Payment Integration Fields for Square
+  payment: {
+    status: {
+      type: String,
+      enum: ["pending", "processing", "completed", "failed", "refunded"],
+      default: "pending",
+    },
+    method: {
+      type: String,
+      enum: ["square", "cash", "comp"], // Add other methods as needed
+      default: "square",
+    },
+    squarePaymentId: {
+      type: String,
+      sparse: true, // Allows null but unique when present
+    },
+    receiptNumber: {
+      type: String,
+      sparse: true,
+    },
+    amountPaid: {
+      type: Number,
+      default: 0,
+    },
+    processingFee: {
+      type: Number,
+      default: 0,
+    },
+    paidAt: {
+      type: Date,
+    },
+    refundedAt: {
+      type: Date,
+    },
+    failureReason: {
+      type: String,
+    },
+  },
+
   status: {
     type: String,
     // Allowable entries
-    enum: ["processing", "completed", "delivered", "archived", "cancelled"],
-    default: "processing",
+    enum: [
+      "pending_payment",
+      "processing",
+      "completed",
+      "delivered",
+      "archived",
+      "cancelled",
+    ],
+    default: "pending_payment", // Start with pending payment
   },
 
   // Remove, is not needed if the status of archived is in the status
@@ -79,5 +125,7 @@ orderSchema.index({ status: 1, date: -1 }); // Orders by status and date (newest
 orderSchema.index({ orderNumber: 1 }); // Unique order number lookup
 orderSchema.index({ date: -1 }); // Recent orders
 orderSchema.index({ "address.zip": 1 }); // Orders by location
+orderSchema.index({ "payment.status": 1 }); // Payment status queries
+// Note: payment.squarePaymentId index is created automatically by sparse: true option
 
 export default orderSchema;

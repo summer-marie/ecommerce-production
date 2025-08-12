@@ -1,11 +1,24 @@
 import axios from "axios";
 
 const orderService = {
-  // Create a new Order
+  // Create a new Order (without payment processing)
+  // Use for: cash orders, admin-created orders, or unpaid orders
   createOrder: async (order) => {
     return await axios.post(
       `${import.meta.env.VITE_API_SERVER_URL}/orders`,
       order
+    );
+  },
+
+  // Create order with Square payment processing
+  // Use for: customer checkout with Square payment
+  createOrderWithPayment: async (orderData, paymentToken) => {
+    return await axios.post(
+      `${import.meta.env.VITE_API_SERVER_URL}/orders/with-payment`,
+      {
+        ...orderData,
+        paymentToken
+      }
     );
   },
 
@@ -45,17 +58,6 @@ const orderService = {
     );
   },
 
-  // orderGetOne: async (id) => {
-  //   return await axios.get(
-  //     `${import.meta.env.VITE_API_SERVER_URL}/orders/${id}`
-  //   );
-  // },
-  // orderUpdate: async ( {id, orderForm }) => {
-  //   return await axios.put(
-  //     `${import.meta.env.VITE_API_SERVER_URL}/orders/order-detail/${id}`,
-  //     orderForm
-  //   );
-  // },
 };
 
 export default orderService;

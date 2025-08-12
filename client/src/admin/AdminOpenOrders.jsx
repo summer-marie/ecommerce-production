@@ -8,6 +8,11 @@ import {
   orderArchiveOne,
 } from "../redux/orderSlice";
 
+// TODO: explore other gui interface and user controls to make tracking orders easier
+
+// TODO: Refresh issue when new orders are being created. have to reload to see them 
+
+
 const AdminOpenOrders = () => {
   const { orders } = useSelector((state) => state.order);
   const dispatch = useDispatch();

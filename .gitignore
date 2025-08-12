@@ -149,6 +149,10 @@ session-*.md
 PRODUCTION_DEPLOYMENT_GUIDE.md
 OPTIMIZATION_PHASES_SUMMARY.md
 
+# Square integration guides (client-specific setup information)
+SQUARE_INTEGRATION_GUIDE.md
+CLIENT_SQUARE_SETUP_GUIDE.md
+
 # yarn v2
 .yarn/cache
 .yarn/unplugged

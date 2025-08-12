@@ -1,4 +1,4 @@
-// TODO: capstone+ : add function that deletes or archives orders older then 30 days
+// TODO: Add month/year filter and pagination for archived orders in the admin frontend for easier navigation and record-keeping. Keep at least 1 year of archived orders for tax purposes.
 
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";

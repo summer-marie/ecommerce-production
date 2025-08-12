@@ -9,6 +9,8 @@ import {
 import AlertBlack from "../components/AlertBlack";
 import SpinnerBubbles from "../components/SpinnerBubbles";
 
+// TODO : Might not need ingredients table. might just have admin create price themselves. will still need ingredients just maybe not  the price implimentation
+
 // Add new ingredient modal
 const IngredientModal = ({ isOpen, onClose, setShowModal }) => {
   const initialFormState = {

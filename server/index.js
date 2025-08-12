@@ -79,6 +79,7 @@ import ingredientsIndex from "./ingredients/ingredientsIndex.js";
 import builderIndex from "./builders/builderIndex.js";
 import msgIndex from "./messages/msgIndex.js";
 import monitoringRouter from "./monitoring/index.js";
+import paymentRoutes from "./payments/squareRoutes.js";
 
 // Replace console.log with proper logging
 logInfo("Environment check", {
@@ -164,6 +165,7 @@ app.use("/orders", orderIndex); // Order management: individual routes have spec
 app.use("/ingredients", cacheMiddleware(600), ingredientsIndex); // Pizza ingredients: cached for 10 minutes
 app.use("/builders", cacheMiddleware(300), builderIndex); // Pizza templates: cached for 5 minutes
 app.use("/messages", contactRateLimit, msgIndex); // Contact forms: 5 messages per hour
+app.use("/payments", paymentRoutes); // Square payment processing: rate limited per route
 app.use("/monitoring", adminRateLimit, monitoringRouter); // System monitoring: admin-only access
 
 // Administrative API key management (requires admin authentication)

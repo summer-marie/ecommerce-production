@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.6.1",
+    "@square/web-sdk": "^2.1.0",
     "@tailwindcss/vite": "^4.1.2",
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",

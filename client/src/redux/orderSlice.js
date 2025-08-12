@@ -23,6 +23,14 @@ const initialState = {
     orderTotal: 0,
     status: "",
     isArchived: false,
+    payment: {
+      status: "pending",
+      method: "square",
+      squarePaymentId: "",
+      receiptNumber: "",
+      amountPaid: 0,
+      paidAt: null
+    }
   },
   orders: [],
 };
