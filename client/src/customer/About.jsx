@@ -27,20 +27,6 @@ const herbsImg = (
     loading="lazy"
   />
 );
-// const peppersImg = (
-//   <img
-//     className="object-cover w-full h-100 rounded-lg"
-//     src={new URL("../assets/peppers.jpg", import.meta.url).href}
-//     alt=""
-//   />
-// );
-// const sauceImg = (
-//   <img
-//     className="object-cover w-full rounded-lg h-100"
-//     src={new URL("../assets/sauce.jpg", import.meta.url).href}
-//     alt=""
-//   />
-// );
 
 const ourIngredients = (
   <div className="text-3xl cursiveFont text-black  text-center p-3">

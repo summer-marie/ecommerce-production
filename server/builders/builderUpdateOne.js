@@ -7,32 +7,6 @@ const upload = multer({ dest: "uploads/" });
 // Export your middleware for use in your route
 export const pizzaUpdateOneUpload = upload.single("image");
 
-// Helper function to calculate pizza price
-const calculatePizzaPrice = (base, sauce, meatTopping, veggieTopping) => {
-  // Calculate base price (crust + cheese)
-  const basePrice = base.reduce((sum, item) => sum + (item.price || 0), 0);
-
-  // Add sauce price
-  const saucePrice = sauce.price || 0;
-
-  // Add meat toppings price (considering amount)
-  const meatPrice = meatTopping.reduce(
-    (sum, item) => sum + (item.price || 0) * (item.amount || 1),
-    0
-  );
-
-  // Add veggie toppings price (considering amount)
-  const veggiePrice = veggieTopping.reduce(
-    (sum, item) => sum + (item.price || 0) * (item.amount || 1),
-    0
-  );
-
-  // Return total price rounded to 2 decimal places
-  return parseFloat(
-    (basePrice + saucePrice + meatPrice + veggiePrice).toFixed(2)
-  );
-};
-
 const pizzaUpdateOne = async (req, res) => {
   try {
     const { id } = req.params;
@@ -44,13 +18,20 @@ const pizzaUpdateOne = async (req, res) => {
     const veggieTopping = JSON.parse(req.body.veggieTopping);
     const base = JSON.parse(req.body.base);
 
-    // Calculate price automatically based on ingredients
-    const pizzaPrice = calculatePizzaPrice(
-      base,
-      sauce,
-      meatTopping,
-      veggieTopping
-    );
+    // Accept admin-provided price (string or number)
+    const rawPrice = req.body.pizzaPrice;
+    const pizzaPrice =
+      typeof rawPrice === "string" ? parseFloat(rawPrice) : Number(rawPrice);
+    if (!Number.isFinite(pizzaPrice)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Valid pizzaPrice is required" });
+    }
+    if (pizzaPrice < 0 || pizzaPrice > 1000) {
+      return res
+        .status(400)
+        .json({ success: false, message: "pizzaPrice must be between 0 and 1000" });
+    }
 
     // Handle image
     const image = req.file
@@ -65,7 +46,7 @@ const pizzaUpdateOne = async (req, res) => {
 
     const updateFields = {
       pizzaName,
-      pizzaPrice, // Use calculated price instead of submitted price
+      pizzaPrice, // Use admin-entered price
       sauce,
       meatTopping,
       veggieTopping,
@@ -88,10 +69,10 @@ const pizzaUpdateOne = async (req, res) => {
         .json({ success: false, message: "Pizza not found" });
     }
 
-    console.log("Pizza updated with calculated price:", updatedPizza);
+    console.log("Pizza updated with manual price:", updatedPizza);
     res.status(200).json({
       success: true,
-      message: "Pizza updated successfully with automatic pricing",
+      message: "Pizza updated successfully",
       builder: updatedPizza,
     });
   } catch (err) {

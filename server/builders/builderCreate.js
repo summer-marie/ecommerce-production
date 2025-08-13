@@ -1,30 +1,7 @@
 import builderModel from "./builderModel.js";
 import fs from "fs";
 
-const calculatePizzaPrice = (base, sauce, meatTopping, veggieTopping) => {
-  // Calculate base price (crust + cheese)
-  const basePrice = base.reduce((sum, item) => sum + (item.price || 0), 0);
-
-  // Add sauce price
-  const saucePrice = sauce.price || 0;
-
-  // Add meat toppings price (considering amount)
-  const meatPrice = meatTopping.reduce(
-    (sum, item) => sum + (item.price || 0) * (item.amount || 1),
-    0
-  );
-
-  // Add veggie toppings price (considering amount)
-  const veggiePrice = veggieTopping.reduce(
-    (sum, item) => sum + (item.price || 0) * (item.amount || 1),
-    0
-  );
-
-  // Return total price rounded to 2 decimal places
-  return parseFloat(
-    (basePrice + saucePrice + meatPrice + veggiePrice).toFixed(2)
-  );
-};
+// Note: Ingredients retain their unit prices but are no longer used to compute pizzaPrice on create.
 
 const builderCreate = async (req, res) => {
   try {
@@ -68,17 +45,25 @@ const builderCreate = async (req, res) => {
         .json({ success: false, message: "Pizza name is required" });
     }
 
-    // Calculate price automatically based on ingredients
-    const pizzaPrice = calculatePizzaPrice(
-      base,
-      sauce,
-      meatTopping,
-      veggieTopping
-    );
+    // Accept admin-provided price instead of calculating from ingredients
+    const rawPrice = req.body.pizzaPrice;
+    const pizzaPrice =
+      typeof rawPrice === "string" ? parseFloat(rawPrice) : Number(rawPrice);
+    if (!Number.isFinite(pizzaPrice)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Valid pizzaPrice is required" });
+    }
+    if (pizzaPrice < 0 || pizzaPrice > 1000) {
+      return res.status(400).json({
+        success: false,
+        message: "pizzaPrice must be between 0 and 1000",
+      });
+    }
 
     const newPizza = await builderModel.create({
       pizzaName,
-      pizzaPrice, // Use calculated price
+      pizzaPrice, // Use admin-entered price
       base,
       sauce,
       meatTopping,
@@ -96,11 +81,11 @@ const builderCreate = async (req, res) => {
 
     console.log("File received:", req.file);
 
-    console.log("New pizza created with calculated price:", newPizza);
+    console.log("New pizza created with manual price:", newPizza);
 
     res.status(200).json({
       success: true,
-      message: "Pizza created successfully with automatic pricing",
+      message: "Pizza created successfully",
       pizza: newPizza,
     });
   } catch (err) {
