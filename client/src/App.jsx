@@ -16,7 +16,6 @@ const About = lazy(() => import("./customer/About"));
 const OrderMenu = lazy(() => import("./customer/OrderMenu"));
 const Contact = lazy(() => import("./customer/Contact"));
 const Checkout = lazy(() => import("./customer/Checkout"));
-const BuildYourOwn = lazy(() => import("./customer/BuildYourOwn"));
 const OrderSuccess = lazy(() => import("./customer/OrderSuccess"));
 
 // Admin components (only loaded when accessing admin)
@@ -76,11 +75,6 @@ function App() {
           <Route path="/order-menu" element={
             <Suspense fallback={<LoadingFallback />}>
               <OrderMenu />
-            </Suspense>
-          } />
-          <Route path="/order-create" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <BuildYourOwn />
             </Suspense>
           } />
           <Route path="/contact" element={

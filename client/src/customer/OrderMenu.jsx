@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useCallback } from "react";
 import { builderGetMany } from "../redux/builderSlice";
@@ -6,7 +5,6 @@ import { addToCart } from "../redux/cartSlice";
 import { LazyImage } from "../utils/performance.jsx";
 
 const Order = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { builders } = useSelector((state) => state.builder);
 
@@ -15,21 +13,20 @@ const Order = () => {
   }, [dispatch]);
 
   // Memoized callback for adding to cart
-  const handleAddToCart = useCallback((builder) => {
-    dispatch(
-      addToCart({
-        ...builder,
-        cartItemId: Date.now() + Math.random(),
-      })
-    );
-  }, [dispatch]);
+  const handleAddToCart = useCallback(
+    (builder) => {
+      dispatch(
+        addToCart({
+          ...builder,
+          cartItemId: Date.now() + Math.random(),
+        })
+      );
+    },
+    [dispatch]
+  );
 
-  // Memoized callback for navigation
-  const handleBuildYourOwn = useCallback(() => {
-    navigate("/order-create");
-  }, [navigate]);
-
-  const fallbackImage = new URL("../assets/basePizza.jpg", import.meta.url).href;
+  const fallbackImage = new URL("../assets/basePizza.jpg", import.meta.url)
+    .href;
 
   return (
     <>
@@ -41,49 +38,17 @@ const Order = () => {
         Flavor is just one click away
       </h3>
       <hr className="my-6 sm:mx-auto lg:my-8 border-gray-700 w-[80%]" />
-      
+
       {/* Flex container */}
       <div className="mx-auto max-w-[120rem]">
         <div className="flex flex-wrap justify-center items-start flex-row sm:flex-col sm:items-center md:flex-row lg:flex-col xl:flex-row m-[3rem]">
-          
-          {/* Build your own pizza card */}
-          <div className="max-w-sm rounded-lg shadow-2xl w-1/4 m-4 sm:w-full bg-white border border-gray-200 shadow-emerald-700">
-            <div className="relative h-0 aspect-ratio">
-              <LazyImage
-                className="object-cover absolute inset-0 w-full h-full rounded-t-lg rounded-s-lg p-2"
-                src={new URL("../assets/greenplus.png", import.meta.url).href}
-                alt="Build your own pizza"
-              />
-            </div>
-
-            <div className="px-5 pb-5">
-              <h5 className="text-xl font-semibold tracking-tight text-gray-900">
-                Build Your Pizza
-              </h5>
-              <p className="mt-2 mb-2">
-                Every pizza starts with a base of Brick Oven Crust and Special
-                Blend Italian cheese. Toppings are.50 ea with a limit of 5
-                toppings per pie.
-              </p>
-
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold text-gray-900">$6.00+</span>
-                <button
-                  onClick={handleBuildYourOwn}
-                  type="button"
-                  className="font-medium rounded-lg text-sm px-5 py-2.5 text-center mt-2 top-0 right-0 shadow-lg me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer shadow-cyan-800/80 hover:text-black text-white from-cyan-950 via-cyan-500 to-cyan-600 focus:ring-cyan-800 transition-all duration-200"
-                >
-                  Build Your Own
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* Pizza Menu Cards */}
           {builders.length === 0 ? (
             <div className="w-full text-center py-12">
               <div className="animate-pulse">
-                <div className="text-gray-500 text-lg">Loading delicious pizzas...</div>
+                <div className="text-gray-500 text-lg">
+                  Loading delicious pizzas...
+                </div>
               </div>
             </div>
           ) : (
@@ -97,14 +62,16 @@ const Order = () => {
                     className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
                     src={
                       builder.image && builder.image.filename
-                        ? `${import.meta.env.VITE_API_SERVER_URL}/uploads/${builder.image.filename}`
+                        ? `${import.meta.env.VITE_API_SERVER_URL}/uploads/${
+                            builder.image.filename
+                          }`
                         : fallbackImage
                     }
                     fallbackSrc={fallbackImage}
                     alt={builder.pizzaName || "Pizza"}
                   />
                 </div>
-                
+
                 <div className="px-5 pt-3 pb-3 flex flex-col flex-1">
                   <h5 className="text-xl font-semibold tracking-tight text-gray-900">
                     {builder.pizzaName}
@@ -115,7 +82,8 @@ const Order = () => {
                         <strong>Pizza Base:</strong>{" "}
                         {builder.base &&
                           builder.base.map((b) => b.name).join(", ")}{" "}
-                        , {builder.sauce && (builder.sauce.name || builder.sauce)}
+                        ,{" "}
+                        {builder.sauce && (builder.sauce.name || builder.sauce)}
                       </span>
                       <span className="block">
                         <strong>Toppings:</strong>{" "}
