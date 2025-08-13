@@ -20,7 +20,7 @@ const SquarePayment = ({
     if (isInitialized.current) {
       return;
     }
-    
+
     isInitialized.current = true;
     try {
       console.log("Initializing Square SDK...");
@@ -45,8 +45,8 @@ const SquarePayment = ({
             color: "#111827",
             fontFamily: "inherit",
             fontSize: "14px",
-            fontWeight: "normal"
-          }
+            fontWeight: "normal",
+          },
         },
       });
 
@@ -87,9 +87,12 @@ const SquarePayment = ({
 
             if (result.status === "OK") {
               // Build payload using orderNumber when available; otherwise fallback to a temp orderId
-              const amountToCharge = Number(orderData?.orderTotal ?? orderTotal);
+              const amountToCharge = Number(
+                orderData?.orderTotal ?? orderTotal
+              );
               const rawOrderNumber = orderData?.orderNumber;
-              const hasOrderNumber = rawOrderNumber != null && !Number.isNaN(Number(rawOrderNumber));
+              const hasOrderNumber =
+                rawOrderNumber != null && !Number.isNaN(Number(rawOrderNumber));
 
               const paymentData = {
                 sourceId: result.token,
@@ -105,7 +108,9 @@ const SquarePayment = ({
               };
 
               // Dispatch Redux thunk instead of direct service call
-              const resp = await dispatch(createSquarePayment(paymentData)).unwrap();
+              const resp = await dispatch(
+                createSquarePayment(paymentData)
+              ).unwrap();
 
               if (resp?.success) {
                 onPaymentSuccess({
@@ -120,14 +125,18 @@ const SquarePayment = ({
                 throw new Error("Payment failed");
               }
             } else {
-              const msg = result.errors?.map((e) => e.message).join(", ") || "Payment failed";
+              const msg =
+                result.errors?.map((e) => e.message).join(", ") ||
+                "Payment failed";
               onPaymentError(msg);
               throw new Error(msg);
             }
           } catch (error) {
             console.error("Payment error:", error);
             onPaymentError(
-              error.response?.data?.details || error.message || "Payment processing failed"
+              error.response?.data?.details ||
+                error.message ||
+                "Payment processing failed"
             );
             throw error; // propagate to caller so it can soft-cancel
           } finally {
