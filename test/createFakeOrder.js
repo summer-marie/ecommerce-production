@@ -5,7 +5,6 @@ const names = [
   "Supreme",
   "Peperoni Deluxe",
   "Cheese Me",
-  "Build Your Own",
 ];
 
 const ZIP_CODES = ["95338", "85395"];

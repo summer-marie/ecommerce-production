@@ -141,7 +141,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Static file serving for pizza images and other uploads
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    // Allow embedding images from other origins (e.g., Vite dev server at 3005)
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  },
+  express.static(path.join(__dirname, "../uploads"))
+);
 
 // Simple health check endpoint
 app.get("/", (req, res) => {
@@ -199,9 +207,6 @@ app.get("/api/docs", (req, res) => {
     },
   });
 });
-
-// Additional static file serving (backup path for uploads)
-app.use("/uploads", express.static(uploadsDir));
 
 // Global error handling middleware (must be last middleware)
 app.use(errorLogger);
