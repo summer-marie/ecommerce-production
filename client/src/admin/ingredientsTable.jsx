@@ -358,10 +358,10 @@ const IngredientsTable = () => {
                     name
                   </th>
                   <th scope="col" className="px-2 py-4">
-                    description
+                   item description
                   </th>
                   <th scope="col" className="px-2 py-4 text-center">
-                    $ price per serving
+                    $ unit price
                   </th>
                   <th scope="col" className="px-2 py-4 text-center">
                     Update
