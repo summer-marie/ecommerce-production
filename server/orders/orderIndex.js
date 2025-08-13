@@ -7,6 +7,7 @@ import orderGetArchived from "./orderGetArchived.js"
 import orderGetOpen from "./orderGetOpen.js"
 import orderUpdateStatus from "./orderUpdateStatus.js"
 import { orderRateLimit } from "../middleware/advancedSecurity.js"
+import orderMarkPaymentFailed from "./orderMarkPaymentFailed.js"
 
 const orderIndex = express.Router()
 
@@ -30,6 +31,9 @@ orderIndex.put("/open/:id", orderRateLimit, orderUpdateStatus)
 
 // Get one order by id - No rate limit (admin viewing)
 orderIndex.get("/order/:id", orderGetOne)
+
+// Soft-cancel by orderNumber when payment fails - Rate limited
+orderIndex.patch("/by-number/:orderNumber/payment-failed", orderRateLimit, orderMarkPaymentFailed)
 
 export default orderIndex
 

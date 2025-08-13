@@ -99,6 +99,15 @@ export const orderArchiveOne = createAsyncThunk(
   }
 );
 
+// Soft-cancel an order by orderNumber (payment failed)
+export const markOrderPaymentFailed = createAsyncThunk(
+  "order/markPaymentFailed",
+  async ({ orderNumber, reason }) => {
+    const response = await orderService.markPaymentFailedByOrderNumber(orderNumber, reason);
+    return response.data;
+  }
+);
+
 export const orderSlice = createSlice({
   name: "order",
   initialState,
@@ -215,6 +224,25 @@ export const orderSlice = createSlice({
       })
       .addCase(orderArchiveOne.rejected, (state, action) => {
         console.log("orderSlice orderArchiveOne.rejected", action.payload);
+        state.loading = false;
+      })
+
+      // Mark order payment failed
+      .addCase(markOrderPaymentFailed.pending, (state, action) => {
+        console.log("orderSlice markOrderPaymentFailed.pending", action.payload);
+        state.loading = true;
+      })
+      .addCase(markOrderPaymentFailed.fulfilled, (state, action) => {
+        console.log("orderSlice markOrderPaymentFailed.fulfilled", action.payload);
+        state.loading = false;
+        // Optionally update state.orders with returned order
+        const updated = action.payload?.order;
+        if (updated && state.orders?.length) {
+          state.orders = state.orders.map(o => (o.orderNumber === updated.orderNumber ? updated : o));
+        }
+      })
+      .addCase(markOrderPaymentFailed.rejected, (state, action) => {
+        console.log("orderSlice markOrderPaymentFailed.rejected", action.payload);
         state.loading = false;
       });
   },

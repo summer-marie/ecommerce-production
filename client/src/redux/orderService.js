@@ -22,6 +22,14 @@ const orderService = {
     );
   },
 
+  // Soft-cancel an order by orderNumber (payment failed)
+  markPaymentFailedByOrderNumber: async (orderNumber, reason) => {
+    return await axios.patch(
+      `${import.meta.env.VITE_API_SERVER_URL}/orders/by-number/${orderNumber}/payment-failed`,
+      { reason }
+    );
+  },
+
   // Get all orders
   orderGetAll: async () => {
     return await axios.get(`${import.meta.env.VITE_API_SERVER_URL}/orders`);

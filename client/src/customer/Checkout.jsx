@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
 import { clearCart, removeFromCart } from "../redux/cartSlice";
-import { createOrder } from "../redux/orderSlice";
+import { createOrder, markOrderPaymentFailed } from "../redux/orderSlice";
 import AlertSuccess from "../components/AlertSuccess";
 import AlertBlack from "../components/AlertBlack";
 import SquarePayment from "../components/SquarePayment";
@@ -31,7 +31,8 @@ const Checkout = () => {
   const [phone, setPhone] = useState("");
 
   // Payment state
-  const [paymentMethod] = useState("square");
+  const [paymentMethod, setPaymentMethod] = useState(null);
+  const [showCardForm, setShowCardForm] = useState(false);
   const [paymentHandler, setPaymentHandler] = useState(null);
   const [paymentError, setPaymentError] = useState("");
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
@@ -68,55 +69,71 @@ const Checkout = () => {
         quantity: item.quantity || 1,
       })),
       orderTotal: calculateTotal(),
+      // Create as processing; payment will update status to completed via backend
+      status: "processing",
     };
 
-    // Process payment with Square
-    if (paymentHandler && paymentMethod === "square") {
+    // Process payment based on method
+    if (paymentMethod === "square" && paymentHandler) {
       setIsPaymentProcessing(true);
+      let createdOrderNumber;
       try {
-        await paymentHandler(orderData);
+        // 1) Create the order first to get a real orderNumber
+        const created = await dispatch(createOrder(orderData)).unwrap();
+        createdOrderNumber = Number(created?.order?.orderNumber);
+        if (!createdOrderNumber || Number.isNaN(createdOrderNumber)) {
+          throw new Error("Failed to get orderNumber");
+        }
+
+        // 2) Call the Square payment handler with orderNumber
+        await paymentHandler({
+          ...orderData,
+          orderNumber: createdOrderNumber,
+        });
+        // handlePaymentSuccess will finish the UX
       } catch (error) {
-        console.error("Payment failed:", error);
-        setPaymentError("Payment processing failed. Please try again.");
+        console.error("Payment flow failed:", error);
+        // Attempt soft-cancel via Redux thunk
+        if (createdOrderNumber) {
+          try {
+            await dispatch(
+              markOrderPaymentFailed({
+                orderNumber: createdOrderNumber,
+                reason: error?.response?.data?.details || error?.message || "payment_failed",
+              })
+            ).unwrap();
+          } catch (e) {
+            console.warn("Soft-cancel failed:", e?.message);
+          }
+        }
+        setPaymentError(
+          error?.response?.data?.message || error?.message || "Payment processing failed. Please try again."
+        );
         setIsPaymentProcessing(false);
       }
+    } else if (paymentMethod === "cash") {
+      // Process cash payment
+      handleCashPayment(orderData);
     } else {
-      setPaymentError("Payment system not ready. Please refresh and try again.");
+      setPaymentError("Please select a payment method");
     }
   };
 
-  const handlePaymentSuccess = async (paymentResult) => {
-    console.log("Payment successful:", paymentResult);
-    
+  const handleCashPayment = async (orderData) => {
+    setIsPaymentProcessing(true);
     try {
-      // Create order with payment info
-      const orderData = {
-        firstName,
-        lastName,
-        address: {
-          street,
-          city,
-          state: stateVal,
-          zip,
-        },
-        phone,
-        orderDetails: cartItems.map((item) => ({
-          pizzaName: item.pizzaName,
-          pizzaPrice: Number(item.pizzaPrice),
-          quantity: item.quantity || 1,
-        })),
-        orderTotal: calculateTotal(),
+      // Create order with cash payment info
+      const cashOrderData = {
+        ...orderData,
         payment: {
-          status: "completed",
-          method: "square",
-          squarePaymentId: paymentResult.paymentId,
-          receiptNumber: paymentResult.receiptNumber,
+          status: "pending",
+          method: "cash",
           amountPaid: calculateTotal(),
-          paidAt: new Date()
+          paidAt: null // Will be updated when cash is received
         }
       };
 
-      await dispatch(createOrder(orderData)).unwrap();
+      await dispatch(createOrder(cashOrderData)).unwrap();
       
       setShowSuccessAlert(true);
       setTimeout(() => {
@@ -126,8 +143,41 @@ const Checkout = () => {
       }, 1500);
       
     } catch (error) {
-      console.error("Failed to create order:", error);
-      setPaymentError("Payment successful but order creation failed. Please contact support.");
+      console.error("Failed to create cash order:", error);
+      setPaymentError("Failed to create order. Please try again.");
+    } finally {
+      setIsPaymentProcessing(false);
+    }
+  };
+
+  const handlePayWithCard = () => {
+    setPaymentMethod("square");
+    setShowCardForm(true);
+    setPaymentError("");
+  };
+
+  const handlePayWithCash = () => {
+    setPaymentMethod("cash");
+    setShowCardForm(false);
+    setPaymentError("");
+  };
+
+  const handlePaymentSuccess = async (paymentResult) => {
+    console.log("Payment successful:", paymentResult);
+    
+    try {
+      // Order was already created. Backend updated it via orderNumber.
+      // Just clear cart and navigate to success.
+      setShowSuccessAlert(true);
+      setTimeout(() => {
+        setShowSuccessAlert(false);
+        dispatch(clearCart());
+        navigate("/order-success");
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Post-payment flow failed:", error);
+      setPaymentError("Payment completed but there was an app error. Please contact support.");
     } finally {
       setIsPaymentProcessing(false);
     }
@@ -200,14 +250,14 @@ const Checkout = () => {
 
   return (
     <>
-      <form onSubmit={handleSubmit} autoComplete="off" className="mt-10 ">
+      <form onSubmit={handleSubmit} autoComplete="off" className="mt-10 mb-20">
         <div className="min-h-screen mx-auto w-full">
-          <div className="flex flex-col sm:flex-row items-start justify-center mx-auto space-y-6 sm:space-y-0 sm:space-x-6 w-2/3 bg-gray-100">
+          <div className="flex flex-col sm:flex-row items-start justify-center mx-auto space-y-6 sm:space-y-0 sm:space-x-6 w-2/3 bg-gray-100 mb-10 h-full">
             <ul
               role="list"
               className="divide-y w-full border-2 rounded-xl p-5
               divide-gray-200
-              border-red-700 "
+              border-red-700 mb-10 h-full"
             >
               {" "}
               <div className="text-center rounded-t-xl mb-5">
@@ -217,11 +267,11 @@ const Checkout = () => {
               </div>
               <li className="px-2">
                 <div className="flex justify-between space-x-6 w-full">
-                  <div className="space-y-1 w-3/4 relative">
+                  <div className="space-y-1 w-3/4">
                     {cartItems.map((item, idx) => (
                       <div
                         key={item.cartItemId || idx}
-                        className="flex items-center space-x-4 mt-1 relative"
+                        className="flex items-center space-x-4 mt-1"
                       >
                         <button
                           onClick={() => handleItemDelete(item.cartItemId)}
@@ -239,7 +289,7 @@ const Checkout = () => {
                       </div>
                     ))}
 
-                    <div className="bottom-0 absolute w-full">
+                    <div className="w-full mt-6">
                       <hr className="w-full mt-3"></hr>
                       <div className="flex items-center justify-between mt-4">
                         <dt className="text-xl font-medium text-gray-900">
@@ -446,48 +496,130 @@ const Checkout = () => {
               </li>
               
               {/* Payment Error Display */}
-              {paymentError && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                  {paymentError}
+              <li className="px-2 py-4">
+                {paymentError && (
+                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {paymentError}
+                  </div>
+                )}
+
+                {/* Payment Method Selection */}
+                {!paymentMethod && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Choose Payment Method</h3>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <button
+                        type="button"
+                        onClick={handlePayWithCard}
+                        className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-300"
+                      >
+                        Pay with Card
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handlePayWithCash}
+                        className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-700 focus:ring-4 focus:ring-green-300"
+                      >
+                        Pay Cash On-Site
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Square Payment Form - Only show if card payment selected */}
+                {showCardForm && paymentMethod === "square" && (
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium text-gray-900">Card Payment</h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPaymentMethod(null);
+                          setShowCardForm(false);
+                          setPaymentError("");
+                        }}
+                        className="text-black hover:text-gray-700 cursor-pointer border-gray-700 border-2 rounded-lg px-3 py-1 hover:bg-white bg-green-400"
+                      >
+                        Change Payment Method
+                      </button>
+                    </div>
+                    <SquarePayment
+                      orderTotal={calculateTotal()}
+                      onPaymentSuccess={handlePaymentSuccess}
+                      onPaymentError={handlePaymentError}
+                      onPaymentReady={handlePaymentReady}
+                    />
+                  </div>
+                )}
+
+                {/* Cash Payment Confirmation */}
+                {paymentMethod === "cash" && !showCardForm && (
+                  <div className="mb-6">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-medium text-green-800">Cash Payment Selected</h3>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPaymentMethod(null);
+                            setPaymentError("");
+                          }}
+                          className="text-green-600 hover:text-green-800"
+                        >
+                          Change Payment Method
+                        </button>
+                      </div>
+                      <p className="text-green-700">
+                        You will pay <strong>${calculateTotal()}</strong> in cash when you pick up your order.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-center mt-5">
+                  <button
+                    onClick={() => setShowAlert(true)}
+                    type="button"
+                    className="bg-gradient-to-r hover:bg-gradient-to-br focus:ring-4 focus:outline-none shadow-lg shadow-red-500/50  font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 cursor-pointer
+                    text-white 
+                    from-red-400 
+                    via-red-500 
+                    to-red-600  
+                    focus:ring-red-800 "
+                  >
+                    Cancel Order
+                  </button>
+
+                  {/* Dynamic submit button based on payment method */}
+                  {paymentMethod === "cash" && (
+                    <button
+                      type="submit"
+                      disabled={isPaymentProcessing}
+                      className={`focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 shadow-lg cursor-pointer 
+                      ${isPaymentProcessing 
+                        ? 'bg-gray-400 shadow-gray-400 text-gray-600 cursor-not-allowed' 
+                        : 'shadow-green-600 text-white bg-green-600 hover:bg-green-700 focus:ring-green-800'
+                      }`}
+                    >
+                      {isPaymentProcessing ? 'Processing...' : 'Complete Order'}
+                    </button>
+                  )}
+
+                  {paymentMethod === "square" && showCardForm && (
+                    <button
+                      type="submit"
+                      disabled={isPaymentProcessing || !paymentHandler}
+                      className={`focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 shadow-lg cursor-pointer 
+                      ${isPaymentProcessing || !paymentHandler 
+                        ? 'bg-gray-400 shadow-gray-400 text-gray-600 cursor-not-allowed' 
+                        : 'shadow-blue-600 text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-800'
+                      }`}
+                    >
+                      {isPaymentProcessing ? 'Processing...' : 'Submit Order'}
+                    </button>
+                  )}
                 </div>
-              )}
-
-              {/* Square Payment Form */}
-              <div className="mb-6">
-                <SquarePayment
-                  orderTotal={calculateTotal()}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  onPaymentError={handlePaymentError}
-                  onPaymentReady={handlePaymentReady}
-                />
-              </div>
-
-              <div className="flex justify-center mt-5">
-                <button
-                  onClick={() => setShowAlert(true)}
-                  type="button"
-                  className="bg-gradient-to-r hover:bg-gradient-to-br focus:ring-4 focus:outline-none shadow-lg shadow-red-500/50  font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 cursor-pointer
-                  text-white 
-                  from-red-400 
-                  via-red-500 
-                  to-red-600  
-                  focus:ring-red-800 "
-                >
-                  Cancel Order
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isPaymentProcessing || !paymentHandler}
-                  className={`focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 shadow-lg cursor-pointer 
-                  ${isPaymentProcessing || !paymentHandler 
-                    ? 'bg-gray-400 shadow-gray-400 text-gray-600 cursor-not-allowed' 
-                    : 'shadow-green-600 text-white bg-green-600 hover:bg-green-700 focus:ring-green-800'
-                  }`}
-                >
-                  {isPaymentProcessing ? 'Processing...' : 'Complete Order'}
-                </button>
-              </div>
+              </li>
             </ul>
           </div>
         </div>
