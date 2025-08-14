@@ -12,16 +12,12 @@ const authService = {
   },
 
   status: async () => {
-    // Get token from localStorage (no JSON.parse needed for strings)
-    const token = localStorage.getItem("token");
+    // Get and parse token from localStorage
+    const token = JSON.parse(localStorage.getItem("token"));
     console.log("NEW authService status token", token);
-    
-    if (!token) {
-      throw new Error("No token found");
-    }
-    
     const response = await axios.get(
       `${import.meta.env.VITE_API_SERVER_URL}/auth/status`,
+      {},
       {
         withCredentials: true,
         headers: {
@@ -40,7 +36,7 @@ const authService = {
 
       // Make logout request
       const response = await axios.post(
-        `${import.meta.env.VITE_API_SERVER_URL}/auth/logout`,
+        `${import.meta.env.VITE_API_SERVER_URL}/auth/logout/`,
         {},
         {
           headers: {

@@ -9,8 +9,6 @@ import {
 import AlertBlack from "../components/AlertBlack";
 import SpinnerBubbles from "../components/SpinnerBubbles";
 
-// TODO : Might not need ingredients table. might just have admin create price themselves. will still need ingredients just maybe not  the price implimentation
-
 // Add new ingredient modal
 const IngredientModal = ({ isOpen, onClose, setShowModal }) => {
   const initialFormState = {
@@ -358,10 +356,10 @@ const IngredientsTable = () => {
                     name
                   </th>
                   <th scope="col" className="px-2 py-4">
-                   item description
+                    description
                   </th>
                   <th scope="col" className="px-2 py-4 text-center">
-                    $ unit price
+                    $ price per serving
                   </th>
                   <th scope="col" className="px-2 py-4 text-center">
                     Update

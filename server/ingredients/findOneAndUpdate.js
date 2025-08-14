@@ -1,5 +1,4 @@
 import ingredientsModel from "./ingredientsModel.js";
-import { invalidateCache } from "../middleware/performance.js";
 
 const findOneAndUpdate = async (req, res) => {
   try {
@@ -18,23 +17,9 @@ const findOneAndUpdate = async (req, res) => {
     if (!updateIngredient) {
       return res.status(404).json({ error: "Ingredient not found." });
     }
-
-    // Ensure id is returned as string for client matching
-    const updatedObj = updateIngredient.toObject();
-    const updatedResponse = {
-      id: updatedObj._id?.toString?.() || updatedObj._id,
-      name: updatedObj.name,
-      description: updatedObj.description,
-      itemType: updatedObj.itemType,
-      price: updatedObj.price,
-    };
-
-    // Invalidate any cached ingredient lists
-    await invalidateCache('api:/ingredients*');
-
     res
       .status(200)
-      .json({ success: true, ingredient: updatedResponse });
+      .json({ success: true, ingredient: updateIngredient?.toJSON() });
   } catch (error) {
     console.error(error);
     res
