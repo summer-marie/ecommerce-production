@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import AlertSuccess2 from "../components/AlertSuccess2";
 import { builderCreate } from "../redux/builderSlice";
 import { ingredientGetAll } from "../redux/ingredientSlice";
-import { uploadImage } from "../utils/firebaseStorage";
+import { convertImageToBase64, compressImage } from "../utils/imageUtils";
 
 const successMsg = "Pizza was created successfully!!";
 const successDescription = "navigating you to the admin menu....";
@@ -84,12 +84,25 @@ const AdminBuilderCreate = () => {
         })
         .filter(Boolean);
 
-      // Upload image to Firebase Storage if selected
+      // Convert image to Base64 if selected
       let imageData = null;
       if (selectedFile) {
-        console.log("Uploading image to Firebase Storage...");
-        imageData = await uploadImage(selectedFile, 'pizzas');
-        console.log("Image uploaded:", imageData);
+        console.log("Converting image to Base64...");
+        try {
+          // Optionally compress the image first
+          const compressedFile = await compressImage(selectedFile, 0.8, 800);
+          imageData = await convertImageToBase64(compressedFile);
+          console.log("Image converted to Base64:", {
+            filename: imageData.filename,
+            size: `${(imageData.size / 1024).toFixed(2)} KB`,
+            type: imageData.mimetype
+          });
+        } catch (error) {
+          console.error("Error converting image:", error);
+          alert("Error processing image: " + error.message);
+          setShowSuccessAlert(false);
+          return;
+        }
       }
 
       // Create pizza data object

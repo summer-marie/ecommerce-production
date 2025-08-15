@@ -80,8 +80,8 @@ const AdminMenu = () => {
                       <img
                         className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
                         src={
-                          builder.image && builder.image.url
-                            ? builder.image.url
+                          builder.image && builder.image.data
+                            ? builder.image.data
                             : new URL(
                                 "../assets/basePizza.jpg",
                                 import.meta.url

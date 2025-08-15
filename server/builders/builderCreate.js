@@ -40,7 +40,14 @@ const builderCreate = async (req, res) => {
       image: image || null, // Firebase Storage image data
     });
 
-    console.log("New pizza created with Firebase image:", newPizza);
+    console.log("New pizza created with Base64 image:", {
+      ...newPizza.toObject(),
+      image: newPizza.image ? { 
+        filename: newPizza.image.filename, 
+        mimetype: newPizza.image.mimetype,
+        dataSize: newPizza.image.data ? `${(newPizza.image.data.length / 1024).toFixed(2)} KB` : '0 KB'
+      } : null
+    });
 
     // Invalidate builders cache so new pizza appears immediately
     await invalidateCache('api:/builders');

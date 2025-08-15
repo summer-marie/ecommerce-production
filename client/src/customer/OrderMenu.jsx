@@ -61,10 +61,8 @@ const Order = () => {
                   <LazyImage
                     className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
                     src={
-                      builder.image && builder.image.filename
-                        ? `${import.meta.env.VITE_API_SERVER_URL}/uploads/${
-                            builder.image.filename
-                          }`
+                      builder.image && builder.image.data
+                        ? builder.image.data
                         : fallbackImage
                     }
                     fallbackSrc={fallbackImage}

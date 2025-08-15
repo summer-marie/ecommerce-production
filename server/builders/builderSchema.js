@@ -45,9 +45,9 @@ const builderSchema = new Schema({
     },
   ],
   image: {
-    url: String,        // Firebase Storage download URL
-    path: String,       // Firebase Storage path for deletion
-    filename: String,   // Original filename
+    data: String,        // Base64 encoded image data
+    filename: String,    // Original filename for reference
+    mimetype: String,    // Image MIME type (image/jpeg, image/png, etc.)
   },
 });
 

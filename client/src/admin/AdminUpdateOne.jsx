@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import AlertSuccess2 from "../components/AlertSuccess2";
 import { pizzaGetOne, builderUpdateOne } from "../redux/builderSlice";
 import { ingredientGetAll } from "../redux/ingredientSlice";
-import { uploadImage, deleteImage } from "../utils/firebaseStorage";
+import { convertImageToBase64, compressImage } from "../utils/imageUtils";
 
 const successMsg = "Pizza was updated successfully";
 const successDescription = "Navigating you back to the admin menu....";
@@ -98,20 +98,25 @@ const AdminUpdateOne = () => {
         .map((name) => veggieOptions.find((opt) => opt.name === name))
         .filter(Boolean);
 
-      // Upload new image to Firebase Storage if selected
+      // Convert new image to Base64 if selected
       let imageData = pizzaForm.image; // Keep existing image by default
       
       if (selectedFile) {
-        console.log("Uploading new image to Firebase Storage...");
-        
-        // Delete old image if it exists
-        if (pizzaForm.image?.path) {
-          await deleteImage(pizzaForm.image.path);
+        console.log("Converting new image to Base64...");
+        try {
+          // Optionally compress the image first
+          const compressedFile = await compressImage(selectedFile, 0.8, 800);
+          imageData = await convertImageToBase64(compressedFile);
+          console.log("New image converted:", {
+            filename: imageData.filename,
+            size: `${(imageData.size / 1024).toFixed(2)} KB`,
+            type: imageData.mimetype
+          });
+        } catch (error) {
+          console.error("Error converting image:", error);
+          alert("Error processing image: " + error.message);
+          return;
         }
-        
-        // Upload new image
-        imageData = await uploadImage(selectedFile, 'pizzas');
-        console.log("New image uploaded:", imageData);
       }
 
       // Construct payload with full objects
@@ -260,10 +265,10 @@ const AdminUpdateOne = () => {
                             Add picture of desired pizza
                           </div>
                         </div>
-                        {pizzaForm?.image?.url && (
+                        {pizzaForm?.image?.data && (
                           <div className="flex-shrink-0 w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
                             <img
-                              src={pizzaForm.image.url}
+                              src={pizzaForm.image.data}
                               alt="Current Pizza"
                               className="w-full h-full object-cover"
                             />
