@@ -33,10 +33,9 @@ paymentIndex.post(
 // Get payment status
 paymentIndex.get("/square/payments/:paymentId", getPaymentStatus);
 
-// Webhook endpoint (raw body needed for signature verification)
+// Webhook endpoint (raw body already handled in main app)
 paymentIndex.post(
   "/square/webhook",
-  express.raw({ type: "application/json" }),
   handleSquareWebhook
 );
 
