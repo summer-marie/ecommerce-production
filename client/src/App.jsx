@@ -10,6 +10,7 @@ import "./App.css";
 import CustomerLayout from "./customer/CustomerLayout";
 import AdminLayout from "./admin/AdminLayout";
 import PerformanceMonitor from "./components/PerformanceMonitor";
+import TestingALert from "./TestingALert";
 
 // Lazy load components for better code splitting
 const About = lazy(() => import("./customer/About"));
@@ -65,6 +66,8 @@ function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
+        <Route path="/testing" element={<TestingALert />} />
+
         {/* Public/customer routes */}
         <Route element={<CustomerLayout />}>
           <Route path="/" element={
