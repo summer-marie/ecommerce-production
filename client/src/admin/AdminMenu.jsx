@@ -66,99 +66,124 @@ const AdminMenu = () => {
         <div className="mb-10 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4 mb-10 pb-12">
             {/* Cards */}
-            {builders.length === 0 ? (
+            {Array.isArray(builders) && builders.length === 0 ? (
               <p>No pizzas found.</p>
             ) : (
-              builders.map((builder, index) => (
-                // Card
-                <div
-                  key={builder.id || index}
-                  className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-zinc-300 border border-gray-200 shadow-green-600 relative"
-                >
-                  <div className="relative">
-                    <div className="relative w-full aspect-[4/3]">
-                      <img
-                        className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
-                        src={
-                          builder.image && builder.image.data
-                            ? builder.image.data
-                            : new URL(
+              (Array.isArray(builders) ? builders : []).map(
+                (builder, index) => {
+                  // Defensive normalizations to avoid rendering raw objects
+                  const safeBase = Array.isArray(builder?.base)
+                    ? builder.base
+                        .map((b) => (typeof b === "string" ? b : b?.name))
+                        .filter(Boolean)
+                        .join(", ")
+                    : "";
+                  const safeSauce = builder?.sauce
+                    ? typeof builder.sauce === "string"
+                      ? builder.sauce
+                      : builder.sauce.name || ""
+                    : "";
+                  const safeMeats = Array.isArray(builder?.meatTopping)
+                    ? builder.meatTopping
+                        .map((m) => (typeof m === "string" ? m : m?.name))
+                        .filter(Boolean)
+                        .join(", ")
+                    : "";
+                  const safeVeggies = Array.isArray(builder?.veggieTopping)
+                    ? builder.veggieTopping
+                        .map((v) => (typeof v === "string" ? v : v?.name))
+                        .filter(Boolean)
+                        .join(", ")
+                    : "";
+                  const imageSrc =
+                    builder?.image && typeof builder.image.data === "string"
+                      ? builder.image.data
+                      : new URL("../assets/basePizza.jpg", import.meta.url)
+                          .href;
+                  return (
+                    // Card
+                    <div
+                      key={builder?.id || index}
+                      className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-zinc-300 border border-gray-200 shadow-green-600 relative"
+                    >
+                      <div className="relative">
+                        <div className="relative w-full aspect-[4/3]">
+                          <img
+                            className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
+                            src={imageSrc}
+                            alt={builder?.pizzaName || "Pizza"}
+                            onError={(e) => {
+                              e.currentTarget.src = new URL(
                                 "../assets/basePizza.jpg",
                                 import.meta.url
-                              ).href
-                        }
-                        alt={builder.pizzaName || "Pizza"}
-                      />
-                    </div>
-                    <button
-                      onClick={() => handleClick(builder.id)}
-                      type="button"
-                      className="absolute mt-2 top-0 right-0 font-medium rounded-lg shadow-lg  text-sm px-5 py-2.5 text-center me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t  focus:ring-4 focus:outline-none cursor-pointer
+                              ).href;
+                            }}
+                          />
+                        </div>
+                        <button
+                          onClick={() => builder?.id && handleClick(builder.id)}
+                          type="button"
+                          className="absolute mt-2 top-0 right-0 font-medium rounded-lg shadow-lg  text-sm px-5 py-2.5 text-center me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t  focus:ring-4 focus:outline-none cursor-pointer
                 shadow-green-800/80 
                 text-white 
                 from-green-950
                 via-green-500 
                 to-green-600
                 focus:ring-green-800"
-                    >
-                      Update Pizza
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(builder.id)}
-                      type="button"
-                      className="absolute z-10 mt-2 top-0 left-2 font-medium rounded-lg shadow-lg  text-sm px-5 py-2.5 text-center me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t  focus:ring-4 focus:outline-none cursor-pointer
+                        >
+                          Update Pizza
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(builder.id)}
+                          type="button"
+                          className="absolute z-10 mt-2 top-0 left-2 font-medium rounded-lg shadow-lg  text-sm px-5 py-2.5 text-center me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t  focus:ring-4 focus:outline-none cursor-pointer
                 shadow-red-800/80 
                 text-white 
                 from-black
                 via-red-500 
                 to-red-600
                 focus:ring-red-800"
-                    >
-                      Delete Pizza
-                    </button>
-                  </div>
-                  <div className="p-3">
-                    <p className="text-gray-900">
-                      <strong>Name: {builder.pizzaName}</strong>
-                    </p>
+                        >
+                          Delete Pizza
+                        </button>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-gray-900">
+                          <strong>
+                            Name: {builder?.pizzaName || "Unnamed"}
+                          </strong>
+                        </p>
 
-                    <div className="space-y-1">
-                      <div>
-                        <strong>Pizza Base:</strong>
-                        <span className="ml-2">
-                          {builder.base &&
-                            builder.base.map((b) => b.name).join(", ")}
-                        </span>
-                      </div>
-                      <div>
-                        <strong>Sauce:</strong>
-                        <span className="ml-2">
-                          {builder.sauce &&
-                            (builder.sauce.name || builder.sauce)}
-                        </span>
-                      </div>
-                      <div>
-                        <strong>Meats:</strong>
-                        <span className="ml-2">
-                          {builder.meatTopping &&
-                            builder.meatTopping.map((m) => m.name).join(", ")}
-                        </span>
-                      </div>
-                      <div>
-                        <strong>Veggies:</strong>
-                        <span className="ml-2">
-                          {builder.veggieTopping &&
-                            builder.veggieTopping.map((v) => v.name).join(", ")}
-                        </span>
+                        <div className="space-y-1">
+                          <div>
+                            <strong>Pizza Base:</strong>
+                            <span className="ml-2">{safeBase || "-"}</span>
+                          </div>
+                          <div>
+                            <strong>Sauce:</strong>
+                            <span className="ml-2">{safeSauce || "-"}</span>
+                          </div>
+                          <div>
+                            <strong>Meats:</strong>
+                            <span className="ml-2">{safeMeats || "-"}</span>
+                          </div>
+                          <div>
+                            <strong>Veggies:</strong>
+                            <span className="ml-2">{safeVeggies || "-"}</span>
+                          </div>
+                        </div>
+
+                        <h2 className="font-bold text-lg text-gray-900 mt-2">
+                          Price ${" "}
+                          {builder?.pizzaPrice
+                            ? Number(builder.pizzaPrice).toFixed(2)
+                            : "0.00"}
+                        </h2>
                       </div>
                     </div>
-
-                    <h2 className="font-bold text-lg text-gray-900 mt-2">
-                      Price $ {Number(builder.pizzaPrice).toFixed(2)}
-                    </h2>
-                  </div>
-                </div>
-              ))
+                  );
+                }
+              )
             )}
             {/* End of card */}
           </div>
