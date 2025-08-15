@@ -49,7 +49,14 @@ const pizzaUpdateOne = async (req, res) => {
         .json({ success: false, message: "Pizza not found" });
     }
 
-    console.log("Pizza updated with Firebase image:", updatedPizza);
+    console.log("Pizza updated with Base64 image:", {
+      ...updatedPizza.toObject(),
+      image: updatedPizza.image ? { 
+        filename: updatedPizza.image.filename, 
+        mimetype: updatedPizza.image.mimetype,
+        dataSize: updatedPizza.image.data ? `${(updatedPizza.image.data.length / 1024).toFixed(2)} KB` : '0 KB'
+      } : null
+    });
     // Invalidate builders cache for fresh data
     await invalidateCache('api:/builders');
     
