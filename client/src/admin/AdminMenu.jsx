@@ -30,6 +30,10 @@ const AdminMenu = () => {
   const handleConfirm = async () => {
     setShowAlert(false);
     const id = deleteIdRef.current;
+    if (!id) {
+      console.error("No pizza id set for deletion");
+      return;
+    }
     dispatch(builderDeleteOneAlt(id));
     deleteIdRef.current = null;
     console.log("Pizza deleted with ID:", id);
@@ -96,7 +100,6 @@ const AdminMenu = () => {
                       Update Pizza
                     </button>
                     <button
-                      key={builder.id}
                       onClick={() => handleDeleteClick(builder.id)}
                       type="button"
                       className="absolute z-10 mt-2 top-0 left-2 font-medium rounded-lg shadow-lg  text-sm px-5 py-2.5 text-center me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t  focus:ring-4 focus:outline-none cursor-pointer
