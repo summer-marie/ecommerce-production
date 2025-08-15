@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import AlertSuccess2 from "../components/AlertSuccess2";
 import { pizzaGetOne, builderUpdateOne } from "../redux/builderSlice";
 import { ingredientGetAll } from "../redux/ingredientSlice";
-import { convertImageToBase64, compressImage } from "../utils/imageUtils";
 
 const successMsg = "Pizza was updated successfully";
 const successDescription = "Navigating you back to the admin menu....";
@@ -16,7 +15,6 @@ const AdminUpdateOne = () => {
   const builder = useSelector((state) => state.builder?.builder);
   const ingredients = useSelector((state) => state.ingredient.ingredients);
   const [pizzaForm, setPizzaForm] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
   const { id } = useParams();
   console.log("USE PARAMS", id);
 
@@ -78,8 +76,22 @@ const AdminUpdateOne = () => {
     setPizzaForm({ ...pizzaForm, pizzaPrice: formatted });
   };
 
+  // const handleFileChange = (e) => {
+  //   setSelectedFile(e.target.files[0]);
+  // };
+
   const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPizzaForm({
+          ...pizzaForm,
+          image: { data: reader.result, name: file.name, type: file.type },
+        });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -98,32 +110,15 @@ const AdminUpdateOne = () => {
         .map((name) => veggieOptions.find((opt) => opt.name === name))
         .filter(Boolean);
 
-      // Convert new image to Base64 if selected
-      let imageData = pizzaForm.image; // Keep existing image by default
-      
-      if (selectedFile) {
-        console.log("Converting new image to Base64...");
-        try {
-          // Optionally compress the image first
-          const compressedFile = await compressImage(selectedFile, 0.8, 800);
-          imageData = await convertImageToBase64(compressedFile);
-          console.log("New image converted:", {
-            filename: imageData.filename,
-            size: `${(imageData.size / 1024).toFixed(2)} KB`,
-            type: imageData.mimetype
-          });
-        } catch (error) {
-          console.error("Error converting image:", error);
-          alert("Error processing image: " + error.message);
-          return;
-        }
-      }
+      // Use the image from pizzaForm (already converted by handleFileChange)
+      const imageData = pizzaForm.image;
 
       // Construct payload with full objects
       const payload = {
         ...pizzaForm,
         id,
-        sauce: sauceObj || {},
+        // Use null instead of {} to avoid rendering empty object placeholder in UI
+        sauce: sauceObj || null,
         meatTopping,
         veggieTopping,
         image: imageData,
@@ -143,6 +138,22 @@ const AdminUpdateOne = () => {
   console.log("pizzaForm:", pizzaForm);
 
   if (!pizzaForm) return <div>Loading...</div>;
+
+  // Defensive helpers for rendering to avoid raw objects
+  const safeArrayNames = (arr) =>
+    Array.isArray(arr)
+      ? arr
+          .map((item) =>
+            typeof item === "string"
+              ? item
+              : item && typeof item === "object"
+              ? item.name
+              : null
+          )
+          .filter(Boolean)
+      : [];
+  const safeBaseNames = safeArrayNames(pizzaForm.base);
+  // (Optional) Additional safe arrays can be derived similarly if needed
 
   return (
     <>
@@ -265,15 +276,16 @@ const AdminUpdateOne = () => {
                             Add picture of desired pizza
                           </div>
                         </div>
-                        {pizzaForm?.image?.data && (
-                          <div className="flex-shrink-0 w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
-                            <img
-                              src={pizzaForm.image.data}
-                              alt="Current Pizza"
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
+                        {pizzaForm?.image?.data &&
+                          typeof pizzaForm.image.data === "string" && (
+                            <div className="flex-shrink-0 w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
+                              <img
+                                src={pizzaForm.image.data}
+                                alt="Current Pizza"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
                       </div>
                     </div>
 
@@ -301,13 +313,7 @@ const AdminUpdateOne = () => {
                         required
                       >
                         {/* checks crust info */}
-                        {pizzaForm &&
-                        pizzaForm.base &&
-                        Array.isArray(pizzaForm.base) &&
-                        pizzaForm.base[0] &&
-                        pizzaForm.base[0].name
-                          ? pizzaForm.base[0].name
-                          : "No crust info"}
+                        {safeBaseNames[0] || "No crust info"}
                       </div>
                       <div
                         type="text"
@@ -322,13 +328,7 @@ const AdminUpdateOne = () => {
                         required
                       >
                         {/* checks cheese info */}
-                        {pizzaForm &&
-                        pizzaForm.base &&
-                        Array.isArray(pizzaForm.base) &&
-                        pizzaForm.base[1] &&
-                        pizzaForm.base[1].name
-                          ? pizzaForm.base[1].name
-                          : "No cheese info"}
+                        {safeBaseNames[1] || "No cheese info"}
                       </div>
                     </div>
 
