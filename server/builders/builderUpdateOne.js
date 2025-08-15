@@ -1,5 +1,6 @@
 import builderModel from "./builderModel.js";
 import multer from "multer";
+import { invalidateCache } from "../middleware/performance.js";
 
 // Configure multer for file uploads
 const upload = multer({ dest: "uploads/" });
@@ -69,7 +70,9 @@ const pizzaUpdateOne = async (req, res) => {
         .json({ success: false, message: "Pizza not found" });
     }
 
-    console.log("Pizza updated with manual price:", updatedPizza);
+  console.log("Pizza updated with manual price:", updatedPizza);
+  // Invalidate builders cache for fresh data
+  await invalidateCache('api:/builders');
     res.status(200).json({
       success: true,
       message: "Pizza updated successfully",

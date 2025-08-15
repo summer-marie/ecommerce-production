@@ -81,6 +81,14 @@ export const builderSlice = createSlice({
       .addCase(builderCreate.fulfilled, (state, action) => {
         console.log("builderSlice builderCreate.fulfilled", action.payload);
         state.loading = false;
+        // Optimistically add new pizza to list if returned shape matches
+        if (action.payload?.pizza) {
+          // Normalize id field
+            const newPizza = action.payload.pizza;
+            if (!state.builders.find(p => p.id === newPizza.id || p._id === newPizza._id)) {
+              state.builders.push(newPizza);
+            }
+        }
       })
       .addCase(builderCreate.rejected, (state, action) => {
         console.log("builderSlice builderCreate.rejected", action.payload);
@@ -137,11 +145,9 @@ export const builderSlice = createSlice({
         );
         state.loading = false;
         state.builder = action.payload.builder;
-        // state.builders = state.builders.map((builder) =>
-        //   builder.id === action.payload.builder.id
-        //     ? action.payload.builder
-        //     : builder
-        // )
+        state.builders = state.builders.map((b) =>
+          b.id === action.payload.builder.id ? action.payload.builder : b
+        );
       })
       .addCase(builderUpdateOne.rejected, (state, action) => {
         console.log("builderSlice builderUpdateOne.rejected", action.payload);

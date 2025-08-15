@@ -103,7 +103,14 @@ export const ingredientSlice = createSlice({
           action.payload
         );
         state.loading = false;
-        state.ingredients = action.payload.ingredients;
+        if (Array.isArray(action.payload?.ingredients)) {
+          state.ingredients = action.payload.ingredients;
+        } else if (Array.isArray(action.payload)) {
+          // Fallback in case API returned raw array (corrupted earlier code)
+          state.ingredients = action.payload;
+        } else {
+          state.ingredients = [];
+        }
       })
       .addCase(ingredientGetAll.rejected, (state, action) => {
         console.log(

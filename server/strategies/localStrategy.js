@@ -29,23 +29,32 @@ export default passport.use(
 
     // search users in db
     try {
+      console.log('[Auth] Attempting login for email:', username);
+      
       const user = await userModel.findOne({ email: username });
 
       if (!user) {
         // no user found - err
+        console.log('[Auth] No user found for email:', username);
         return done(new Error("Invalid credentials"), null);
       }
 
+      console.log('[Auth] User found, verifying password');
+      
       // Comparing hashed values of PWs
       const isPasswordCorrect = await argon2.verify(user.password, password);
 
       if (!isPasswordCorrect) {
         // user found but password doesn't match - throw err
+        console.log('[Auth] Password incorrect for user:', username);
         return done(new Error("Invalid credentials"), null);
       }
+      
+      console.log('[Auth] Login successful for user:', username);
       // if both cases are false - call done function
       done(null, user);
     } catch (err) {
+      console.error('[Auth] Login error:', err);
       done(err, null);
     }
   })
