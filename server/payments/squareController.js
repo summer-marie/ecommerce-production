@@ -160,22 +160,37 @@ export const createSquarePayment = async (req, res) => {
     const { sourceId, amount, orderId, orderNumber, customerDetails } =
       req.body;
 
+    // Debug: log sanitized incoming request
+    if (process.env.NODE_ENV !== 'production') {
+      const safeLog = {
+        hasSourceId: !!sourceId,
+        sourceIdPrefix: typeof sourceId === 'string' ? sourceId.slice(0, 6) : null,
+        amountType: typeof amount,
+        amountValue: amount,
+        orderId,
+        orderNumber,
+      };
+      console.log('[Square] Incoming create payment request', safeLog);
+    }
+
     // Prefer orderNumber; fall back to orderId for backward compatibility
     const orderRef = orderNumber ?? orderId;
 
     // Validate required fields
-    if (!sourceId || !amount || orderRef == null) {
+    if (!sourceId || amount == null || orderRef == null) {
       return res.status(400).json({
         error: "Missing required fields: sourceId, amount, orderNumber",
+        received: { hasSourceId: !!sourceId, amount, orderRef }
       });
     }
 
-    if (typeof amount !== 'number') {
-      // Frontend sends a number; if it's a string attempt conversion
-      const parsed = Number(amount);
+    let normalizedAmount = amount;
+    if (typeof normalizedAmount !== 'number') {
+      const parsed = Number(normalizedAmount);
       if (Number.isNaN(parsed)) {
-        return res.status(400).json({ error: 'Amount must be a number' });
+        return res.status(400).json({ error: 'Amount must be a number', receivedType: typeof amount, receivedValue: amount });
       }
+      normalizedAmount = parsed;
     }
 
     if (!process.env.SQUARE_LOCATION_ID) {
@@ -187,7 +202,7 @@ export const createSquarePayment = async (req, res) => {
     }
 
     // Convert dollars to cents (Square requires cents)
-    const amountInCents = Math.round(amount * 100);
+  const amountInCents = Math.round(normalizedAmount * 100);
 
     // Minimum amount validation (50 cents)
     if (amountInCents < 50) {
@@ -204,7 +219,8 @@ export const createSquarePayment = async (req, res) => {
 
     const paymentRequest = {
       sourceId,
-      amountMoney: { amount: amountInCents, currency: "USD" },
+  // Square SDK version in use expects bigint for amountMoney.amount
+  amountMoney: { amount: BigInt(amountInCents), currency: "USD" },
       locationId: process.env.SQUARE_LOCATION_ID,
       referenceId,
       note: `Pizza Order #${referenceId}${
