@@ -107,6 +107,10 @@ const SquarePayment = ({
                 },
               };
 
+              if (import.meta.env.DEV) {
+                console.log('[Square] Dispatching createSquarePayment', paymentData);
+              }
+
               // Dispatch Redux thunk instead of direct service call
               const resp = await dispatch(
                 createSquarePayment(paymentData)
@@ -135,6 +139,7 @@ const SquarePayment = ({
             console.error("Payment error:", error);
             onPaymentError(
               error.response?.data?.details ||
+                error.response?.data?.error ||
                 error.message ||
                 "Payment processing failed"
             );

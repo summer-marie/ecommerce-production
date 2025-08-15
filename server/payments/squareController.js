@@ -32,12 +32,14 @@ function toJsonSafe(value) {
 }
 
 // Initialize Square client
-console.log("Square module keys:", Object.keys(Square));
-console.log("Resolved ClientCtor type:", typeof ClientCtor);
-console.log(
-  "Resolved EnvironmentEnum keys:",
-  EnvironmentEnum ? Object.keys(EnvironmentEnum) : "undefined"
-);
+if (process.env.NODE_ENV !== 'production') {
+  console.log("Square module keys:", Object.keys(Square));
+  console.log("Resolved ClientCtor type:", typeof ClientCtor);
+  console.log(
+    "Resolved EnvironmentEnum keys:",
+    EnvironmentEnum ? Object.keys(EnvironmentEnum) : "undefined"
+  );
+}
 if (!ClientCtor) {
   throw new Error(
     "Square SDK: Could not resolve Client constructor (looked for Client/SquareClient)."
@@ -52,45 +54,49 @@ const squareClient = new ClientCtor({
 });
 
 // Debug: Check if Square client is properly initialized
-console.log("Square client initialized:", !!squareClient);
-console.log("Square client keys:", Object.keys(squareClient));
-if (squareClient.paymentsApi) {
-  console.log(
-    "paymentsApi methods:",
-    Object.getOwnPropertyNames(squareClient.paymentsApi)
-  );
-} else {
-  console.log("paymentsApi not found, checking alternatives...");
-  if (squareClient.payments) {
-    console.log("Found payments property:", typeof squareClient.payments);
+if (process.env.NODE_ENV !== 'production') {
+  console.log("Square client initialized:", !!squareClient);
+  console.log("Square client keys:", Object.keys(squareClient));
+  if (squareClient.paymentsApi) {
+    console.log(
+      "paymentsApi methods:",
+      Object.getOwnPropertyNames(squareClient.paymentsApi)
+    );
+  } else {
+    console.log("paymentsApi not found, checking alternatives...");
+    if (squareClient.payments) {
+      console.log("Found payments property:", typeof squareClient.payments);
+    }
   }
+  console.log("Environment:", process.env.SQUARE_ENVIRONMENT);
+  console.log("Access Token exists:", !!process.env.SQUARE_ACCESS_TOKEN);
 }
-console.log("Environment:", process.env.SQUARE_ENVIRONMENT);
-console.log("Access Token exists:", !!process.env.SQUARE_ACCESS_TOKEN);
 
 // Extra introspection for payments API shape
-try {
-  const p = squareClient.payments;
-  console.log("payments typeof:", typeof p);
-  if (p) {
-    console.log("payments own keys:", Object.getOwnPropertyNames(p));
-    const proto = Object.getPrototypeOf(p);
-    if (proto)
-      console.log("payments proto keys:", Object.getOwnPropertyNames(proto));
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    const p = squareClient.payments;
+    console.log("payments typeof:", typeof p);
+    if (p) {
+      console.log("payments own keys:", Object.getOwnPropertyNames(p));
+      const proto = Object.getPrototypeOf(p);
+      if (proto)
+        console.log("payments proto keys:", Object.getOwnPropertyNames(proto));
+    }
+    const pa = squareClient.paymentsApi;
+    console.log("paymentsApi typeof:", typeof pa);
+    if (pa) {
+      console.log("paymentsApi own keys:", Object.getOwnPropertyNames(pa));
+      const protoA = Object.getPrototypeOf(pa);
+      if (protoA)
+        console.log(
+          "paymentsApi proto keys:",
+          Object.getOwnPropertyNames(protoA)
+        );
+    }
+  } catch (e) {
+    console.log("payments introspection error:", e?.message);
   }
-  const pa = squareClient.paymentsApi;
-  console.log("paymentsApi typeof:", typeof pa);
-  if (pa) {
-    console.log("paymentsApi own keys:", Object.getOwnPropertyNames(pa));
-    const protoA = Object.getPrototypeOf(pa);
-    if (protoA)
-      console.log(
-        "paymentsApi proto keys:",
-        Object.getOwnPropertyNames(protoA)
-      );
-  }
-} catch (e) {
-  console.log("payments introspection error:", e?.message);
 }
 
 function resolvePaymentsApi(client) {
@@ -164,6 +170,22 @@ export const createSquarePayment = async (req, res) => {
       });
     }
 
+    if (typeof amount !== 'number') {
+      // Frontend sends a number; if it's a string attempt conversion
+      const parsed = Number(amount);
+      if (Number.isNaN(parsed)) {
+        return res.status(400).json({ error: 'Amount must be a number' });
+      }
+    }
+
+    if (!process.env.SQUARE_LOCATION_ID) {
+      return res.status(500).json({ error: 'Square location not configured' });
+    }
+
+    if (!process.env.SQUARE_ACCESS_TOKEN) {
+      return res.status(500).json({ error: 'Square access token not configured' });
+    }
+
     // Convert dollars to cents (Square requires cents)
     const amountInCents = Math.round(amount * 100);
 
@@ -182,7 +204,7 @@ export const createSquarePayment = async (req, res) => {
 
     const paymentRequest = {
       sourceId,
-      amountMoney: { amount: BigInt(amountInCents), currency: "USD" },
+      amountMoney: { amount: amountInCents, currency: "USD" },
       locationId: process.env.SQUARE_LOCATION_ID,
       referenceId,
       note: `Pizza Order #${referenceId}${
@@ -194,10 +216,14 @@ export const createSquarePayment = async (req, res) => {
         crypto.randomUUID?.() ?? crypto.randomBytes(16).toString("hex"),
     };
 
-    console.log("Creating Square payment:", {
-      orderRef: referenceId,
-      amount: amountInCents,
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("[Square] Creating payment", {
+        orderRef: referenceId,
+        amountInCents,
+        location: process.env.SQUARE_LOCATION_ID,
+        hasToken: !!process.env.SQUARE_ACCESS_TOKEN,
+      });
+    }
 
     const paymentsApi = resolvePaymentsApi(squareClient);
     if (!paymentsApi) {
@@ -216,10 +242,29 @@ export const createSquarePayment = async (req, res) => {
     }
 
     // Call with the request object directly (SDK validates and serializes BigInt)
-    const resp = await createFn(paymentRequest);
+    let resp;
+    try {
+      resp = await createFn(paymentRequest);
+    } catch (sdkErr) {
+      console.error('[Square] SDK createPayment error raw:', sdkErr); 
+      if (sdkErr?.errors) {
+        return res.status(400).json({
+          error: 'Payment failed',
+          details: sdkErr.errors[0]?.detail || sdkErr.errors[0]?.code,
+          category: sdkErr.errors[0]?.category,
+        });
+      }
+      return res.status(400).json({ error: 'Payment failed', details: sdkErr.message });
+    }
     const result = resp.result ?? resp;
 
-    console.log("Square payment successful:", result.payment?.id);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("[Square] Payment success", {
+        paymentId: result.payment?.id,
+        status: result.payment?.status,
+        receipt: result.payment?.receiptNumber,
+      });
+    }
 
     // Try to update order, but don't fail payment response if not found
     let orderUpdate = { updated: false };
@@ -257,7 +302,7 @@ export const createSquarePayment = async (req, res) => {
       orderUpdate,
     });
   } catch (error) {
-    console.error("Square payment failed:", error);
+  console.error("[Square] Payment controller failure:", error);
 
     // Handle Square-specific errors
     if (error.errors) {

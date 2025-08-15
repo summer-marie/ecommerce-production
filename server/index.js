@@ -113,8 +113,15 @@ app.use(securityHeaders); // Extra security headers for older browsers
 app.use(generalRateLimit); // Global rate limit: 100 requests per 15 minutes
 // Note: requestLogger removed to avoid duplicate logging with securityLogger
 
-// Input sanitization and protection against common attacks
+// Webhook raw body (must be BEFORE express.json so signature can be verified)
+app.use(
+  "/payments/square/webhook",
+  express.raw({ type: "application/json" })
+);
+
+// Input sanitization and protection against common attacks (after raw webhook)
 app.use(express.json({ limit: "10mb" })); // JSON parser with size limit for image uploads
+
 app.use(mongoSanitizer); // Prevent MongoDB injection attacks (e.g., $gt, $ne)
 app.use(xssProtection); // Sanitize HTML input to prevent XSS attacks
 app.use(hppProtection); // Prevent HTTP Parameter Pollution attacks

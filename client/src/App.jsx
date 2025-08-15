@@ -25,7 +25,7 @@ const AdminMenu = lazy(() => import("./admin/AdminMenu"));
 const AdminLogin = lazy(() => import("./admin/AdminLogin"));
 const AdminUpdateOne = lazy(() => import("./admin/AdminUpdateOne"));
 const AdminInbox = lazy(() => import("./admin/AdminInbox"));
-const IngredientsTable = lazy(() => import("./admin/IngredientsTable"));
+const IngredientsTable = lazy(() => import("./admin/IngredientsTable.jsx"));
 const AdminBuilderCreate = lazy(() => import("./admin/AdminBuilderCreate"));
 
 // Error boundary and fallback components

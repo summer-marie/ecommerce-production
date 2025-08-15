@@ -246,19 +246,22 @@ const IngredientsTable = () => {
     setSavingId(editing.id);
     setLoading(true);
     try {
+      // Ensure price is properly converted to number
+      const updateData = {
+        ...editing,
+        price: editing.price === "" ? 0 : parseFloat(editing.price) || 0
+      };
+      
       // Update the ingredient
-      await dispatch(ingredientUpdateOne(editing)).unwrap();
+      await dispatch(ingredientUpdateOne(updateData)).unwrap();
       // Clear editing state
       setEditing({});
       // Fetch fresh, sorted data from server
       await dispatch(ingredientGetAll()).unwrap();
-
-      setTimeout(() => {
-        setSavingId(null);
-        setLoading(false);
-      }, 2000);
     } catch (error) {
       console.error("Update failed:", error);
+    } finally {
+      setSavingId(null);
       setLoading(false);
     }
   };
