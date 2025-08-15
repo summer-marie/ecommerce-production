@@ -1,5 +1,6 @@
 import builderModel from "./builderModel.js";
 import fs from "fs";
+import { invalidateCache } from "../middleware/performance.js";
 
 // Note: Ingredients retain their unit prices but are no longer used to compute pizzaPrice on create.
 
@@ -61,7 +62,7 @@ const builderCreate = async (req, res) => {
       });
     }
 
-    const newPizza = await builderModel.create({
+  const newPizza = await builderModel.create({
       pizzaName,
       pizzaPrice, // Use admin-entered price
       base,
@@ -82,6 +83,9 @@ const builderCreate = async (req, res) => {
     console.log("File received:", req.file);
 
     console.log("New pizza created with manual price:", newPizza);
+
+  // Invalidate builders cache so new pizza appears immediately
+  await invalidateCache('api:/builders');
 
     res.status(200).json({
       success: true,

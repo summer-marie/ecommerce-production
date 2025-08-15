@@ -14,9 +14,9 @@ const ingredientService = {
     );
   },
 
-  ingredientGetOne: async (ingredient) => {
+  ingredientGetOne: async (id) => {
     return await axios.get(
-      `${import.meta.env.VITE_NODE_SERVER_URL}/ingredient/${ingredient.id}`
+      `${import.meta.env.VITE_API_SERVER_URL}/ingredients/${id}`
     );
   },
 

@@ -220,19 +220,51 @@ app.use(errorLogger);
 
 // Database connection and server startup
 try {
-  const mongoURL = process.env.MONGODB_URL || "";
-  // Connect to MongoDB
-  await mongoose.connect(mongoURL);
-  logInfo(`Pizza app connected to database`, {
-    host: mongoURL.split("@")[1] || "localhost",
+  // Use Atlas URL for production, local for development
+  const mongoURL = process.env.NODE_ENV === 'production' 
+    ? process.env.MONGODB_ATLAS_URL 
+    : process.env.MONGODB_URL || process.env.MONGODB_ATLAS_URL;
+    
+  if (!mongoURL) {
+    throw new Error('No MongoDB connection string found in environment variables');
+  }
+  
+  console.log(`🔌 Connecting to MongoDB (${process.env.NODE_ENV === 'production' ? 'Atlas Cloud' : 'Local/Atlas'})...`);
+  
+  // Connect to MongoDB with better error handling
+  await mongoose.connect(mongoURL, {
+    // These options help with connection stability
+    maxPoolSize: 10, // Maintain up to 10 socket connections
+    serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  });
+  
+  logInfo(`✅ Pizza app connected to database`, {
+    host: mongoURL.includes('mongodb+srv') ? 'MongoDB Atlas Cloud' : 'Local MongoDB',
+    environment: process.env.NODE_ENV || 'development'
   });
 
+  // Lightweight verification of key collections (non-blocking)
+  try {
+    const collectionsToCheck = ['ingredients', 'builders'];
+    for (const name of collectionsToCheck) {
+      if (mongoose.connection.collections[name]) {
+        const count = await mongoose.connection.collections[name].countDocuments();
+        logInfo('Collection count', { collection: name, count });
+      }
+    }
+  } catch (verifyErr) {
+    logWarn('Collection count check failed', { error: verifyErr.message });
+  }
+
   app.listen(port, () => {
-    logInfo(`Pizza app server started`, {
+    logInfo(`🚀 Pizza app server started`, {
       port,
-      environment: process.env.NODE_ENV,
+      environment: process.env.NODE_ENV || 'development',
+      database: mongoURL.includes('mongodb+srv') ? 'Atlas Cloud' : 'Local'
     });
   });
 } catch (err) {
-  logError("Database connection failed", { error: err.message });
+  logError("❌ Database connection failed", { error: err.message });
+  process.exit(1); // Exit process if database connection fails
 }

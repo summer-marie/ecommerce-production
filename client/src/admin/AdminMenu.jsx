@@ -34,7 +34,9 @@ const AdminMenu = () => {
       console.error("No pizza id set for deletion");
       return;
     }
-    dispatch(builderDeleteOneAlt(id));
+    await dispatch(builderDeleteOneAlt(id)).unwrap();
+    // Refresh the builders list after deletion
+    await dispatch(builderGetMany()).unwrap();
     deleteIdRef.current = null;
     console.log("Pizza deleted with ID:", id);
   };
