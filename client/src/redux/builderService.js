@@ -5,15 +5,15 @@ const builderService = {
     return await axios.get(`${import.meta.env.VITE_API_SERVER_URL}/builders`);
   },
 
-  builderCreate: async (formData) => {
+  builderCreate: async (pizzaData) => {
     try {
-      console.log("Sending FormData to server...");
+      console.log("Sending pizza data to server...", pizzaData);
       const response = await axios.post(
         `${import.meta.env.VITE_API_SERVER_URL}/builders`,
-        formData,
+        pizzaData,
         {
           headers: {
-            "Content-Type": "multipart/form-data",
+            "Content-Type": "application/json",
           },
         }
       );
@@ -35,16 +35,16 @@ const builderService = {
     return response.data; // just the data, not the whole Axios response
   },
 
-  builderUpdateOne(formData) {
-    const id = formData.get("id");
+  builderUpdateOne(pizzaData) {
+    const id = pizzaData.id;
     if (!id) {
-      throw new Error("No ID provided in formData");
+      throw new Error("No ID provided in pizza data");
     }
     return axios.put(
       `${import.meta.env.VITE_API_SERVER_URL}/builders/${id}`,
-      formData,
+      pizzaData,
       {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": "application/json" },
       }
     );
   },

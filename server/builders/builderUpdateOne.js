@@ -1,23 +1,12 @@
 import builderModel from "./builderModel.js";
-import multer from "multer";
 import { invalidateCache } from "../middleware/performance.js";
-
-// Configure multer for file uploads
-const upload = multer({ dest: "uploads/" });
-
-// Export your middleware for use in your route
-export const pizzaUpdateOneUpload = upload.single("image");
 
 const pizzaUpdateOne = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Parse fields from FormData
-    const pizzaName = req.body.pizzaName;
-    const sauce = JSON.parse(req.body.sauce);
-    const meatTopping = JSON.parse(req.body.meatTopping);
-    const veggieTopping = JSON.parse(req.body.veggieTopping);
-    const base = JSON.parse(req.body.base);
+    // Extract fields from request body
+    const { pizzaName, sauce, meatTopping, veggieTopping, base, image } = req.body;
 
     // Accept admin-provided price (string or number)
     const rawPrice = req.body.pizzaPrice;
@@ -34,17 +23,6 @@ const pizzaUpdateOne = async (req, res) => {
         .json({ success: false, message: "pizzaPrice must be between 0 and 1000" });
     }
 
-    // Handle image
-    const image = req.file
-      ? {
-          filename: req.file.filename,
-          originalname: req.file.originalname,
-          mimetype: req.file.mimetype,
-          path: req.file.path,
-          size: req.file.size,
-        }
-      : undefined;
-
     const updateFields = {
       pizzaName,
       pizzaPrice, // Use admin-entered price
@@ -54,6 +32,7 @@ const pizzaUpdateOne = async (req, res) => {
       base,
     };
 
+    // Only update image if provided
     if (image) {
       updateFields.image = image;
     }
@@ -70,9 +49,10 @@ const pizzaUpdateOne = async (req, res) => {
         .json({ success: false, message: "Pizza not found" });
     }
 
-  console.log("Pizza updated with manual price:", updatedPizza);
-  // Invalidate builders cache for fresh data
-  await invalidateCache('api:/builders');
+    console.log("Pizza updated with Firebase image:", updatedPizza);
+    // Invalidate builders cache for fresh data
+    await invalidateCache('api:/builders');
+    
     res.status(200).json({
       success: true,
       message: "Pizza updated successfully",

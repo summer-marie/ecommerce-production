@@ -57,6 +57,10 @@ const AdminMenu = () => {
         <h2 className="berkshireSwashFont mt-5 text-center text-2xl font-bold text-slate-800">
           Current Customer Menu
         </h2>
+        <p className="text-center text-lg text-gray-600 pt-2">
+          * Modify the customer menu here. Updates and deletions are immediately
+          applied to the database.
+        </p>
         <hr className="my-6 sm:mx-auto lg:my-8 border-gray-700 " />
         {/* Grid container Responsive */}
         <div className="mb-10 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
@@ -76,10 +80,8 @@ const AdminMenu = () => {
                       <img
                         className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
                         src={
-                          builder.image && builder.image.filename
-                            ? `${import.meta.env.VITE_API_SERVER_URL}/uploads/${
-                                builder.image.filename
-                              }`
+                          builder.image && builder.image.url
+                            ? builder.image.url
                             : new URL(
                                 "../assets/basePizza.jpg",
                                 import.meta.url

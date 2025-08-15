@@ -1,43 +1,11 @@
 import builderModel from "./builderModel.js";
-import fs from "fs";
 import { invalidateCache } from "../middleware/performance.js";
-
-// Note: Ingredients retain their unit prices but are no longer used to compute pizzaPrice on create.
 
 const builderCreate = async (req, res) => {
   try {
-    // Log the request body and file details for debugging
     console.log("Request body:", req.body);
-    console.log(
-      "File details:",
-      req.file
-        ? {
-            filename: req.file.filename,
-            path: req.file.path,
-            exists: fs.existsSync(req.file.path),
-          }
-        : "No file uploaded"
-    );
 
-    const { pizzaName } = req.body;
-
-    // Parse ingredients from request body
-    const base =
-      typeof req.body.base === "string"
-        ? JSON.parse(req.body.base)
-        : req.body.base;
-    const sauce =
-      typeof req.body.sauce === "string"
-        ? JSON.parse(req.body.sauce)
-        : req.body.sauce;
-    const meatTopping =
-      typeof req.body.meatTopping === "string"
-        ? JSON.parse(req.body.meatTopping)
-        : req.body.meatTopping;
-    const veggieTopping =
-      typeof req.body.veggieTopping === "string"
-        ? JSON.parse(req.body.veggieTopping)
-        : req.body.veggieTopping;
+    const { pizzaName, base, sauce, meatTopping, veggieTopping, image } = req.body;
 
     // Validation
     if (!pizzaName || pizzaName === "") {
@@ -62,30 +30,20 @@ const builderCreate = async (req, res) => {
       });
     }
 
-  const newPizza = await builderModel.create({
+    const newPizza = await builderModel.create({
       pizzaName,
       pizzaPrice, // Use admin-entered price
       base,
       sauce,
       meatTopping,
       veggieTopping,
-      image: req.file
-        ? {
-            filename: req.file.filename,
-            originalname: req.file.originalname,
-            mimetype: req.file.mimetype,
-            path: req.file.path,
-            size: req.file.size,
-          }
-        : null,
+      image: image || null, // Firebase Storage image data
     });
 
-    console.log("File received:", req.file);
+    console.log("New pizza created with Firebase image:", newPizza);
 
-    console.log("New pizza created with manual price:", newPizza);
-
-  // Invalidate builders cache so new pizza appears immediately
-  await invalidateCache('api:/builders');
+    // Invalidate builders cache so new pizza appears immediately
+    await invalidateCache('api:/builders');
 
     res.status(200).json({
       success: true,
