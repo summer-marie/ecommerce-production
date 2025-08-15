@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import AlertSuccess2 from "../components/AlertSuccess2";
 import { builderCreate } from "../redux/builderSlice";
 import { ingredientGetAll } from "../redux/ingredientSlice";
+import { uploadImage } from "../utils/firebaseStorage";
 
 const successMsg = "Pizza was created successfully!!";
 const successDescription = "navigating you to the admin menu....";
@@ -52,60 +53,70 @@ const AdminBuilderCreate = () => {
     setNewPizza({ ...newPizza, pizzaPrice: formatted });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setShowSuccessAlert(true);
+    
+    try {
+      setShowSuccessAlert(true);
 
-    // Find the selected sauce object
-    const sauceObj = sauceOptions.find((s) => s.name === newPizza.sauce);
-    if (!sauceObj) {
-      alert("Please select a valid sauce.");
-      return;
+      // Find the selected sauce object
+      const sauceObj = sauceOptions.find((s) => s.name === newPizza.sauce);
+      if (!sauceObj) {
+        alert("Please select a valid sauce.");
+        return;
+      }
+
+      // Build meatTopping array of objects, filter out empty selections
+      const meatToppingObjs = newPizza.meatTopping
+        .filter((m) => m)
+        .map((meat) => {
+          const found = meatOptions.find((opt) => opt.name === meat);
+          return found ? { ...found, amount: 1 } : null;
+        })
+        .filter(Boolean);
+
+      // Build veggieTopping array of objects, filter out empty selections
+      const veggieToppingObjs = newPizza.veggieTopping
+        .filter((v) => v)
+        .map((veggie) => {
+          const found = veggieOptions.find((opt) => opt.name === veggie);
+          return found ? { ...found, amount: 1 } : null;
+        })
+        .filter(Boolean);
+
+      // Upload image to Firebase Storage if selected
+      let imageData = null;
+      if (selectedFile) {
+        console.log("Uploading image to Firebase Storage...");
+        imageData = await uploadImage(selectedFile, 'pizzas');
+        console.log("Image uploaded:", imageData);
+      }
+
+      // Create pizza data object
+      const pizzaData = {
+        pizzaName: newPizza.pizzaName,
+        pizzaPrice: newPizza.pizzaPrice,
+        base: [
+          baseOptions[0] || { name: "No crust found" },
+          baseOptions[1] || { name: "No cheese found" },
+        ],
+        sauce: sauceObj,
+        meatTopping: meatToppingObjs,
+        veggieTopping: veggieToppingObjs,
+        image: imageData,
+      };
+
+      console.log("Sending pizza data:", pizzaData);
+      await dispatch(builderCreate(pizzaData)).unwrap();
+
+      setTimeout(() => {
+        navigate("/admin-menu");
+      }, 2000);
+    } catch (error) {
+      console.error("Error creating pizza:", error);
+      setShowSuccessAlert(false);
+      // You might want to show an error alert here
     }
-
-    // Build meatTopping array of objects, filter out empty selections
-    const meatToppingObjs = newPizza.meatTopping
-      .filter((m) => m)
-      .map((meat) => {
-        const found = meatOptions.find((opt) => opt.name === meat);
-        return found ? { ...found, amount: 1 } : null;
-      })
-      .filter(Boolean);
-
-    // Build veggieTopping array of objects, filter out empty selections
-    const veggieToppingObjs = newPizza.veggieTopping
-      .filter((v) => v)
-      .map((veggie) => {
-        const found = veggieOptions.find((opt) => opt.name === veggie);
-        return found ? { ...found, amount: 1 } : null;
-      })
-      .filter(Boolean);
-
-    // Use FormData for file upload
-    const formData = new FormData();
-    formData.append("pizzaName", newPizza.pizzaName);
-    formData.append("pizzaPrice", newPizza.pizzaPrice); // manual price
-    formData.append(
-      "base",
-      JSON.stringify([
-        baseOptions[0] || { name: "No crust found" },
-        baseOptions[1] || { name: "No cheese found" },
-      ])
-    );
-    formData.append("sauce", JSON.stringify(sauceObj));
-    formData.append("meatTopping", JSON.stringify(meatToppingObjs));
-    formData.append("veggieTopping", JSON.stringify(veggieToppingObjs));
-
-    // Append the selected file if it exists
-    if (selectedFile) {
-      formData.append("image", selectedFile);
-    }
-
-    dispatch(builderCreate(formData));
-
-    setTimeout(() => {
-      navigate("/admin-menu");
-    }, 2000);
   };
 
   return (

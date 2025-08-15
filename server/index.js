@@ -34,7 +34,6 @@ import express from "express";
 import cors from "cors";
 import session from "express-session";
 import cookieParser from "cookie-parser";
-import multer from "multer";
 import fs from "fs";
 // Database
 import mongoose from "mongoose";
@@ -91,12 +90,6 @@ const port = process.env.PORT || 8010;
 const cookieSecret = process.env.COOKIE_SECRET;
 const sessionSecret = process.env.SESSION_SECRET;
 
-// Create uploads directory in server folder
-const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
 const app = express();
 
 // Core security middleware - apply before any request processing
@@ -146,17 +139,6 @@ const corsOptions = {
 };
 // Apply CORS middleware with security restrictions
 app.use(cors(corsOptions));
-
-// Static file serving for pizza images and other uploads
-app.use(
-  "/uploads",
-  (req, res, next) => {
-    // Allow embedding images from other origins (e.g., Vite dev server at 3005)
-    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-    next();
-  },
-  express.static(path.join(__dirname, "../uploads"))
-);
 
 // Simple health check endpoint
 app.get("/", (req, res) => {

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import AlertSuccess2 from "../components/AlertSuccess2";
 import { pizzaGetOne, builderUpdateOne } from "../redux/builderSlice";
 import { ingredientGetAll } from "../redux/ingredientSlice";
+import { uploadImage, deleteImage } from "../utils/firebaseStorage";
 
 const successMsg = "Pizza was updated successfully";
 const successDescription = "Navigating you back to the admin menu....";
@@ -81,49 +82,57 @@ const AdminUpdateOne = () => {
     setSelectedFile(e.target.files[0]);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Find the full sauce, meat, and veggie objects based on selected names
-    const sauceObj = sauceOptions.find((opt) => opt.name === pizzaForm.sauce);
+    try {
+      // Find the full sauce, meat, and veggie objects based on selected names
+      const sauceObj = sauceOptions.find((opt) => opt.name === pizzaForm.sauce);
 
-    // Use .filter(Boolean) to remove empty/undefined toppings
-    const meatTopping = pizzaForm.meatTopping
-      .map((name) => meatOptions.find((opt) => opt.name === name))
-      .filter(Boolean);
+      // Use .filter(Boolean) to remove empty/undefined toppings
+      const meatTopping = pizzaForm.meatTopping
+        .map((name) => meatOptions.find((opt) => opt.name === name))
+        .filter(Boolean);
 
-    const veggieTopping = pizzaForm.veggieTopping
-      .map((name) => veggieOptions.find((opt) => opt.name === name))
-      .filter(Boolean);
+      const veggieTopping = pizzaForm.veggieTopping
+        .map((name) => veggieOptions.find((opt) => opt.name === name))
+        .filter(Boolean);
 
-    // Construct payload with full objects
-    const payload = {
-      ...pizzaForm,
-      id,
-      sauce: sauceObj || {},
-      meatTopping,
-      veggieTopping,
-    };
+      // Upload new image to Firebase Storage if selected
+      let imageData = pizzaForm.image; // Keep existing image by default
+      
+      if (selectedFile) {
+        console.log("Uploading new image to Firebase Storage...");
+        
+        // Delete old image if it exists
+        if (pizzaForm.image?.path) {
+          await deleteImage(pizzaForm.image.path);
+        }
+        
+        // Upload new image
+        imageData = await uploadImage(selectedFile, 'pizzas');
+        console.log("New image uploaded:", imageData);
+      }
 
-    const formData = new FormData();
-    formData.append("pizzaName", payload.pizzaName);
-    formData.append("pizzaPrice", payload.pizzaPrice);
-    formData.append("sauce", JSON.stringify(payload.sauce));
-    formData.append("meatTopping", JSON.stringify(payload.meatTopping));
-    formData.append("veggieTopping", JSON.stringify(payload.veggieTopping));
-    formData.append("base", JSON.stringify(payload.base));
-    formData.append("id", payload.id);
+      // Construct payload with full objects
+      const payload = {
+        ...pizzaForm,
+        id,
+        sauce: sauceObj || {},
+        meatTopping,
+        veggieTopping,
+        image: imageData,
+      };
 
-    if (selectedFile) {
-      formData.append("image", selectedFile);
-    }
+      console.log("Submitting payload:", payload);
 
-    console.log("Submitting payload:", payload);
-
-    dispatch(builderUpdateOne(formData)).then(() => {
+      await dispatch(builderUpdateOne(payload)).unwrap();
       setShowSuccessAlert(true);
       setTimeout(() => navigate("/admin-menu"), 2000);
-    });
+    } catch (error) {
+      console.error("Error updating pizza:", error);
+      // You might want to show an error alert here
+    }
   };
 
   console.log("pizzaForm:", pizzaForm);
@@ -228,25 +237,38 @@ const AdminUpdateOne = () => {
                     </div>
                     {/* Upload new Photo */}
                     <div id="imgUploader" className="max-w-lg mx-auto mb-5">
-                      <label
-                        className="block mb-2 text-sm font-medium pl-2 text-gray-900 capitalize"
-                        htmlFor="pizza_photo"
-                      >
-                        Upload New photo
-                      </label>
-                      <input
-                        className="block w-full text-lg focus:outline-none p-2 text-gray-800 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 "
-                        aria-describedby="pizza_photo_help"
-                        id="pizza_photo"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                      />
-                      <div
-                        className="mt-1 text-sm text-gray-500"
-                        id="pizza_photo_help"
-                      >
-                        Add picture of desired pizza
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <label
+                            className="block mb-2 text-sm font-medium pl-2 text-gray-900 capitalize"
+                            htmlFor="pizza_photo"
+                          >
+                            Upload New photo
+                          </label>
+                          <input
+                            className="block w-full text-lg focus:outline-none p-2 text-gray-800 border border-gray-300 rounded-lg cursor-pointer bg-gray-50"
+                            aria-describedby="pizza_photo_help"
+                            id="pizza_photo"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                          />
+                          <div
+                            className="mt-1 text-sm text-gray-500"
+                            id="pizza_photo_help"
+                          >
+                            Add picture of desired pizza
+                          </div>
+                        </div>
+                        {pizzaForm?.image?.url && (
+                          <div className="flex-shrink-0 w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
+                            <img
+                              src={pizzaForm.image.url}
+                              alt="Current Pizza"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
 
