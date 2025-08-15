@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import "dotenv/config";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const Square = require("square");
@@ -47,8 +47,8 @@ const squareClient = new ClientCtor({
   token: process.env.SQUARE_ACCESS_TOKEN,
   environment:
     process.env.SQUARE_ENVIRONMENT === "production"
-      ? (EnvironmentEnum?.Production ?? "production")
-      : (EnvironmentEnum?.Sandbox ?? "sandbox"),
+      ? EnvironmentEnum?.Production ?? "production"
+      : EnvironmentEnum?.Sandbox ?? "sandbox",
 });
 
 // Debug: Check if Square client is properly initialized
@@ -75,14 +75,19 @@ try {
   if (p) {
     console.log("payments own keys:", Object.getOwnPropertyNames(p));
     const proto = Object.getPrototypeOf(p);
-    if (proto) console.log("payments proto keys:", Object.getOwnPropertyNames(proto));
+    if (proto)
+      console.log("payments proto keys:", Object.getOwnPropertyNames(proto));
   }
   const pa = squareClient.paymentsApi;
   console.log("paymentsApi typeof:", typeof pa);
   if (pa) {
     console.log("paymentsApi own keys:", Object.getOwnPropertyNames(pa));
     const protoA = Object.getPrototypeOf(pa);
-    if (protoA) console.log("paymentsApi proto keys:", Object.getOwnPropertyNames(protoA));
+    if (protoA)
+      console.log(
+        "paymentsApi proto keys:",
+        Object.getOwnPropertyNames(protoA)
+      );
   }
 } catch (e) {
   console.log("payments introspection error:", e?.message);
@@ -91,7 +96,11 @@ try {
 function resolvePaymentsApi(client) {
   let api = client.paymentsApi ?? client.payments ?? null;
   if (typeof api === "function") {
-    try { api = api(); } catch { /* ignore */ }
+    try {
+      api = api();
+    } catch {
+      /* ignore */
+    }
   }
   return api;
 }
@@ -109,7 +118,11 @@ function selectCreatePaymentFn(paymentsApi) {
 }
 
 function selectGetPaymentFn(paymentsApi) {
-  const candidates = [paymentsApi?.getPayment, paymentsApi?.GetPayment, paymentsApi?.get];
+  const candidates = [
+    paymentsApi?.getPayment,
+    paymentsApi?.GetPayment,
+    paymentsApi?.get,
+  ];
   for (const fn of candidates) {
     if (typeof fn === "function") return fn.bind(paymentsApi);
   }
@@ -117,7 +130,11 @@ function selectGetPaymentFn(paymentsApi) {
 }
 
 function selectListPaymentsFn(paymentsApi) {
-  const candidates = [paymentsApi?.listPayments, paymentsApi?.ListPayments, paymentsApi?.list];
+  const candidates = [
+    paymentsApi?.listPayments,
+    paymentsApi?.ListPayments,
+    paymentsApi?.list,
+  ];
   for (const fn of candidates) {
     if (typeof fn === "function") return fn.bind(paymentsApi);
   }
@@ -134,7 +151,8 @@ function resolveResource(client, names) {
 // Create payment endpoint
 export const createSquarePayment = async (req, res) => {
   try {
-    const { sourceId, amount, orderId, orderNumber, customerDetails } = req.body;
+    const { sourceId, amount, orderId, orderNumber, customerDetails } =
+      req.body;
 
     // Prefer orderNumber; fall back to orderId for backward compatibility
     const orderRef = orderNumber ?? orderId;
@@ -151,12 +169,16 @@ export const createSquarePayment = async (req, res) => {
 
     // Minimum amount validation (50 cents)
     if (amountInCents < 50) {
-      return res.status(400).json({ error: "Payment amount must be at least $0.50" });
+      return res
+        .status(400)
+        .json({ error: "Payment amount must be at least $0.50" });
     }
 
     // Normalize reference for Square (string) and DB (number where applicable)
     const referenceId = String(orderRef);
-    const orderRefNumber = Number.isNaN(Number(orderRef)) ? null : Number(orderRef);
+    const orderRefNumber = Number.isNaN(Number(orderRef))
+      ? null
+      : Number(orderRef);
 
     const paymentRequest = {
       sourceId,
@@ -168,10 +190,14 @@ export const createSquarePayment = async (req, res) => {
           ? ` - ${customerDetails.firstName} ${customerDetails.lastName}`
           : ""
       }`,
-      idempotencyKey: (crypto.randomUUID?.() ?? crypto.randomBytes(16).toString("hex")),
+      idempotencyKey:
+        crypto.randomUUID?.() ?? crypto.randomBytes(16).toString("hex"),
     };
 
-    console.log("Creating Square payment:", { orderRef: referenceId, amount: amountInCents });
+    console.log("Creating Square payment:", {
+      orderRef: referenceId,
+      amount: amountInCents,
+    });
 
     const paymentsApi = resolvePaymentsApi(squareClient);
     if (!paymentsApi) {
@@ -180,8 +206,13 @@ export const createSquarePayment = async (req, res) => {
 
     const createFn = selectCreatePaymentFn(paymentsApi);
     if (!createFn) {
-      console.log("Available payments keys:", Object.getOwnPropertyNames(paymentsApi));
-      throw new Error("Square SDK createPayment method not found on payments API");
+      console.log(
+        "Available payments keys:",
+        Object.getOwnPropertyNames(paymentsApi)
+      );
+      throw new Error(
+        "Square SDK createPayment method not found on payments API"
+      );
     }
 
     // Call with the request object directly (SDK validates and serializes BigInt)
@@ -200,14 +231,16 @@ export const createSquarePayment = async (req, res) => {
           receiptNumber: result.payment.receiptNumber,
           amountPaid: Number(result.payment.amountMoney.amount) / 100,
           processingFee:
-            ((result.payment.processingFee || []).reduce(
+            (result.payment.processingFee || []).reduce(
               (total, fee) => total + Number(fee?.amountMoney?.amount ?? 0),
               0
-            )) / 100,
+            ) / 100,
         });
         orderUpdate = { updated: true };
       } else {
-        console.warn(`Order reference '${referenceId}' is not numeric; skipped DB update.`);
+        console.warn(
+          `Order reference '${referenceId}' is not numeric; skipped DB update.`
+        );
         orderUpdate = { updated: false, reason: "non_numeric_reference" };
       }
     } catch (e) {
@@ -236,7 +269,9 @@ export const createSquarePayment = async (req, res) => {
       });
     }
 
-    res.status(500).json({ error: "Payment processing failed", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Payment processing failed", details: error.message });
   }
 };
 
@@ -245,9 +280,11 @@ export const getPaymentStatus = async (req, res) => {
   try {
     const { paymentId } = req.params;
     const paymentsApi = resolvePaymentsApi(squareClient);
-    if (!paymentsApi) throw new Error("Square SDK payments API not found on client");
+    if (!paymentsApi)
+      throw new Error("Square SDK payments API not found on client");
     const getFn = selectGetPaymentFn(paymentsApi);
-    if (!getFn) throw new Error("Square SDK getPayment method not found on payments API");
+    if (!getFn)
+      throw new Error("Square SDK getPayment method not found on payments API");
 
     let result;
     try {
@@ -313,7 +350,10 @@ export const handleSquareWebhook = async (req, res) => {
             squarePaymentId: payment.id,
             amountPaid: Number(payment.amountMoney?.amount ?? 0) / 100,
           });
-        } else if (payment.status === "FAILED" || payment.status === "CANCELED") {
+        } else if (
+          payment.status === "FAILED" ||
+          payment.status === "CANCELED"
+        ) {
           await updateOrderPaymentStatus(orderRefNumber, {
             status: "failed",
             squarePaymentId: payment.id,
@@ -358,7 +398,10 @@ export const handleSquareWebhook = async (req, res) => {
 export const testSquareConnection = async (req, res) => {
   try {
     // Try payments first
-    const paymentsApi = resolveResource(squareClient, ["payments", "paymentsApi"]);
+    const paymentsApi = resolveResource(squareClient, [
+      "payments",
+      "paymentsApi",
+    ]);
     if (paymentsApi) {
       const listPaymentsFn = selectListPaymentsFn(paymentsApi);
       if (listPaymentsFn) {
@@ -381,11 +424,16 @@ export const testSquareConnection = async (req, res) => {
     }
 
     // Fallback to locations
-    const locationsApi = resolveResource(squareClient, ["locations", "locationsApi"]);
+    const locationsApi = resolveResource(squareClient, [
+      "locations",
+      "locationsApi",
+    ]);
     if (locationsApi) {
       const listLocFn =
-        (typeof locationsApi.listLocations === "function" && locationsApi.listLocations.bind(locationsApi)) ||
-        (typeof locationsApi.ListLocations === "function" && locationsApi.ListLocations.bind(locationsApi));
+        (typeof locationsApi.listLocations === "function" &&
+          locationsApi.listLocations.bind(locationsApi)) ||
+        (typeof locationsApi.ListLocations === "function" &&
+          locationsApi.ListLocations.bind(locationsApi));
 
       if (listLocFn) {
         const resp = await listLocFn();
@@ -395,14 +443,22 @@ export const testSquareConnection = async (req, res) => {
           success: true,
           message: "Square locations API connection successful",
           environment: process.env.SQUARE_ENVIRONMENT,
-          locations: (safe.locations || []).map(l => ({ id: l.id, name: l.name, status: l.status })),
+          locations: (safe.locations || []).map((l) => ({
+            id: l.id,
+            name: l.name,
+            status: l.status,
+          })),
         });
       }
     }
 
-    throw new Error("No suitable Square API method found for test (payments or locations)");
+    throw new Error(
+      "No suitable Square API method found for test (payments or locations)"
+    );
   } catch (error) {
     console.error("Square connection test failed:", error);
-    res.status(500).json({ error: "Square connection failed", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Square connection failed", details: error.message });
   }
 };

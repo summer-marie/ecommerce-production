@@ -24,5 +24,5 @@ const generateFakeUser = () => {
 const user = generateFakeUser();
 console.log("user", user);
 
-const buildUser = await axios.post(`${process.env.SERVER_URL}/admins`, user);
+const buildUser = await axios.post(`${process.env.SERVER_URL}/users`, user);
 console.log("buildUser", buildUser.data);
