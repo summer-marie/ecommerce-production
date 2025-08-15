@@ -1,27 +1,41 @@
-import ingredientsModel from "./ingredientsModel.js"
-
-
+import ingredientsModel from "./ingredientsModel.js";
+import { invalidateCache } from "../middleware/performance.js";
+import { logInfo, logError } from "../middleware/logger.js";
 
 const ingredientsCreate = async (req, res) => {
-  const { name, description, itemType, price } = req.body
+  try {
+    const { name, description, itemType, price } = req.body;
 
-  console.log(name, description, itemType, price)
+    logInfo('Creating new ingredient', { name, itemType });
 
-  // Validate the incoming data using Mongoose's built-in schema validator
-  const newIngredient = await ingredientsModel.create({
-    name,
-    description,
-    itemType,
-    price,
-  })
+    // Validate the incoming data using Mongoose's built-in schema validator
+    const newIngredient = await ingredientsModel.create({
+      name,
+      description,
+      itemType,
+      price,
+    });
 
-  console.log("newIngredient", newIngredient)
+    // Invalidate ingredients cache when new ingredient is created
+    await invalidateCache('api:/ingredients*');
 
-  res.status(201).json({
-    success: true,
-    message: "SERVER newIngredient created.",
-    ingredient: newIngredient,
-  })
-}
+    logInfo('New ingredient created', { id: newIngredient._id, name });
 
-export default ingredientsCreate
+    res.status(201).json({
+      success: true,
+      message: "SERVER newIngredient created.",
+      ingredient: newIngredient,
+    });
+  } catch (error) {
+    logError('Error creating ingredient', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to create ingredient",
+      error: error.message
+    });
+  }
+};
+
+export default ingredientsCreate;
+// This code defines a function to create a new ingredient in the database.
+// It validates the input, creates the ingredient, invalidates the cache, and logs the process

@@ -79,6 +79,9 @@ web_modules/
 .env.production.local
 .env.local
 
+# Database migration scripts with sensitive data
+server/migrate-db.js
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
@@ -129,6 +132,26 @@ dist
 OPTIMIZATION_PHASE_*.md
 optimization-*.md
 *-optimization.md
+
+# Phase documentation files (development only - not for GitHub)
+server/PHASE*.md
+client/PHASE*.md
+test/PHASE*.md
+**/PHASE*_*.md
+
+# Session TODO files and development notes
+TODO-SESSION-*.md
+**/TODO-SESSION-*.md
+session-*.md
+**/session-*.md
+
+# Production planning documents (development working files)
+PRODUCTION_DEPLOYMENT_GUIDE.md
+OPTIMIZATION_PHASES_SUMMARY.md
+
+# Square integration guides (client-specific setup information)
+SQUARE_INTEGRATION_GUIDE.md
+CLIENT_SQUARE_SETUP_GUIDE.md
 
 # yarn v2
 .yarn/cache

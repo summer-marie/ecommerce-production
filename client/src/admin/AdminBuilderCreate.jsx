@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
@@ -15,13 +14,13 @@ const AdminBuilderCreate = () => {
   const ingredients = useSelector((state) => state.ingredient.ingredients);
   const [newPizza, setNewPizza] = useState({
     pizzaName: "",
+    pizzaPrice: "", // manual entry by admin
     sauce: "Signature Red Sauce",
     meatTopping: ["", "", ""], // 3 meat slots
     veggieTopping: ["", "", "", ""], // 4 veggie slots
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
-  const [calculatedPrice, setCalculatedPrice] = useState(0);
 
   const meatOptions = ingredients.filter((i) => i.itemType === "Meat Topping");
   const veggieOptions = ingredients.filter(
@@ -34,70 +33,28 @@ const AdminBuilderCreate = () => {
     dispatch(ingredientGetAll());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (!ingredients.length) return;
-
-    // Find the selected sauce object
-    const sauceObj = sauceOptions.find((s) => s.name === newPizza.sauce);
-
-    // Get base prices
-    const basePrice = baseOptions.reduce(
-      (sum, item) => sum + (item.price || 0),
-      0
-    );
-
-    // Get sauce price
-    const saucePrice = sauceObj?.price || 0;
-
-    // Calculate meat prices
-    const meatPrice = newPizza.meatTopping
-      .filter((name) => name) // Filter empty selections
-      .reduce((sum, name) => {
-        const meat = meatOptions.find((m) => m.name === name);
-        return sum + (meat?.price || 0);
-      }, 0);
-
-    // Calculate veggie prices
-    const veggiePrice = newPizza.veggieTopping
-      .filter((name) => name) // Filter empty selections
-      .reduce((sum, name) => {
-        const veggie = veggieOptions.find((v) => v.name === name);
-        return sum + (veggie?.price || 0);
-      }, 0);
-
-    // Calculate total
-    const total = parseFloat(
-      (basePrice + saucePrice + meatPrice + veggiePrice).toFixed(2)
-    );
-    setCalculatedPrice(total);
-  }, [
-    newPizza,
-    ingredients,
-    baseOptions,
-    sauceOptions,
-    meatOptions,
-    veggieOptions,
-  ]);
-
   const handleFileChange = (e) => {
     if (e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
     }
   };
 
+  const handlePriceChange = (e) => {
+    let input = e.target.value.replace(/\D/g, ""); // keep digits only
+    if (input.length === 0) {
+      setNewPizza({ ...newPizza, pizzaPrice: "" });
+      return;
+    }
+    while (input.length < 3) input = "0" + input; // ensure at least 3 digits
+    const dollars = input.slice(0, -2);
+    const cents = input.slice(-2);
+    const formatted = `${parseInt(dollars, 10)}.${cents}`;
+    setNewPizza({ ...newPizza, pizzaPrice: formatted });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setShowSuccessAlert(true);
-
-    // Debug logging
-    console.log("Form submission data:", {
-      pizzaName: newPizza.pizzaName,
-      base: baseOptions,
-      sauce: sauceOptions.find((s) => s.name === newPizza.sauce),
-      meatTopping: newPizza.meatTopping,
-      veggieTopping: newPizza.veggieTopping,
-      selectedFile,
-    });
 
     // Find the selected sauce object
     const sauceObj = sauceOptions.find((s) => s.name === newPizza.sauce);
@@ -127,7 +84,7 @@ const AdminBuilderCreate = () => {
     // Use FormData for file upload
     const formData = new FormData();
     formData.append("pizzaName", newPizza.pizzaName);
-    // Don't need to append pizzaPrice here, it will be calculated on server
+    formData.append("pizzaPrice", newPizza.pizzaPrice); // manual price
     formData.append(
       "base",
       JSON.stringify([
@@ -141,13 +98,7 @@ const AdminBuilderCreate = () => {
 
     // Append the selected file if it exists
     if (selectedFile) {
-      console.log("Selected file:", selectedFile);
       formData.append("image", selectedFile);
-    }
-
-    // Debug logging for FormData
-    for (let pair of formData.entries()) {
-      console.log(pair[0], pair[1]);
     }
 
     dispatch(builderCreate(formData));
@@ -223,6 +174,34 @@ const AdminBuilderCreate = () => {
                         Add image of desired pizza
                       </div>
                     </div>
+
+                    {/* Manual Price Input */}
+                    <div className="mb-5 w-[95%] mx-auto">
+                      <label
+                        htmlFor="pizzaPrice"
+                        className="block mb-2 text-sm font-medium text-gray-900"
+                      >
+                        Pizza Price $
+                      </label>
+                      <input
+                        value={newPizza.pizzaPrice}
+                        onChange={handlePriceChange}
+                        type="text"
+                        inputMode="decimal"
+                        pattern="[0-9]*(\.[0-9]{0,2})?"
+                        placeholder="00.00"
+                        id="pizzaPrice"
+                        className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light
+                        text-black 
+                        border-slate-500
+                        bg-gray-200 
+                        focus:bg-gray-100 
+                        focus:border-sky-700
+              "
+                        required
+                      />
+                    </div>
+
                     <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
                       Pizza Base
                     </h1>
@@ -236,7 +215,6 @@ const AdminBuilderCreate = () => {
                       </label>
 
                       <div
-                        type="text"
                         id="crust"
                         className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light cursor-not-allowed
                       text-black 
@@ -253,7 +231,6 @@ const AdminBuilderCreate = () => {
                       </div>
 
                       <div
-                        type="text"
                         id="cheese"
                         className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light cursor-not-allowed
                       text-black 
@@ -303,8 +280,8 @@ const AdminBuilderCreate = () => {
                     </div>
                     <h1 className="block text-lg font-medium text-gray-900 text-center"></h1>
                     <p className="tex-md mb-2 p-1 text-center">
-                      *Each topping has base value of quantity 1, if you want
-                      extra just select it twice
+                      Ingredients keep unit prices for reference, but pizza price is
+                      set manually.
                     </p>
                     <hr className="mb-5" />
                     <h1 className="block mb-5 text-lg font-medium text-gray-900 text-left">
@@ -606,20 +583,8 @@ const AdminBuilderCreate = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="mb-5 w-[95%] mx-auto">
-                      <label
-                        htmlFor="pizzaPrice"
-                        className="block mb-2 text-sm font-medium text-gray-900"
-                      >
-                        Pizza Price (Auto-Calculated)
-                      </label>
-                      <div className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light text-black border-slate-500 bg-gray-200">
-                        ${calculatedPrice.toFixed(2)}
-                      </div>
-                    </div>
+
                     <button
-                      // disabled={submitDisabled}
-                      // onClick={handleSubmit}
                       type="submit"
                       className="flex justify-center mx-auto cursor-pointer disabled:cursor-not-allowed font-medium rounded-lg text-sm px-5 py-2.5 text-center  focus:outline-none hover:bg-gradient-to-br bg-gradient-to-r  focus:ring-4 
                       shadow-green-800/80 
