@@ -23,9 +23,21 @@ const IngredientModal = ({ isOpen, onClose, setShowModal }) => {
   // Handle inline input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const capitalizeWords = (str) =>
+      str.replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize first letter of each word
+    const capitalizeFirstLetter = (str) =>
+      str.charAt(0).toUpperCase() + str.slice(1); // Capitalize only the first letter of the sentence
+
     setFormData((prevState) => ({
       ...prevState,
-      [name]: name === "price" ? value.replace(/^0+/, "") : value, // allow empty or numeric string
+      [name]:
+        name === "price"
+          ? value.replace(/^0+/, "")
+          : name === "name"
+          ? capitalizeWords(value) // Apply capitalization to "name"
+          : name === "description"
+          ? capitalizeFirstLetter(value) // Apply first-letter capitalization to "description"
+          : value,
     }));
   };
 
@@ -297,6 +309,51 @@ const IngredientsTable = () => {
     alertMsg
   );
 
+  // State for sorting
+  const [sortConfig, setSortConfig] = useState(null);
+
+  // Sorting function
+  const sortedIngredients = () => {
+    const sortableItems = [...ingredients];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        const isAsc = sortConfig.direction === "ascending";
+        switch (sortConfig.key) {
+          case "itemType":
+            return isAsc
+              ? a.itemType.localeCompare(b.itemType)
+              : b.itemType.localeCompare(a.itemType);
+          case "name":
+            return isAsc
+              ? a.name.localeCompare(b.name)
+              : b.name.localeCompare(a.name);
+          case "description":
+            return isAsc
+              ? a.description.localeCompare(b.description)
+              : b.description.localeCompare(a.description);
+          case "price":
+            return isAsc ? a.price - b.price : b.price - a.price;
+          default:
+            return 0;
+        }
+      });
+    }
+    return sortableItems;
+  };
+
+  // Handle sort request
+  const handleSort = (key) => {
+    let direction = "ascending";
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === "ascending"
+    ) {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
   return (
     <>
       <div className="ml-64 px-4">
@@ -368,15 +425,29 @@ const IngredientsTable = () => {
                 <tr>
                   <th scope="col" className="px-2 py-4">
                     category (A-Z)
+                    <span className="ml-2">
+                      <button onClick={() => handleSort("itemType")}>▲▼</button>
+                    </span>
                   </th>
                   <th scope="col" className="px-2 py-4">
                     name
+                    <span className="ml-2">
+                      <button onClick={() => handleSort("name")}>▲▼</button>
+                    </span>
                   </th>
                   <th scope="col" className="px-2 py-4">
                     description
+                    <span className="ml-2">
+                      <button onClick={() => handleSort("description")}>
+                        ▲▼
+                      </button>
+                    </span>
                   </th>
                   <th scope="col" className="px-2 py-4 text-center">
-                    $ price per serving
+                    $ unit price
+                    <span className="ml-2">
+                      <button onClick={() => handleSort("price")}>▲▼</button>
+                    </span>
                   </th>
                   <th scope="col" className="px-2 py-4 text-center">
                     Update
@@ -387,7 +458,7 @@ const IngredientsTable = () => {
                 </tr>
               </thead>
               <tbody>
-                {ingredients.map((ingredient, index) =>
+                {sortedIngredients().map((ingredient, index) =>
                   savingId === ingredient.id ? (
                     // Show spinner while saving
                     <tr key={ingredient.id || index}>
@@ -487,7 +558,7 @@ const IngredientsTable = () => {
                             }
                           />
                         ) : (
-                          ingredient.price
+                          parseFloat(ingredient.price).toFixed(2) // 0.00
                         )}
                       </td>
 
