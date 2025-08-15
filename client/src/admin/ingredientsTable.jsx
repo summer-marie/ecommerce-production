@@ -185,7 +185,8 @@ const IngredientModal = ({ isOpen, onClose, setShowModal }) => {
 };
 
 const alertMsg = "Are you sure you want to delete?";
-const alertDescription = "Ingredient will permanently removed from data set";
+const alertDescription =
+  "Ingredient will be permanently removed from the data set";
 
 const IngredientsTable = () => {
   const { ingredients } = useSelector((state) => state.ingredient);
@@ -199,6 +200,10 @@ const IngredientsTable = () => {
   const [deleteId, setDeleteId] = useState(null);
   // State to track which ingredient is being saved
   const [savingId, setSavingId] = useState(null);
+  // Alert Position
+  const [alertPosition, setAlertPosition] = useState({ top: 0, left: 0 });
+  // State to track the clicked ingredient
+  const [alertIngredient, setAlertIngredient] = useState(null);
 
   const itemTypesArray = ["Base", "Sauce", "Meat Topping", "Veggie Topping"];
 
@@ -241,7 +246,6 @@ const IngredientsTable = () => {
     setShowModal(false);
   };
 
-
   const handleUpdate = async () => {
     setSavingId(editing.id);
     setLoading(true);
@@ -249,9 +253,9 @@ const IngredientsTable = () => {
       // Ensure price is properly converted to number
       const updateData = {
         ...editing,
-        price: editing.price === "" ? 0 : parseFloat(editing.price) || 0
+        price: editing.price === "" ? 0 : parseFloat(editing.price) || 0,
       };
-      
+
       // Update the ingredient
       await dispatch(ingredientUpdateOne(updateData)).unwrap();
       // Clear editing state
@@ -274,14 +278,24 @@ const IngredientsTable = () => {
   const handleConfirm = async () => {
     setShowAlert(false);
     if (deleteId) {
+      console.log("Deleting ingredient with ID:", deleteId); // Log deleteId
       await dispatch(ingredientDeleteOne(deleteId)).unwrap();
-      // After deletion, refresh the ingredients list
-      await dispatch(ingredientGetAll()).unwrap();
-      // Reset deleteId to null
+      await dispatch(ingredientGetAll()).unwrap(); // Refresh ingredients list
       setDeleteId(null);
+    } else {
+      console.error("No deleteId set");
     }
-    console.log("delete ingredient");
   };
+
+  // Pass the ingredient name dynamically to the alert
+  const dynamicAlertMsg = alertIngredient ? (
+    <>
+      Are you sure you want to delete{" "}
+      <span className="text-red-500 italic p-2">{alertIngredient.name}</span>?
+    </>
+  ) : (
+    alertMsg
+  );
 
   return (
     <>
@@ -500,7 +514,13 @@ const IngredientsTable = () => {
                       </td>
                       <td className="px-2 py-2">
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            const rect = e.target.getBoundingClientRect();
+                            setAlertPosition({
+                              top: rect.top + window.scrollY,
+                              left: rect.left + window.scrollX,
+                            });
+                            setAlertIngredient(ingredient); // Set the clicked ingredient
                             setDeleteId(ingredient.id);
                             setShowAlert(true);
                           }}
@@ -523,9 +543,15 @@ const IngredientsTable = () => {
       </div>
 
       {showAlert && (
-        <div className="absolute top-[40%] left-[40%] z-30 min-w-sm">
+        <div
+          className="absolute z-30 min-w-sm"
+          style={{
+            top: `${alertPosition.top - 50}px`, // Adjusted to center vertically
+            left: `${Math.min(alertPosition.left, window.innerWidth - 800)}px`, // Prevent overflow
+          }}
+        >
           <AlertBlack
-            alertMsg={alertMsg}
+            alertMsg={dynamicAlertMsg}
             alertDescription={alertDescription}
             handleCancel={handleCancel}
             handleConfirm={handleConfirm}
