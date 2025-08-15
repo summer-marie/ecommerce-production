@@ -148,6 +148,7 @@ session-*.md
 # Production planning documents (development working files)
 PRODUCTION_DEPLOYMENT_GUIDE.md
 OPTIMIZATION_PHASES_SUMMARY.md
+FIREBASE_SETUP.md
 
 # Square integration guides (client-specific setup information)
 SQUARE_INTEGRATION_GUIDE.md
