@@ -9,6 +9,46 @@ import { convertImageToBase64, compressImage } from "../utils/imageUtils";
 const successMsg = "Pizza was created successfully!!";
 const successDescription = "navigating you to the admin menu....";
 
+// Reusable dropdown component
+const ToppingDropdown = ({ label, value, onChange, options, type }) => (
+  <div className="mb-5">
+    <label className="block mb-2 text-sm font-medium text-gray-900">
+      {label}
+    </label>
+    <select
+      value={value}
+      onChange={onChange}
+      className={`text-sm rounded-lg block w-full p-2.5 shadow-sm-light border-2 text-white placeholder-gray-400 ${
+        type === "meat"
+          ? "border-red-950 bg-red-800 focus:bg-red-950 focus:ring-red-500 focus:border-red-500"
+          : "border-green-950 bg-green-800 focus:bg-green-950 focus:ring-green-500 focus:border-green-500"
+      }`}
+    >
+      <option value="">- - None - -</option>
+      {options.map((option) => (
+        <option key={option.id} value={option.name}>
+          {option.name}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+// Reusable base ingredient display component
+const BaseIngredientDisplay = ({ value }) => (
+  <div
+    className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light cursor-not-allowed
+    text-black 
+    placeholder-gray-500 
+    border-slate-500
+    bg-gray-400 
+    focus:bg-sky-200 
+    focus:border-sky-700"
+  >
+    {value}
+  </div>
+);
+
 const AdminBuilderCreate = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -17,10 +57,10 @@ const AdminBuilderCreate = () => {
     pizzaName: "",
     pizzaPrice: "", // manual entry by admin
     sauce: "Signature Red Sauce",
-    meatTopping: ["", "", ""], // 3 meat slots
-    veggieTopping: ["", "", "", ""], // 4 veggie slots
+    meatTopping: ["", "", "", "", "", ""], // 6 meat slots
+    veggieTopping: ["", "", "", "", "", ""], // 6 veggie slots
+    image: null, // Added image field
   });
-  const [selectedFile, setSelectedFile] = useState(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   const meatOptions = ingredients.filter((i) => i.itemType === "Meat Topping");
@@ -35,8 +75,20 @@ const AdminBuilderCreate = () => {
   }, [dispatch]);
 
   const handleFileChange = (e) => {
-    if (e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewPizza({
+          ...newPizza,
+          image: {
+            data: reader.result.split(",")[1],
+            name: file.name,
+            type: file.type,
+          },
+        });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -55,7 +107,7 @@ const AdminBuilderCreate = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       setShowSuccessAlert(true);
 
@@ -86,16 +138,16 @@ const AdminBuilderCreate = () => {
 
       // Convert image to Base64 if selected
       let imageData = null;
-      if (selectedFile) {
+      if (newPizza.image) {
         console.log("Converting image to Base64...");
         try {
           // Optionally compress the image first
-          const compressedFile = await compressImage(selectedFile, 0.8, 800);
+          const compressedFile = await compressImage(newPizza.image, 0.8, 800);
           imageData = await convertImageToBase64(compressedFile);
           console.log("Image converted to Base64:", {
             filename: imageData.filename,
             size: `${(imageData.size / 1024).toFixed(2)} KB`,
-            type: imageData.mimetype
+            type: imageData.mimetype,
           });
         } catch (error) {
           console.error("Error converting image:", error);
@@ -145,85 +197,99 @@ const AdminBuilderCreate = () => {
               <div className="border-4 border-green-700 mb-20">
                 <div className="border-4 border-white">
                   <div className="border-4 border-red-700 p-5">
-                    <div className="mb-5">
-                      <label
-                        htmlFor="pizza-name"
-                        className="block mb-2 text-sm font-medium text-gray-900"
-                      >
-                        Create Pizza Name
-                      </label>
-                      <input
-                        value={newPizza.pizzaName}
-                        onChange={(e) =>
-                          setNewPizza({
-                            ...newPizza,
-                            pizzaName: e.target.value,
-                          })
-                        }
-                        type="text"
-                        id="pizza-name"
-                        className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light
-                      text-black 
-                      placeholder-gray-500 
-                      border-slate-500
-                      bg-gray-200 
-                      focus:bg-gray-100 
-                      focus:border-sky-700
-              "
-                        placeholder="Meat Lovers"
-                        required
-                      />
-                    </div>
-
-                    {/* Upload new Photo */}
-                    <div id="imgUploader" className="max-w-lg mx-auto mb-5">
-                      <label
-                        className="block mb-2 text-sm font-medium pl-2 text-gray-900 capitalize"
-                        htmlFor="pizza_photo"
-                      >
-                        Upload photo
-                      </label>
-                      <input
-                        id="pizza_photo"
-                        type="file"
-                        name="image"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="block w-full text-lg focus:outline-none p-2 text-gray-800 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 "
-                      />
-                      <div
-                        className="mt-1 text-sm text-gray-500"
-                        id="pizza_photo_help"
-                      >
-                        Add image of desired pizza
+                    <div className="flex gap-4 mb-5">
+                      {/* Pizza Name Input */}
+                      <div className="w-1/2">
+                        <label
+                          htmlFor="pizza-name"
+                          className="block mb-2 text-sm font-medium text-gray-900"
+                        >
+                          Create Pizza Name
+                        </label>
+                        <input
+                          value={newPizza.pizzaName}
+                          onChange={(e) =>
+                            setNewPizza({
+                              ...newPizza,
+                              pizzaName: e.target.value,
+                            })
+                          }
+                          type="text"
+                          id="pizza-name"
+                          className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light
+                          text-black 
+                          placeholder-gray-500 
+                          border-slate-500
+                          bg-gray-200 
+                          focus:bg-gray-100 
+                          focus:border-sky-700"
+                          placeholder="Meat Lovers"
+                          required
+                        />
+                      </div>
+                      {/* Pizza Price Input */}
+                      <div className="w-1/2">
+                        <label
+                          htmlFor="pizzaPrice"
+                          className="block mb-2 text-sm font-medium text-gray-900"
+                        >
+                          Set Price $
+                        </label>
+                        <input
+                          value={newPizza.pizzaPrice}
+                          onChange={handlePriceChange}
+                          type="text"
+                          inputMode="decimal"
+                          pattern="[0-9]*(\.[0-9]{0,2})?"
+                          placeholder="00.00"
+                          id="pizzaPrice"
+                          className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light
+                          text-black 
+                          placeholder-gray-500 
+                          border-slate-500
+                          bg-gray-200 
+                          focus:bg-gray-100 
+                          focus:border-sky-700"
+                          required
+                        />
                       </div>
                     </div>
 
-                    {/* Manual Price Input */}
-                    <div className="mb-5 w-[95%] mx-auto">
-                      <label
-                        htmlFor="pizzaPrice"
-                        className="block mb-2 text-sm font-medium text-gray-900"
-                      >
-                        Pizza Price $
-                      </label>
-                      <input
-                        value={newPizza.pizzaPrice}
-                        onChange={handlePriceChange}
-                        type="text"
-                        inputMode="decimal"
-                        pattern="[0-9]*(\.[0-9]{0,2})?"
-                        placeholder="00.00"
-                        id="pizzaPrice"
-                        className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light
-                        text-black 
-                        border-slate-500
-                        bg-gray-200 
-                        focus:bg-gray-100 
-                        focus:border-sky-700
-              "
-                        required
-                      />
+                    {/* Upload new Photo */}
+                    <div id="imgUploader" className="max-w-lg ml-10 mb-5">
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <label
+                            className="block mb-2 text-sm font-medium pl-2 text-gray-900 capitalize"
+                            htmlFor="pizza_photo"
+                          >
+                            Upload New photo
+                          </label>
+                          <input
+                            className="block w-full text-lg focus:outline-none p-2 text-gray-800 border border-gray-300 rounded-lg cursor-pointer bg-gray-50"
+                            aria-describedby="pizza_photo_help"
+                            id="pizza_photo"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                          />
+                          <div
+                            className="mt-1 text-sm text-gray-500"
+                            id="pizza_photo_help"
+                          >
+                            Add picture of desired pizza
+                          </div>
+                        </div>
+                        {newPizza?.image?.data && (
+                          <div className="flex-shrink-0 w-30 h-24 border border-gray-300 rounded-lg overflow-hidden">
+                            <img
+                              src={`data:${newPizza.image.type};base64,${newPizza.image.data}`}
+                              alt="Current Pizza"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
@@ -238,37 +304,12 @@ const AdminBuilderCreate = () => {
                         Crust and Cheese
                       </label>
 
-                      <div
-                        id="crust"
-                        className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light cursor-not-allowed
-                      text-black 
-                      placeholder-gray-500 
-                      border-slate-500
-                      bg-gray-400 
-                      focus:bg-sky-200 
-                      focus:border-sky-700
-              "
-                      >
-                        {baseOptions[0]
-                          ? baseOptions[0].name
-                          : "No crust found"}
-                      </div>
-
-                      <div
-                        id="cheese"
-                        className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light cursor-not-allowed
-                      text-black 
-                        placeholder-gray-500 
-                        border-slate-500
-                        bg-gray-400 
-                        focus:bg-sky-200 
-                        focus:border-sky-700
-              "
-                      >
-                        {baseOptions[1]
-                          ? baseOptions[1].name
-                          : "No cheese found"}
-                      </div>
+                      <BaseIngredientDisplay 
+                        value={baseOptions[0] ? baseOptions[0].name : "No crust found"} 
+                      />
+                      <BaseIngredientDisplay 
+                        value={baseOptions[1] ? baseOptions[1].name : "No cheese found"} 
+                      />
                     </div>
 
                     <div className="mb-5">
@@ -303,309 +344,58 @@ const AdminBuilderCreate = () => {
                       </select>
                     </div>
                     <h1 className="block text-lg font-medium text-gray-900 text-center"></h1>
-                    <p className="tex-md mb-2 p-1 text-center">
-                      Ingredients keep unit prices for reference, but pizza price is
-                      set manually.
-                    </p>
-                    <hr className="mb-5" />
-                    <h1 className="block mb-5 text-lg font-medium text-gray-900 text-left">
-                      Meat Options:
+
+                    <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
+                      Meat Options
                     </h1>
+                    <hr className="mb-5" />
 
-                    <div
-                      id="nested-flex-container"
-                      className="nested-flex-meat"
-                    >
-                      <div id="nested-col-1" className="px-2">
-                        <div className="mb-5">
-                          <label
-                            htmlFor="meat-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Select Meat #1
-                          </label>
-                          <select
-                            value={newPizza.meatTopping[0]}
-                            onChange={(e) =>
-                              setNewPizza({
-                                ...newPizza,
-                                meatTopping: [
-                                  e.target.value,
-                                  newPizza.meatTopping[1],
-                                  newPizza.meatTopping[2],
-                                ],
-                              })
-                            }
-                            id="meat-type"
-                            className="text-sm rounded-lg block w-full p-2.5 shadow-sm-light border-2
-                          text-white 
-                          placeholder-gray-400 
-                          border-red-950
-                          bg-red-800 
-                          focus:bg-red-950 
-                          focus:ring-red-500
-                          focus:border-red-500"
-                          >
-                            <option value="">- - None - -</option>
-                            {meatOptions.map((meat) => (
-                              <option key={meat.id} value={meat.name}>
-                                {meat.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div id="nested-col-2" className="px-2">
-                        <div className="mb-5">
-                          <label
-                            htmlFor="meat-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Select Meat #2
-                          </label>
-                          <select
-                            value={newPizza.meatTopping[1]}
-                            onChange={(e) =>
-                              setNewPizza({
-                                ...newPizza,
-                                meatTopping: [
-                                  newPizza.meatTopping[0],
-                                  e.target.value,
-                                  newPizza.meatTopping[2],
-                                ],
-                              })
-                            }
-                            id="meat-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                          text-white 
-                          placeholder-gray-400 
-                          border-red-950
-                          bg-red-800 
-                          focus:bg-red-950 
-                          focus:ring-red-500
-                          focus:border-red-500"
-                          >
-                            <option value="">- - None - -</option>
-                            {meatOptions.map((meat) => (
-                              <option key={meat.id} value={meat.name}>
-                                {meat.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div id="nested-col-3" className="px-2">
-                        <div className="mb-5">
-                          <label
-                            htmlFor="meat-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Select Meat #3
-                          </label>
-                          <select
-                            value={newPizza.meatTopping[2]}
-                            onChange={(e) =>
-                              setNewPizza({
-                                ...newPizza,
-                                meatTopping: [
-                                  newPizza.meatTopping[0],
-                                  newPizza.meatTopping[1],
-                                  e.target.value,
-                                ],
-                              })
-                            }
-                            id="meat-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                          text-white 
-                          placeholder-gray-400 
-                          border-red-950
-                          bg-red-800 
-                          focus:bg-red-950 
-                          focus:ring-red-500
-                          focus:border-red-500 "
-                          >
-                            <option value="">- - None - -</option>
-                            {meatOptions.map((meat) => (
-                              <option key={meat.id} value={meat.name}>
-                                {meat.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-3 gap-4 mb-5">
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <ToppingDropdown
+                          key={`meat-${index}`}
+                          label={`Select Meat #${index + 1}`}
+                          value={newPizza.meatTopping[index]}
+                          onChange={(e) => {
+                            const updatedMeatTopping = [
+                              ...newPizza.meatTopping,
+                            ];
+                            updatedMeatTopping[index] = e.target.value;
+                            setNewPizza({
+                              ...newPizza,
+                              meatTopping: updatedMeatTopping,
+                            });
+                          }}
+                          options={meatOptions}
+                          type="meat"
+                        />
+                      ))}
                     </div>
 
-                    {/* Nested flex with 2 cols */}
-                    <h1 className="block mb-5 text-lg font-medium text-gray-900 text-left">
-                      Veggie Options:
+                    <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
+                      Veggie Options
                     </h1>
-
-                    <div
-                      id="nested-flex-container"
-                      className="nested-flex-veggie"
-                    >
-                      {/* Nested col 1 */}
-                      <div id="nested-col-1" className="px-2">
-                        <div className="mb-5 ">
-                          <label
-                            htmlFor="veggie-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Select Veggies #1
-                          </label>
-                          <select
-                            value={newPizza.veggieTopping[0]}
-                            onChange={(e) =>
-                              setNewPizza({
-                                ...newPizza,
-                                veggieTopping: [
-                                  e.target.value,
-                                  newPizza.veggieTopping[1],
-                                  newPizza.veggieTopping[2],
-                                  newPizza.veggieTopping[3],
-                                ],
-                              })
-                            }
-                            id="veggie-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                          text-white 
-                          placeholder-gray-400 
-                          border-green-800
-                          bg-emerald-500
-                          focus:bg-emerald-800
-                          focus:ring-emerald-100
-                          focus:border-emerald-200 "
-                          >
-                            <option value="">- - None - -</option>
-                            {veggieOptions.map((veggie) => (
-                              <option key={veggie.id} value={veggie.name}>
-                                {veggie.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="mb-5">
-                          <label
-                            htmlFor="veggie-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Select Veggies #2
-                          </label>
-                          <select
-                            value={newPizza.veggieTopping[1]}
-                            onChange={(e) =>
-                              setNewPizza({
-                                ...newPizza,
-                                veggieTopping: [
-                                  newPizza.veggieTopping[0],
-                                  e.target.value,
-                                  newPizza.veggieTopping[2],
-                                  newPizza.veggieTopping[3],
-                                ],
-                              })
-                            }
-                            id="veggie-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                          text-white 
-                          placeholder-gray-400 
-                          border-green-800
-                          bg-emerald-500
-                          focus:bg-emerald-800
-                          focus:ring-emerald-100
-                          focus:border-emerald-200 "
-                          >
-                            <option value="">- - None - -</option>
-                            {veggieOptions.map((veggie) => (
-                              <option key={veggie.id} value={veggie.name}>
-                                {veggie.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      {/* Nested col 2 */}
-                      <div id="nested-col-2" className="px-2">
-                        <div className="mb-5">
-                          <label
-                            htmlFor="veggie-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Select Veggies #3
-                          </label>
-                          <select
-                            value={newPizza.veggieTopping[2]}
-                            onChange={(e) =>
-                              setNewPizza({
-                                ...newPizza,
-                                veggieTopping: [
-                                  newPizza.veggieTopping[0],
-                                  newPizza.veggieTopping[1],
-                                  e.target.value,
-                                  newPizza.veggieTopping[3],
-                                ],
-                              })
-                            }
-                            id="veggie-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                          text-white 
-                          placeholder-gray-400 
-                          border-green-800
-                          bg-emerald-500
-                          focus:bg-emerald-800
-                          focus:ring-emerald-100
-                          focus:border-emerald-200 "
-                          >
-                            <option value="">- - None - -</option>
-                            {veggieOptions.map((veggie) => (
-                              <option key={veggie.id} value={veggie.name}>
-                                {veggie.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="mb-5">
-                          <label
-                            htmlFor="veggie-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Select Veggies #4
-                          </label>
-                          <select
-                            value={newPizza.veggieTopping[3]}
-                            onChange={(e) =>
-                              setNewPizza({
-                                ...newPizza,
-                                veggieTopping: [
-                                  newPizza.veggieTopping[0],
-                                  newPizza.veggieTopping[1],
-                                  newPizza.veggieTopping[2],
-                                  e.target.value,
-                                ],
-                              })
-                            }
-                            id="veggie-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2 
-                            text-white 
-                            placeholder-gray-400 
-                            border-green-800
-                            bg-emerald-500
-                            focus:bg-emerald-800
-                            focus:ring-emerald-100
-                            focus:border-emerald-200 "
-                          >
-                            <option value="">- - None - -</option>
-                            {veggieOptions.map((veggie) => (
-                              <option key={veggie.id} value={veggie.name}>
-                                {veggie.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
+                    <hr className="mb-5" />
+                    <div className="grid grid-cols-3 gap-4 mb-5">
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <ToppingDropdown
+                          key={`veggie-${index}`}
+                          label={`Select Veggie #${index + 1}`}
+                          value={newPizza.veggieTopping[index]}
+                          onChange={(e) => {
+                            const updatedVeggieTopping = [
+                              ...newPizza.veggieTopping,
+                            ];
+                            updatedVeggieTopping[index] = e.target.value;
+                            setNewPizza({
+                              ...newPizza,
+                              veggieTopping: updatedVeggieTopping,
+                            });
+                          }}
+                          options={veggieOptions}
+                          type="veggie"
+                        />
+                      ))}
                     </div>
 
                     <button
@@ -632,7 +422,7 @@ const AdminBuilderCreate = () => {
         <div
           className="fixed bottom-52 left-1/2  
         -translate-x-1/2 ml-30
-        bg-green-400
+        bg-gray-700
         text-white  
         p-2         
         rounded-lg  
