@@ -1,8 +1,8 @@
 const AlertRed = ({ alertMsg, alertDescription, handleClose }) => {
   return (
-    <div className='rounded-lg w-[600px] h-32 bg-red-800/80 text-[#ffffff] mx-auto sticky z-20'>
-      <div className='flex flex-row gap-5 justify-center items-center px-5 w-full h-full'>
-        <div className='my-auto text-lg'>
+    <div className='rounded-lg w-[600px] h-32 bg-gradient-to-r from-red-900 via-red-800 to-red-700 text-[#ffffff] shadow-lg border border-red-500 mx-auto sticky z-20'>
+      <div className='flex flex-row gap-5 items-center px-5 w-full h-full'>
+        <div className='my-auto text-lg flex-shrink-0 ml-4'>
           <svg
             xmlns='http://www.w3.org/2000/svg'
             viewBox='0 0 24 24'
@@ -29,7 +29,7 @@ const AlertRed = ({ alertMsg, alertDescription, handleClose }) => {
           <button
             onClick={handleClose}
             type='button'
-            className='ms-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 focus:ring-red-400 p-1.5 inline-flex items-center justify-center h-8 w-8 bg-gray-800 text-red-800 hover:bg-gray-700'
+            className='ms-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 focus:ring-red-400 p-1.5 inline-flex items-center justify-center h-8 w-8 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-500 text-red-800 hover:from-gray-600 hover:via-gray-500 hover:to-gray-400 cursor-pointer'
             data-dismiss-target='#alert-border-2'
             aria-label='Close'
           >
