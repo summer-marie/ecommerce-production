@@ -1,0 +1,3 @@
+This is a diagnostic test file created at: August 15, 2025
+If this file reappears after deletion, we have a file restoration issue.
+Time created: Current session
