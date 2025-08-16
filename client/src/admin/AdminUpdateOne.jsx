@@ -8,6 +8,50 @@ import { ingredientGetAll } from "../redux/ingredientSlice";
 const successMsg = "Pizza was updated successfully";
 const successDescription = "Navigating you back to the admin menu....";
 
+// Reusable dropdown component
+const ToppingDropdown = ({ label, value, onChange, options, type }) => (
+  <div className="mb-5">
+    <label className="block mb-2 text-sm font-medium text-gray-900">
+      {label}
+    </label>
+    <select
+      value={value || ""}
+      onChange={onChange}
+      className={`text-sm rounded-lg block w-full p-2.5 shadow-sm-light border-2 text-white placeholder-gray-400 ${
+        type === 'meat' 
+          ? 'border-red-950 bg-red-800 focus:bg-red-950 focus:ring-red-500 focus:border-red-500'
+          : 'border-green-800 bg-emerald-500 focus:bg-emerald-800 focus:ring-emerald-100 focus:border-emerald-200'
+      }`}
+    >
+      <option value={value || ""} disabled>
+        {value || "- - None - -"}
+      </option>
+      {options
+        .filter((option) => option.name !== value)
+        .map((option) => (
+          <option key={option.name} value={option.name}>
+            {option.name}
+          </option>
+        ))}
+    </select>
+  </div>
+);
+
+// Reusable base ingredient display component
+const BaseIngredientDisplay = ({ value }) => (
+  <div
+    className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light cursor-not-allowed
+    text-black 
+    placeholder-gray-500 
+    border-slate-500
+    bg-gray-400 
+    focus:bg-sky-200 
+    focus:border-sky-700"
+  >
+    {value}
+  </div>
+);
+
 const AdminUpdateOne = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -49,8 +93,8 @@ const AdminUpdateOne = () => {
           ? builder.sauce.name
           : builder.sauce || "";
 
-      let meatTopping = normalizeArray(builder.meatTopping, 3);
-      let veggieTopping = normalizeArray(builder.veggieTopping, 4);
+      let meatTopping = normalizeArray(builder.meatTopping, 6);
+      let veggieTopping = normalizeArray(builder.veggieTopping, 6);
 
       setPizzaForm({ ...builder, sauce, meatTopping, veggieTopping });
     }
@@ -300,36 +344,12 @@ const AdminUpdateOne = () => {
                       >
                         Crust and Cheese
                       </label>
-                      <div
-                        type="text"
-                        id="crust"
-                        className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light cursor-not-allowed
-                      text-black 
-                        placeholder-gray-500 
-                        border-slate-500
-                        bg-gray-400 
-                        focus:bg-sky-200 focus:border-sky-700
-          "
-                        required
-                      >
-                        {/* checks crust info */}
-                        {safeBaseNames[0] || "No crust info"}
-                      </div>
-                      <div
-                        type="text"
-                        id="cheese"
-                        className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light cursor-not-allowed
-                      text-black 
-                        placeholder-gray-500 
-                        border-slate-500
-                        bg-gray-400 
-                        focus:bg-sky-200 focus:border-sky-700
-          "
-                        required
-                      >
-                        {/* checks cheese info */}
-                        {safeBaseNames[1] || "No cheese info"}
-                      </div>
+                      <BaseIngredientDisplay 
+                        value={safeBaseNames[0] || "No crust info"} 
+                      />
+                      <BaseIngredientDisplay 
+                        value={safeBaseNames[1] || "No cheese info"} 
+                      />
                     </div>
 
                     <div className="mb-5">
@@ -372,370 +392,42 @@ const AdminUpdateOne = () => {
                       Meat Options
                     </h1>
                     <hr className="mb-5" />
-                    <div
-                      id="nested-flex-container"
-                      className="nested-flex-meat"
-                    >
-                      <div id="nested-col-1" className="px-2">
-                        <div className="mb-5">
-                          <label
-                            htmlFor="meat-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Update Meat #1
-                          </label>
-                          <select
-                            value={pizzaForm.meatTopping[0] || ""}
-                            onChange={(e) =>
-                              setPizzaForm({
-                                ...pizzaForm,
-                                meatTopping: [
-                                  e.target.value,
-                                  pizzaForm.meatTopping[1],
-                                  pizzaForm.meatTopping[2],
-                                ],
-                              })
-                            }
-                            id="meat-type"
-                            className="text-sm rounded-lg block w-full p-2.5 shadow-sm-light border-2
-                            text-white 
-                            placeholder-gray-400 
-                            border-red-950
-                            bg-red-800 
-                            focus:bg-red-950 
-                            focus:ring-red-500
-                            focus:border-red-500"
-                          >
-                            <option
-                              value={pizzaForm.meatTopping[0] || ""}
-                              disabled
-                            >
-                              {pizzaForm.meatTopping[0] || "- - None - -"}
-                            </option>
-                            {meatOptions
-                              .filter(
-                                (option) =>
-                                  option.name !== pizzaForm.meatTopping[0]
-                              )
-                              .map((option) => (
-                                <option key={option.name} value={option.name}>
-                                  {option.name}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div id="nested-col-2" className="px-2">
-                        <div className="mb-5">
-                          <label
-                            htmlFor="meat-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Update Meat #2
-                          </label>
-                          <select
-                            value={pizzaForm.meatTopping[1] || ""}
-                            onChange={(e) =>
-                              setPizzaForm({
-                                ...pizzaForm,
-                                meatTopping: [
-                                  pizzaForm.meatTopping[0],
-                                  e.target.value,
-                                  pizzaForm.meatTopping[2],
-                                ],
-                              })
-                            }
-                            id="meat-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                            text-white 
-                            placeholder-gray-400 
-                            border-red-950
-                            bg-red-800 
-                            focus:bg-red-950 
-                            focus:ring-red-500
-                            focus:border-red-500"
-                          >
-                            <option
-                              value={pizzaForm.meatTopping[1] || ""}
-                              disabled
-                            >
-                              {pizzaForm.meatTopping[1] || "- - None - -"}
-                            </option>
-                            {meatOptions
-                              .filter(
-                                (option) =>
-                                  option.name !== pizzaForm.meatTopping[1]
-                              )
-                              .map((option) => (
-                                <option key={option.name} value={option.name}>
-                                  {option.name}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div id="nested-col-3" className="px-2">
-                        <div className="mb-5">
-                          <label
-                            htmlFor="meat-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Update Meat #3
-                          </label>
-                          <select
-                            value={pizzaForm.meatTopping[2] || ""}
-                            onChange={(e) =>
-                              setPizzaForm({
-                                ...pizzaForm,
-                                meatTopping: [
-                                  pizzaForm.meatTopping[0],
-                                  pizzaForm.meatTopping[1],
-                                  e.target.value,
-                                ],
-                              })
-                            }
-                            id="meat-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                                  text-white 
-                                  placeholder-gray-400 
-                                  border-red-950
-                                  bg-red-800 
-                                  focus:bg-red-950 
-                                  focus:ring-red-500
-                                  focus:border-red-500 "
-                          >
-                            <option
-                              value={pizzaForm.meatTopping[2] || ""}
-                              disabled
-                            >
-                              {pizzaForm.meatTopping[2] || "- - None - -"}
-                            </option>
-                            {meatOptions
-                              .filter(
-                                (option) =>
-                                  option.name !== pizzaForm.meatTopping[2]
-                              )
-                              .map((option) => (
-                                <option key={option.name} value={option.name}>
-                                  {option.name}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-3 gap-4 mb-5">
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <ToppingDropdown
+                          key={`meat-${index}`}
+                          label={`Update Meat #${index + 1}`}
+                          value={pizzaForm.meatTopping[index]}
+                          onChange={(e) => {
+                            const updatedMeatTopping = [...pizzaForm.meatTopping];
+                            updatedMeatTopping[index] = e.target.value;
+                            setPizzaForm({ ...pizzaForm, meatTopping: updatedMeatTopping });
+                          }}
+                          options={meatOptions}
+                          type="meat"
+                        />
+                      ))}
                     </div>
 
-                    {/* Nested flex with 2 cols */}
                     <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
                       Veggie Options
                     </h1>
                     <hr className="mb-5" />
-                    <div
-                      id="nested-flex-container"
-                      className="nested-flex-veggie"
-                    >
-                      {/* Nested col 1 */}
-                      <div id="nested-col-1" className="px-2">
-                        <div className="mb-5 ">
-                          <label
-                            htmlFor="veggie-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Update Veggies #1
-                          </label>
-                          <select
-                            value={pizzaForm.veggieTopping[0] || ""}
-                            onChange={(e) =>
-                              setPizzaForm({
-                                ...pizzaForm,
-                                veggieTopping: [
-                                  e.target.value,
-                                  pizzaForm.veggieTopping[1],
-                                  pizzaForm.veggieTopping[2],
-                                  pizzaForm.veggieTopping[3],
-                                ],
-                              })
-                            }
-                            id="veggie-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                            text-white 
-                            placeholder-gray-400 
-                            border-green-800
-                            bg-emerald-500
-                            focus:bg-emerald-800
-                            focus:ring-emerald-100
-                            focus:border-emerald-200 "
-                          >
-                            <option
-                              value={pizzaForm.veggieTopping[0] || ""}
-                              disabled
-                            >
-                              {pizzaForm.veggieTopping[0] || "- - None - -"}
-                            </option>
-                            {veggieOptions
-                              .filter(
-                                (option) =>
-                                  option.name !== pizzaForm.veggieTopping[0]
-                              )
-                              .map((option) => (
-                                <option key={option.name} value={option.name}>
-                                  {option.name}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-
-                        <div className="mb-5">
-                          <label
-                            htmlFor="veggie-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Update Veggies #2
-                          </label>
-                          <select
-                            value={pizzaForm.veggieTopping[1] || ""}
-                            onChange={(e) =>
-                              setPizzaForm({
-                                ...pizzaForm,
-                                veggieTopping: [
-                                  pizzaForm.veggieTopping[0],
-                                  e.target.value,
-                                  pizzaForm.veggieTopping[2],
-                                  pizzaForm.veggieTopping[3],
-                                ],
-                              })
-                            }
-                            id="veggie-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                          text-white 
-                          placeholder-gray-400 
-                          border-green-800
-                          bg-emerald-500
-                          focus:bg-emerald-800
-                          focus:ring-emerald-100
-                          focus:border-emerald-200 "
-                          >
-                            <option
-                              value={pizzaForm.veggieTopping[1] || ""}
-                              disabled
-                            >
-                              {pizzaForm.veggieTopping[1] || "- - None - -"}
-                            </option>
-                            {veggieOptions
-                              .filter(
-                                (option) =>
-                                  option.name !== pizzaForm.veggieTopping[1]
-                              )
-                              .map((option) => (
-                                <option key={option.name} value={option.name}>
-                                  {option.name}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-                      </div>
-                      {/* Nested col 2 */}
-                      <div id="nested-col-2" className="px-2">
-                        <div className="mb-5">
-                          <label
-                            htmlFor="veggie-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Update Veggies #3
-                          </label>
-                          <select
-                            value={pizzaForm.veggieTopping[2] || ""}
-                            onChange={(e) =>
-                              setPizzaForm({
-                                ...pizzaForm,
-                                veggieTopping: [
-                                  pizzaForm.veggieTopping[0],
-                                  pizzaForm.veggieTopping[1],
-                                  e.target.value,
-                                  pizzaForm.veggieTopping[3],
-                                ],
-                              })
-                            }
-                            id="veggie-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                          text-white 
-                          placeholder-gray-400 
-                          border-green-800
-                          bg-emerald-500
-                          focus:bg-emerald-800
-                          focus:ring-emerald-100
-                          focus:border-emerald-200 "
-                          >
-                            <option
-                              value={pizzaForm.veggieTopping[2] || ""}
-                              disabled
-                            >
-                              {pizzaForm.veggieTopping[2] || "- - None - -"}
-                            </option>
-                            {veggieOptions
-                              .filter(
-                                (option) =>
-                                  option.name !== pizzaForm.veggieTopping[2]
-                              )
-                              .map((option) => (
-                                <option key={option.name} value={option.name}>
-                                  {option.name}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-
-                        <div className="mb-5">
-                          <label
-                            htmlFor="veggie-topping"
-                            className="block mb-2 text-sm font-medium text-gray-900"
-                          >
-                            Update Veggies #4
-                          </label>
-                          <select
-                            value={pizzaForm.veggieTopping[3] || ""}
-                            onChange={(e) =>
-                              setPizzaForm({
-                                ...pizzaForm,
-                                veggieTopping: [
-                                  pizzaForm.veggieTopping[0],
-                                  pizzaForm.veggieTopping[1],
-                                  pizzaForm.veggieTopping[2],
-                                  e.target.value,
-                                ],
-                              })
-                            }
-                            id="veggie-type"
-                            className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2 
-                            text-white 
-                            placeholder-gray-400 
-                            border-green-800
-                            bg-emerald-500
-                            focus:bg-emerald-800
-                            focus:ring-emerald-100
-                            focus:border-emerald-200 "
-                          >
-                            <option
-                              value={pizzaForm.veggieTopping[3] || ""}
-                              disabled
-                            >
-                              {pizzaForm.veggieTopping[3] || "- - None - -"}
-                            </option>
-                            {veggieOptions
-                              .filter(
-                                (option) =>
-                                  option.name !== pizzaForm.veggieTopping[3]
-                              )
-                              .map((option) => (
-                                <option key={option.name} value={option.name}>
-                                  {option.name}
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-3 gap-4 mb-5">
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <ToppingDropdown
+                          key={`veggie-${index}`}
+                          label={`Update Veggie #${index + 1}`}
+                          value={pizzaForm.veggieTopping[index]}
+                          onChange={(e) => {
+                            const updatedVeggieTopping = [...pizzaForm.veggieTopping];
+                            updatedVeggieTopping[index] = e.target.value;
+                            setPizzaForm({ ...pizzaForm, veggieTopping: updatedVeggieTopping });
+                          }}
+                          options={veggieOptions}
+                          type="veggie"
+                        />
+                      ))}
                     </div>
                     <button
                       // disabled={submitDisabled}
