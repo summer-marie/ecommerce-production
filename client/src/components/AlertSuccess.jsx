@@ -1,8 +1,8 @@
 const AlertSuccess = ({ successMsg, successDescription }) => {
   return (
-    <div className="rounded-lg w-[300px] h-16 bg-green-900 text-[#ffffff]">
-      <div className="flex flex-row gap-5 justify-center items-center px-5 w-full h-full">
-        <div className="my-auto text-lg">
+    <div className="rounded-lg w-[300px] h-16 bg-gradient-to-r from-green-900 via-green-800 to-green-700 text-[#ffffff] shadow-lg border border-green-500">
+      <div className="flex flex-row gap-5 items-center px-5 w-full h-full">
+        <div className="my-auto text-lg flex-shrink-0 ml-4">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"

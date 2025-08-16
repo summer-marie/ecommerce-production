@@ -7,9 +7,9 @@ const AlertBlack = ({
   handleConfirm,
 }) => {
   return (
-    <div className='rounded-lg w-[600px] h-35  bg-[#000402] text-[#ffffff] sticky z-20'>
-      <div className='flex flex-row gap-2 justify-center items-center px-2 w-full h-full'>
-        <div className='text-lg'>
+    <div className='rounded-lg w-[600px] h-35 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 text-[#ffffff] shadow-lg border border-gray-500 sticky z-20'>
+      <div className='flex flex-row gap-2 items-center px-2 w-full h-full'>
+        <div className='text-lg flex-shrink-0 ml-4'>
           <svg
             xmlns='http://www.w3.org/2000/svg'
             fill='currentColor'
@@ -22,7 +22,7 @@ const AlertBlack = ({
           </svg>
         </div>
 
-        <div>
+        <div className='flex-grow'>
           <div className='font-bold text-lg'>{alertMsg}</div>
           <div className='text-base'>{alertDescription}</div>
         </div>
@@ -31,7 +31,7 @@ const AlertBlack = ({
           <button
             onClick={handleConfirm}
             type='button'
-            className='text-white bg-green-600 hover:bg-green-900 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-xs px-3 py-1.5 me-2 text-center inline-flex items-center'
+            className='text-white bg-gradient-to-r from-green-700 via-green-600 to-green-500 hover:from-green-600 hover:via-green-500 hover:to-green-400 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-xs px-3 py-1.5 me-2 text-center inline-flex items-center cursor-pointer'
           >
             <svg
               className='me-2 h-3 w-3'
@@ -47,7 +47,7 @@ const AlertBlack = ({
           <button
             onClick={handleCancel}
             type='button'
-            className='text-stone-300 bg-transparent border border-stone-800 hover:bg-red-900 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-700 font-medium rounded-lg text-xs px-3 py-1.5 text-center'
+            className='text-stone-300 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-600 border border-stone-800 hover:from-red-700 hover:via-red-600 hover:to-red-500 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-700 font-medium rounded-lg text-xs px-3 py-1.5 text-center cursor-pointer'
           >
             No, Cancel
           </button>
