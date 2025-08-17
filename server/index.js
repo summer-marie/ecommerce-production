@@ -44,6 +44,7 @@ await import("./strategies/localStrategy.js");
 import express from "express";
 import cors from "cors";
 import session from "express-session";
+import MongoStore from "connect-mongo";
 import cookieParser from "cookie-parser";
 import fs from "fs";
 // Database
@@ -158,19 +159,6 @@ app.get("/", (req, res) => {
 
 // Authentication middleware setup
 app.use(passport.initialize());
-app.use(
-  session({
-    secret: sessionSecret,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      httpOnly: true,
-    },
-    name: 'sessionId', // Change default session name for security
-  })
-);
 
 // API route registration with appropriate security and caching middleware
 app.use("/auth", authRateLimit, authRouter); // Authentication: 5 login attempts per 15 minutes
@@ -242,6 +230,28 @@ try {
     host: mongoURL.includes('mongodb+srv') ? 'MongoDB Atlas Cloud' : 'Local MongoDB',
     environment: process.env.NODE_ENV || 'development'
   });
+
+  // Configure session store after MongoDB connection is established
+  app.use(
+    session({
+      secret: sessionSecret,
+      resave: false,
+      saveUninitialized: false,
+      store: MongoStore.create({
+        client: mongoose.connection.getClient(),
+        dbName: mongoose.connection.db.databaseName,
+        collectionName: 'sessions',
+        ttl: 24 * 60 * 60, // Session TTL in seconds (24 hours)
+        touchAfter: 24 * 3600, // Lazy session update
+      }),
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        httpOnly: true,
+      },
+      name: 'sessionId', // Change default session name for security
+    })
+  );
 
   // Lightweight verification of key collections (non-blocking)
   try {
