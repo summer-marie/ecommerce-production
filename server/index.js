@@ -27,13 +27,31 @@ console.log('✅ Environment variables loaded successfully');
 
 // Add global error handlers to catch unhandled errors
 process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
+  console.error('❌ Uncaught Exception:', {
+    message: error.message,
+    stack: error.stack,
+    name: error.name
+  });
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('❌ Unhandled Rejection:', {
+    reason: reason,
+    promise: promise,
+    stack: reason?.stack
+  });
   process.exit(1);
+});
+
+process.on('SIGTERM', () => {
+  console.log('❌ SIGTERM received, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('❌ SIGINT received, shutting down gracefully');
+  process.exit(0);
 });
 
 // Dynamically import authentication strategies after environment is validated
@@ -231,27 +249,35 @@ try {
     environment: process.env.NODE_ENV || 'development'
   });
 
+  console.log('🔧 Setting up MongoDB session store...');
+  
   // Configure session store after MongoDB connection is established
-  app.use(
-    session({
-      secret: sessionSecret,
-      resave: false,
-      saveUninitialized: false,
-      store: MongoStore.create({
-        client: mongoose.connection.getClient(),
-        dbName: mongoose.connection.db.databaseName,
-        collectionName: 'sessions',
-        ttl: 24 * 60 * 60, // Session TTL in seconds (24 hours)
-        touchAfter: 24 * 3600, // Lazy session update
-      }),
-      cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        httpOnly: true,
-      },
-      name: 'sessionId', // Change default session name for security
-    })
-  );
+  try {
+    app.use(
+      session({
+        secret: sessionSecret,
+        resave: false,
+        saveUninitialized: false,
+        store: MongoStore.create({
+          client: mongoose.connection.getClient(),
+          dbName: mongoose.connection.db.databaseName,
+          collectionName: 'sessions',
+          ttl: 24 * 60 * 60, // Session TTL in seconds (24 hours)
+          touchAfter: 24 * 3600, // Lazy session update
+        }),
+        cookie: {
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 24 * 60 * 60 * 1000, // 24 hours
+          httpOnly: true,
+        },
+        name: 'sessionId', // Change default session name for security
+      })
+    );
+    console.log('✅ MongoDB session store configured successfully');
+  } catch (sessionError) {
+    console.error('❌ Failed to setup session store:', sessionError);
+    throw sessionError;
+  }
 
   // Lightweight verification of key collections (non-blocking)
   try {
@@ -266,7 +292,10 @@ try {
     logWarn('Collection count check failed', { error: verifyErr.message });
   }
 
+  console.log('🚀 Starting server...');
+  
   app.listen(port, '0.0.0.0', () => {
+    console.log('✅ Server is now listening for connections');
     logInfo(`🚀 Pizza app server started`, {
       port,
       host: '0.0.0.0',
@@ -275,6 +304,7 @@ try {
     });
   });
 } catch (err) {
+  console.error("❌ Startup error:", err);
   logError("❌ Database connection failed", { error: err.message });
   process.exit(1); // Exit process if database connection fails
 }
