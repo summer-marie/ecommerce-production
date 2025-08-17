@@ -25,6 +25,17 @@ if (!process.env.MONGODB_URL) {
 
 console.log('✅ Environment variables loaded successfully');
 
+// Add global error handlers to catch unhandled errors
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 // Dynamically import authentication strategies after environment is validated
 await import("./strategies/jwtStrategy.js");
 await import("./strategies/localStrategy.js");
@@ -152,6 +163,12 @@ app.use(
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true,
+    },
+    name: 'sessionId', // Change default session name for security
   })
 );
 
@@ -239,9 +256,10 @@ try {
     logWarn('Collection count check failed', { error: verifyErr.message });
   }
 
-  app.listen(port, () => {
+  app.listen(port, '0.0.0.0', () => {
     logInfo(`🚀 Pizza app server started`, {
       port,
+      host: '0.0.0.0',
       environment: process.env.NODE_ENV || 'development',
       database: mongoURL.includes('mongodb+srv') ? 'Atlas Cloud' : 'Local'
     });
