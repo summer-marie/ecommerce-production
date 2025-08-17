@@ -172,7 +172,17 @@ app.use(cors(corsOptions));
 
 // Simple health check endpoint
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.json({ 
+    status: "ok", 
+    message: "Pizza app server is running",
+    timestamp: new Date().toISOString(),
+    port: process.env.PORT || 8010
+  });
+});
+
+// Health check for Railway
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "healthy" });
 });
 
 // Authentication middleware setup
