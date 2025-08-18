@@ -185,53 +185,9 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "healthy" });
 });
 
-// Authentication middleware setup
-app.use(passport.initialize());
-
-// API route registration with appropriate security and caching middleware
-app.use("/auth", authRateLimit, authRouter); // Authentication: 5 login attempts per 15 minutes
-app.use("/admins", adminRateLimit, adminRouter); // Admin operations: 100 requests per 5 minutes
-app.use("/orders", orderIndex); // Order management: individual routes have specific rate limits
-app.use("/ingredients", cacheMiddleware(600), ingredientsIndex); // Pizza ingredients: cached for 10 minutes
-app.use("/builders", cacheMiddleware(300), builderIndex); // Pizza templates: cached for 5 minutes
-app.use("/messages", contactRateLimit, msgIndex); // Contact forms: 5 messages per hour
-app.use("/payments", paymentRoutes); // Square payment processing: rate limited per route
-app.use("/monitoring", adminRateLimit, monitoringRouter); // System monitoring: admin-only access
-
-// Administrative API key management (requires admin authentication)
-createApiKeyRoutes(app);
-
-// Self-documenting API endpoint for developers and integration partners
-app.get("/api/docs", (req, res) => {
-  res.json({
-    title: "Pizza Business API",
-    version: "1.0.0",
-    description: "Secure, high-performance pizza ordering API",
-    security: {
-      apiKey: "Required for most endpoints - use X-API-Key header",
-      jwt: "Required for admin operations - use Authorization header",
-    },
-    endpoints: {
-      auth: "/auth/* - Authentication endpoints",
-      orders: "/orders/* - Order management",
-      ingredients: "/ingredients/* - Pizza ingredients",
-      builders: "/builders/* - Pizza templates",
-      messages: "/messages/* - Contact messages",
-      monitoring: "/monitoring/* - Health & performance",
-      apiKeys: "/api/admin/keys/* - API key management (admin only)",
-    },
-    rateLimits: {
-      auth: "5 requests per 15 minutes",
-      admin: "100 requests per 5 minutes",
-      orders: "10 requests per 10 minutes",
-      contact: "5 requests per hour",
-      general: "100 requests per 15 minutes",
-    },
-  });
-});
-
-// Global error handling middleware (must be last middleware)
-app.use(errorLogger);
+// NOTE: express-session MUST be registered before passport.initialize() and any route
+// handlers that call req.logIn / rely on sessions. It was previously after the routes,
+// which caused: "Login sessions require session support".
 
 // Database connection and server startup
 try {
@@ -265,25 +221,75 @@ try {
   try {
     app.use(
       session({
-        secret: sessionSecret,
+        secret: sessionSecret || 'change_this_session_secret',
         resave: false,
         saveUninitialized: false,
         store: MongoStore.create({
           client: mongoose.connection.getClient(),
           dbName: mongoose.connection.db.databaseName,
           collectionName: 'sessions',
-          ttl: 24 * 60 * 60, // Session TTL in seconds (24 hours)
-          touchAfter: 24 * 3600, // Lazy session update
+          ttl: 24 * 60 * 60,
+          touchAfter: 24 * 3600,
         }),
         cookie: {
           secure: process.env.NODE_ENV === 'production',
-          maxAge: 24 * 60 * 60 * 1000, // 24 hours
+          maxAge: 24 * 60 * 60 * 1000,
           httpOnly: true,
         },
-        name: 'sessionId', // Change default session name for security
+        name: 'sessionId',
       })
     );
     console.log('✅ MongoDB session store configured successfully');
+
+    // Initialize passport & session support AFTER express-session
+    app.use(passport.initialize());
+    app.use(passport.session());
+    console.log('✅ Passport initialized with session support');
+
+    // API route registration with appropriate security and caching middleware
+    app.use("/auth", authRateLimit, authRouter);
+    app.use("/admins", adminRateLimit, adminRouter);
+    app.use("/orders", orderIndex);
+    app.use("/ingredients", cacheMiddleware(600), ingredientsIndex);
+    app.use("/builders", cacheMiddleware(300), builderIndex);
+    app.use("/messages", contactRateLimit, msgIndex);
+    app.use("/payments", paymentRoutes);
+    app.use("/monitoring", adminRateLimit, monitoringRouter);
+
+    // Administrative API key management (requires admin authentication)
+    createApiKeyRoutes(app);
+
+    // Self-documenting API endpoint
+    app.get("/api/docs", (req, res) => {
+      res.json({
+        title: "Pizza Business API",
+        version: "1.0.0",
+        description: "Secure, high-performance pizza ordering API",
+        security: {
+          apiKey: "Required for most endpoints - use X-API-Key header",
+          jwt: "Required for admin operations - use Authorization header",
+        },
+        endpoints: {
+          auth: "/auth/* - Authentication endpoints",
+          orders: "/orders/* - Order management",
+          ingredients: "/ingredients/* - Pizza ingredients",
+          builders: "/builders/* - Pizza templates",
+          messages: "/messages/* - Contact messages",
+          monitoring: "/monitoring/* - Health & performance",
+          apiKeys: "/api/admin/keys/* - API key management (admin only)",
+        },
+        rateLimits: {
+          auth: "5 requests per 15 minutes",
+          admin: "100 requests per 5 minutes",
+          orders: "10 requests per 10 minutes",
+          contact: "5 requests per hour",
+          general: "100 requests per 15 minutes",
+        },
+      });
+    });
+
+    // Global error handling middleware (must remain last after routes)
+    app.use(errorLogger);
   } catch (sessionError) {
     console.error('❌ Failed to setup session store:', sessionError);
     throw sessionError;
