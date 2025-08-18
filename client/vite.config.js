@@ -1,16 +1,21 @@
-import { defineConfig } from 'vite'
+/* eslint-env node */
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  server: {
-    port: 3005,
-    hmr: {
-      port: 3005  // Ensure HMR uses the same port
-    }
-  },
+export default defineConfig(({ mode }) => {
+  // Load environment variables for this mode (safer than direct `process.env` usage)
+  const env = loadEnv(mode, '.', '')
+
+  return {
+    plugins: [react(), tailwindcss()],
+    server: {
+      port: 3005,
+      hmr: {
+        port: 3005  // Ensure HMR uses the same port
+      }
+    },
   build: {
     // Performance optimizations
     rollupOptions: {
@@ -37,7 +42,16 @@ export default defineConfig({
       }
     }
   },
-  // Asset optimization
-  assetsInclude: ['**/*.jpg', '**/*.png', '**/*.webp']
-  // Removed preview port config to avoid conflicts
+    // Asset optimization
+    assetsInclude: ['**/*.jpg', '**/*.png', '**/*.webp'],
+
+    // Preview configuration for Railway production (allows Railway domains)
+    preview: {
+      // let Vite listen on the platform-provided port only when provided by the platform
+      host: true,
+      port: env.PORT ? Number(env.PORT) : undefined,
+      // explicitly allow the Railway-generated frontend and backend domains
+      allowedHosts: ['client-production-24fd.up.railway.app', 'server-production-6620.up.railway.app', 'localhost']
+    }
+  }
 })
