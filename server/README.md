@@ -14,7 +14,7 @@ Create a `.env` file in the `server/` directory with the following content:
 
 ```env
 PORT=8010
-MONGODB_URL=your_mongodb_connection_string
+MONGODB_ATLAS_URL=your_mongodb_atlas_connection_string
 JWT_SECRET=your_jwt_secret
 COOKIE_SECRET=your_cookie_secret
 SESSION_SECRET=your_session_secret
@@ -41,7 +41,7 @@ server/
 | Variable            | Description         | Required |
 | ------------------- | ------------------- | -------- |
 | PORT                | Server port         | Yes      |
-| MONGODB_URL         | Database connection | Yes      |
+| MONGODB_ATLAS_URL   | Database connection | Yes      |
 | JWT_SECRET          | JWT token secret    | Yes      |
 | COOKIE_SECRET       | Cookie signing      | Yes      |
 | SESSION_SECRET      | Session secret      | Yes      |

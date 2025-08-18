@@ -20,9 +20,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 async function run() {
-  const mongoURL = process.env.NODE_ENV === 'production'
-    ? process.env.MONGODB_ATLAS_URL
-    : process.env.MONGODB_URL || process.env.MONGODB_ATLAS_URL;
+  const mongoURL = process.env.MONGODB_ATLAS_URL;
 
   if (!mongoURL) {
     console.error('❌ No MongoDB connection string found.');

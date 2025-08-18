@@ -5,8 +5,8 @@ import adminModel from "./admins/adminModel.js";
 
 const createAdmin = async () => {
   try {
-    // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URL);
+  // Connect to MongoDB (use Atlas URL)
+  await mongoose.connect(process.env.MONGODB_ATLAS_URL);
     console.log("Connected to MongoDB");
 
     // Check if admin already exists

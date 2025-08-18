@@ -18,8 +18,8 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
-if (!process.env.MONGODB_URL) {
-  console.error('❌ MONGODB_URL environment variable is required');
+if (!process.env.MONGODB_ATLAS_URL) {
+  console.error('❌ MONGODB_ATLAS_URL environment variable is required');
   process.exit(1);
 }
 
@@ -112,7 +112,7 @@ import paymentRoutes from "./payments/squareRoutes.js";
 
 // Replace console.log with proper logging
 logInfo("Environment check", {
-  mongodbUrl: process.env.MONGODB_URL ? "Set" : "Missing",
+  mongodbUrl: process.env.MONGODB_ATLAS_URL ? "Set" : "Missing",
 });
 
 const port = process.env.PORT || 8010;
@@ -191,10 +191,8 @@ app.get("/health", (req, res) => {
 
 // Database connection and server startup
 try {
-  // Use Atlas URL for production, local for development
-  const mongoURL = process.env.NODE_ENV === 'production' 
-    ? process.env.MONGODB_ATLAS_URL 
-    : process.env.MONGODB_URL || process.env.MONGODB_ATLAS_URL;
+  // Use Atlas URL exclusively to avoid accidental localhost fallback
+  const mongoURL = process.env.MONGODB_ATLAS_URL;
     
   if (!mongoURL) {
     throw new Error('No MongoDB connection string found in environment variables');
