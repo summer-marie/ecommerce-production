@@ -8,8 +8,11 @@ const SquarePayment = ({
   onPaymentSuccess,
   onPaymentError,
   onPaymentReady,
+  onWalletSupport, // callback({ googlePaySupported: boolean })
+  paymentInstrument = 'card', // 'card' | 'googlePay'
 }) => {
   const [cardNumber, setCardNumber] = useState(null);
+  const [googlePayInstance, setGooglePayInstance] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const cardNumberRef = useRef(null);
   const isInitialized = useRef(false);
@@ -36,8 +39,26 @@ const SquarePayment = ({
       console.log("Square SDK initialized successfully", squarePayments);
       console.log("Available methods:", Object.keys(squarePayments));
 
-      // Try the standard Square SDK API approach
-      // Square SDK requires inline style objects, not CSS class names
+      // Build a payment request for Google Pay (and potentially other wallets)
+      const amountString = Number(orderTotal).toFixed(2);
+      let paymentRequest = null;
+      try {
+        paymentRequest = squarePayments.paymentRequest({
+          countryCode: 'US',
+            // If you later support multi-currency pull this dynamically
+          currencyCode: 'USD',
+          total: {
+            amount: amountString,
+            label: 'Total',
+          },
+          requestBillingContact: false,
+          requestShippingContact: false,
+        });
+      } catch (e) {
+        console.warn('Unable to create paymentRequest (non-fatal)', e);
+      }
+
+      // Card component styles
       const cardComponent = await squarePayments.card({
         style: {
           input: {
@@ -64,6 +85,25 @@ const SquarePayment = ({
       // Attach the unified card component to the card number container
       await cardComponent.attach("#card-number-container");
 
+  // Initialize & attach Google Pay if supported
+      if (paymentRequest) {
+        try {
+          const gpay = await squarePayments.googlePay(paymentRequest);
+          const supported = await gpay.isSupported();
+          if (supported) {
+            await gpay.attach('#google-pay-button');
+            setGooglePayInstance(gpay);
+    if (onWalletSupport) onWalletSupport({ googlePaySupported: true });
+          } else {
+            console.log('Google Pay not supported in this browser/device');
+    if (onWalletSupport) onWalletSupport({ googlePaySupported: false });
+          }
+        } catch (e) {
+          console.warn('Google Pay init failed (continuing with card only)', e);
+      if (onWalletSupport) onWalletSupport({ googlePaySupported: false });
+        }
+      }
+
       console.log("Square payment component attached successfully");
 
       // For now, set the card component to our state
@@ -71,82 +111,17 @@ const SquarePayment = ({
       setCardNumber(cardComponent);
 
       // Pass the payment handler to parent
+      // Create initial handler (will be updated by later effect when instrument changes)
       if (onPaymentReady) {
         onPaymentReady(async (orderData) => {
-          if (!cardComponent) {
-            const msg = "Payment system not ready";
-            onPaymentError(msg);
-            throw new Error(msg);
-          }
-
-          setIsProcessing(true);
-
-          try {
-            // Tokenize the unified card component
-            const result = await cardComponent.tokenize();
-
-            if (result.status === "OK") {
-              // Build payload using orderNumber when available; otherwise fallback to a temp orderId
-              const amountToCharge = Number(
-                orderData?.orderTotal ?? orderTotal
-              );
-              const rawOrderNumber = orderData?.orderNumber;
-              const hasOrderNumber =
-                rawOrderNumber != null && !Number.isNaN(Number(rawOrderNumber));
-
-              const paymentData = {
-                sourceId: result.token,
-                amount: amountToCharge,
-                ...(hasOrderNumber
-                  ? { orderNumber: Number(rawOrderNumber) }
-                  : { orderId: String(Date.now()) }),
-                customerDetails: {
-                  firstName: orderData?.firstName,
-                  lastName: orderData?.lastName,
-                  phone: orderData?.phone,
-                },
-              };
-
-              if (import.meta.env.DEV) {
-                console.log('[Square] Dispatching createSquarePayment', paymentData);
-              }
-
-              // Dispatch Redux thunk instead of direct service call
-              const resp = await dispatch(
-                createSquarePayment(paymentData)
-              ).unwrap();
-
-              if (resp?.success) {
-                onPaymentSuccess({
-                  paymentId: resp.paymentId,
-                  receiptNumber: resp.receiptNumber,
-                  status: resp.status,
-                  orderRef: resp.orderRef,
-                  orderUpdate: resp.orderUpdate,
-                });
-              } else {
-                onPaymentError("Payment failed");
-                throw new Error("Payment failed");
-              }
-            } else {
-              const msg =
-                result.errors?.map((e) => e.message).join(", ") ||
-                "Payment failed";
-              onPaymentError(msg);
-              throw new Error(msg);
-            }
-          } catch (error) {
-            console.error("Payment error:", error);
-            onPaymentError(
-              error.response?.data?.details ||
-                error.response?.data?.error ||
-                error.message ||
-                "Payment processing failed"
-            );
-            throw error; // propagate to caller so it can soft-cancel
-          } finally {
-            setIsProcessing(false);
-          }
+          // This initial handler may reference initial instrument; a later effect will replace it
+          const useGooglePay = paymentInstrument === 'googlePay';
+          return executePayment({
+            useGooglePay,
+            orderData,
+            cardComponent,
+            googlePayInst: googlePayInstance,
+          });
         });
       }
 
@@ -186,7 +161,75 @@ const SquarePayment = ({
       isInitialized.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array intentionally to prevent infinite re-initialization
+  }, []); // keep empty to initialize only once
+
+  // Unified payment executor
+  const executePayment = useCallback(async ({ useGooglePay, orderData, cardComponent = cardNumber, googlePayInst = googlePayInstance }) => {
+    if (useGooglePay && !googlePayInst) {
+      const msg = 'Google Pay not available';
+      onPaymentError(msg);
+      throw new Error(msg);
+    }
+    if (!useGooglePay && !cardComponent) {
+      const msg = 'Card component not ready';
+      onPaymentError(msg);
+      throw new Error(msg);
+    }
+    setIsProcessing(true);
+    try {
+      const result = await (useGooglePay ? googlePayInst.tokenize() : cardComponent.tokenize());
+      if (result.status === 'OK') {
+        const amountToCharge = Number(orderData?.orderTotal ?? orderTotal);
+        const rawOrderNumber = orderData?.orderNumber;
+        const hasOrderNumber = rawOrderNumber != null && !Number.isNaN(Number(rawOrderNumber));
+        const paymentData = {
+          sourceId: result.token,
+            amount: amountToCharge,
+            ...(hasOrderNumber ? { orderNumber: Number(rawOrderNumber) } : { orderId: String(Date.now()) }),
+            customerDetails: {
+              firstName: orderData?.firstName,
+              lastName: orderData?.lastName,
+              phone: orderData?.phone,
+            },
+            wallet: useGooglePay ? 'googlePay' : 'card',
+          };
+          if (import.meta.env.DEV) console.log('[Square] Dispatching createSquarePayment', paymentData);
+          const resp = await dispatch(createSquarePayment(paymentData)).unwrap();
+          if (resp?.success) {
+            onPaymentSuccess({
+              paymentId: resp.paymentId,
+              receiptNumber: resp.receiptNumber,
+              status: resp.status,
+              orderRef: resp.orderRef,
+              orderUpdate: resp.orderUpdate,
+            });
+          } else {
+            onPaymentError('Payment failed');
+            throw new Error('Payment failed');
+          }
+      } else {
+        const msg = result.errors?.map(e => e.message).join(', ') || 'Payment failed';
+        onPaymentError(msg);
+        throw new Error(msg);
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      onPaymentError(error.response?.data?.details || error.response?.data?.error || error.message || 'Payment processing failed');
+      throw error;
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [cardNumber, googlePayInstance, onPaymentError, onPaymentSuccess, orderTotal, dispatch]);
+
+  // Update handler when instrument changes or components become available
+  useEffect(() => {
+    if (!cardNumber && !googlePayInstance) return;
+    if (!onPaymentReady) return;
+    onPaymentReady(async (orderData) => {
+      const useGooglePay = paymentInstrument === 'googlePay';
+      return executePayment({ useGooglePay, orderData });
+    });
+  }, [paymentInstrument, cardNumber, googlePayInstance, onPaymentReady, executePayment]);
 
   useEffect(() => {
     // Add a small delay to ensure DOM is ready
@@ -210,11 +253,16 @@ const SquarePayment = ({
     <div className="square-payment-form max-w-sm mx-auto">
       <div className="mb-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4 text-center">
-          💳 Card Payment
+          {paymentInstrument === 'googlePay' ? 'Google Pay' : 'Card Payment'}
         </h3>
 
-        {/* Square SDK will insert its complete card form here */}
-        <div className="mb-4">
+        {/* Google Pay Button Container (shown when selected & supported) */}
+        <div className={`${paymentInstrument === 'googlePay' ? 'block' : 'hidden'} mb-4 flex justify-center`}>
+          <div id="google-pay-button" className="w-full" />
+        </div>
+
+        {/* Card form (always rendered for SDK attach, hidden when using GPay) */}
+        <div className={`${paymentInstrument === 'card' ? 'block' : 'hidden'} mb-4`}>
           <div
             id="card-number-container"
             ref={cardNumberRef}

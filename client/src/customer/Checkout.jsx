@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
 import { clearCart, removeFromCart } from "../redux/cartSlice";
@@ -6,6 +6,7 @@ import { createOrder, markOrderPaymentFailed } from "../redux/orderSlice";
 import AlertSuccess from "../components/AlertSuccess";
 import AlertBlack from "../components/AlertBlack";
 import SquarePayment from "../components/SquarePayment";
+import squarePaymentService from "../redux/squarePaymentService";
 
 const successMsg = "Item deleted successfully";
 const successDescription = "";
@@ -35,12 +36,53 @@ const Checkout = () => {
   const [paymentHandler, setPaymentHandler] = useState(null);
   const [paymentError, setPaymentError] = useState("");
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
+  // Which Square instrument (card or googlePay)
+  const [paymentInstrument, setPaymentInstrument] = useState("card");
+  const [walletSupport, setWalletSupport] = useState({
+    googlePaySupported: false,
+  });
+
+  // Detect Google Pay support early so we can show/hide button group appropriately
+  useEffect(() => {
+    let cancelled = false;
+    const detectGooglePay = async () => {
+      try {
+        const payments = await squarePaymentService.initializeSquarePayments();
+        const amountString = Number(calculateTotal()).toFixed(2);
+        const request = payments.paymentRequest({
+          countryCode: "US",
+          currencyCode: "USD",
+          total: { amount: amountString, label: "Total" },
+          requestBillingContact: false,
+          requestShippingContact: false,
+        });
+        const gpay = await payments.googlePay(request);
+        const supported = await gpay.isSupported();
+        if (!cancelled) setWalletSupport({ googlePaySupported: supported });
+      } catch {
+        if (!cancelled) setWalletSupport({ googlePaySupported: false });
+      }
+    };
+    detectGooglePay();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartItems.length]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setPaymentError("");
 
-    if (!firstName || !lastName || !street || !city || !stateVal || !zip || !phone) {
+    if (
+      !firstName ||
+      !lastName ||
+      !street ||
+      !city ||
+      !stateVal ||
+      !zip ||
+      !phone
+    ) {
       setPaymentError("Please fill in all required fields");
       return;
     }
@@ -69,7 +111,8 @@ const Checkout = () => {
       try {
         const created = await dispatch(createOrder(orderData)).unwrap();
         createdOrderNumber = Number(created?.order?.orderNumber);
-        if (!createdOrderNumber || Number.isNaN(createdOrderNumber)) throw new Error("Failed to get orderNumber");
+        if (!createdOrderNumber || Number.isNaN(createdOrderNumber))
+          throw new Error("Failed to get orderNumber");
         await paymentHandler({ ...orderData, orderNumber: createdOrderNumber });
       } catch (error) {
         if (createdOrderNumber) {
@@ -77,15 +120,20 @@ const Checkout = () => {
             await dispatch(
               markOrderPaymentFailed({
                 orderNumber: createdOrderNumber,
-                reason: error?.response?.data?.details || error?.message || "payment_failed",
+                reason:
+                  error?.response?.data?.details ||
+                  error?.message ||
+                  "payment_failed",
               })
             ).unwrap();
           } catch (softCancelErr) {
-            console.warn('Soft cancel failed', softCancelErr);
+            console.warn("Soft cancel failed", softCancelErr);
           }
         }
         setPaymentError(
-          error?.response?.data?.message || error?.message || "Payment processing failed. Please try again."
+          error?.response?.data?.message ||
+            error?.message ||
+            "Payment processing failed. Please try again."
         );
         setIsPaymentProcessing(false);
       }
@@ -101,7 +149,12 @@ const Checkout = () => {
     try {
       const cashOrderData = {
         ...orderData,
-        payment: { status: "pending", method: "cash", amountPaid: calculateTotal(), paidAt: null },
+        payment: {
+          status: "pending",
+          method: "cash",
+          amountPaid: calculateTotal(),
+          paidAt: null,
+        },
       };
       await dispatch(createOrder(cashOrderData)).unwrap();
       setShowSuccessAlert(true);
@@ -111,30 +164,83 @@ const Checkout = () => {
         navigate("/order-success");
       }, 1500);
     } catch (error) {
-      console.error('Cash order creation failed', error);
+      console.error("Cash order creation failed", error);
       setPaymentError("Failed to create order. Please try again.");
     } finally {
       setIsPaymentProcessing(false);
     }
   };
 
-  const handlePayWithCard = () => { setPaymentMethod("square"); setShowCardForm(true); setPaymentError(""); };
-  const handlePayWithCash = () => { setPaymentMethod("cash"); setShowCardForm(false); setPaymentError(""); };
+  const handlePayWithCard = () => {
+    setPaymentMethod("square");
+    setShowCardForm(true);
+    setPaymentInstrument("card");
+    setPaymentError("");
+  };
+  const handlePayWithGooglePay = () => {
+    setPaymentMethod("square");
+    setShowCardForm(true);
+    setPaymentInstrument("googlePay");
+    setPaymentError("");
+  };
+  const handlePayWithCash = () => {
+    setPaymentMethod("cash");
+    setShowCardForm(false);
+    setPaymentError("");
+  };
   const handlePaymentSuccess = async () => {
     try {
       setShowSuccessAlert(true);
-      setTimeout(() => { setShowSuccessAlert(false); dispatch(clearCart()); navigate("/order-success"); }, 1000);
+      setTimeout(() => {
+        setShowSuccessAlert(false);
+        dispatch(clearCart());
+        navigate("/order-success");
+      }, 1000);
     } catch {
-      setPaymentError("Payment completed but there was an app error. Please contact support.");
-    } finally { setIsPaymentProcessing(false); }
+      setPaymentError(
+        "Payment completed but there was an app error. Please contact support."
+      );
+    } finally {
+      setIsPaymentProcessing(false);
+    }
   };
-  const handlePaymentError = (error) => { setPaymentError(error); setIsPaymentProcessing(false); };
-  const handlePaymentReady = (handler) => { setPaymentHandler(() => handler); };
-  const handleItemDelete = (cartItemId) => { setShowSuccessAlert(true); dispatch(removeFromCart(cartItemId)); setTimeout(() => setShowSuccessAlert(false), 1500); };
-  const handleCancel = () => { setShowAlert(false); };
-  const handleConfirm = () => { dispatch(clearCart()); setTimeout(() => { setShowAlert(false); navigate("/order-menu"); }, 2000); };
-  const calculateTotal = () => cartItems.reduce((sum, item) => sum + Number(item.pizzaPrice), 0).toFixed(2);
-  const formatPhoneNumber = (value) => { const cleaned = value.replace(/\D/g, ""); const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/); if (!match) return ""; let formatted = ""; if (match[1]) formatted = `(${match[1]}`; if (match[2]) formatted += match[2].length === 3 ? `) ${match[2]}` : match[2]; if (match[3]) formatted += match[3] ? `-${match[3]}` : ""; return formatted; };
+  const handlePaymentError = (error) => {
+    setPaymentError(error);
+    setIsPaymentProcessing(false);
+  };
+  const handlePaymentReady = (handler) => {
+    setPaymentHandler(() => handler);
+  };
+  const handleItemDelete = (cartItemId) => {
+    setShowSuccessAlert(true);
+    dispatch(removeFromCart(cartItemId));
+    setTimeout(() => setShowSuccessAlert(false), 1500);
+  };
+  const handleCancel = () => {
+    setShowAlert(false);
+  };
+  const handleConfirm = () => {
+    dispatch(clearCart());
+    setTimeout(() => {
+      setShowAlert(false);
+      navigate("/order-menu");
+    }, 2000);
+  };
+  const calculateTotal = () =>
+    cartItems
+      .reduce((sum, item) => sum + Number(item.pizzaPrice), 0)
+      .toFixed(2);
+  const formatPhoneNumber = (value) => {
+    const cleaned = value.replace(/\D/g, "");
+    const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
+    if (!match) return "";
+    let formatted = "";
+    if (match[1]) formatted = `(${match[1]}`;
+    if (match[2])
+      formatted += match[2].length === 3 ? `) ${match[2]}` : match[2];
+    if (match[3]) formatted += match[3] ? `-${match[3]}` : "";
+    return formatted;
+  };
 
   // Modern UI Start
   return (
@@ -145,7 +251,7 @@ const Checkout = () => {
             Checkout
           </h1>
 
-            {/* GRID LAYOUT */}
+          {/* GRID LAYOUT */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             {/* Order Summary */}
             <section
@@ -186,7 +292,9 @@ const Checkout = () => {
                           <p className="text-base font-medium text-gray-900 capitalize leading-snug">
                             {item.pizzaName}
                           </p>
-                          <p className="text-sm text-gray-500">${item.pizzaPrice}</p>
+                          <p className="text-sm text-gray-500">
+                            ${item.pizzaPrice}
+                          </p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           <button
@@ -220,24 +328,47 @@ const Checkout = () => {
                     )}
                     {!paymentMethod && (
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                          Payment Method
-                        </h3>
-                        <div className="flex gap-4">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">Payment Method</h3>
+                        <div className="grid grid-cols-2 gap-4 w-full">
+                          <button
+                            type="button"
+                            onClick={handlePayWithCash}
+                            className="btn-metal btn-metal-green w-full"
+                          >
+                            Cash on Pickup
+                          </button>
                           <button
                             type="button"
                             onClick={handlePayWithCard}
-                            className="btn-metal btn-metal-blue w-full lg:w-2/5"
+                            className="btn-metal btn-metal-blue w-full"
                           >
                             Card
                           </button>
                           <button
                             type="button"
-                            onClick={handlePayWithCash}
-                            className="btn-metal btn-metal-green w-full lg:w-2/5"
+                            onClick={handlePayWithGooglePay}
+                            disabled={!walletSupport.googlePaySupported}
+                            className={`rounded-xl px-5 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 border transition shadow-[0_2px_4px_rgba(0,0,0,0.4)] w-full ${walletSupport.googlePaySupported ? 'bg-black text-white hover:brightness-110 border-gray-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300'}`}
+                            title={walletSupport.googlePaySupported ? 'Pay quickly with Google Pay' : 'Google Pay not available'}
                           >
-                            Cash (On-Site)
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z" fill="#4285F4"/>
+                              <path d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z" fill="#34A853"/>
+                              <path d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z" fill="#FBBC05"/>
+                              <path d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z" fill="#EA4335"/>
+                            </svg>
+                            Google Pay
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowAlert(true)}
+                            className="btn-metal btn-metal-red w-full"
+                          >
+                            Cancel Order
+                          </button>
+                          {!walletSupport.googlePaySupported && (
+                            <span className="text-[10px] text-gray-500 col-span-2">Google Pay unavailable on this browser</span>
+                          )}
                         </div>
                       </div>
                     )}
@@ -246,7 +377,9 @@ const Checkout = () => {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <h3 className="text-lg font-semibold text-gray-800">
-                            Card Payment
+                            {paymentInstrument === "googlePay"
+                              ? "Google Pay"
+                              : "Card Payment"}
                           </h3>
                           <button
                             type="button"
@@ -254,17 +387,48 @@ const Checkout = () => {
                               setPaymentMethod(null);
                               setShowCardForm(false);
                               setPaymentError("");
+                              setPaymentInstrument("card");
                             }}
                             className="text-sm font-medium text-blue-600 hover:text-blue-800"
                           >
                             Change
                           </button>
                         </div>
+                        {/* Instrument selector (always show Google Pay, disabled if unsupported) */}
+                        <div className="flex gap-3 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => { setPaymentInstrument("card"); setPaymentHandler(null); }}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition btn-metal btn-metal-blue flex items-center gap-2 ${paymentInstrument === "card" ? "ring-2 ring-blue-300" : ""}`}
+                          >
+                            Card
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { if(!walletSupport.googlePaySupported) { setPaymentError('Google Pay not supported on this browser'); return;} setPaymentInstrument("googlePay"); setPaymentHandler(null); }}
+                            disabled={!walletSupport.googlePaySupported}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 border ${paymentInstrument === "googlePay" ? "ring-2 ring-blue-300" : ""} ${walletSupport.googlePaySupported ? 'bg-black text-white shadow-inner border-gray-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300'}`}
+                            title={walletSupport.googlePaySupported ? 'Google Pay' : 'Google Pay not available'}
+                          >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z" fill="#4285F4"/>
+                              <path d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z" fill="#34A853"/>
+                              <path d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z" fill="#FBBC05"/>
+                              <path d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z" fill="#EA4335"/>
+                            </svg>
+                            <span className="font-semibold tracking-wide">Google Pay</span>
+                          </button>
+                          {!walletSupport.googlePaySupported && (
+                            <span className="text-xs text-gray-500 basis-full">Google Pay unavailable on this browser</span>
+                          )}
+                        </div>
                         <SquarePayment
                           orderTotal={calculateTotal()}
                           onPaymentSuccess={handlePaymentSuccess}
                           onPaymentError={handlePaymentError}
                           onPaymentReady={handlePaymentReady}
+                          onWalletSupport={setWalletSupport}
+                          paymentInstrument={paymentInstrument}
                         />
                       </div>
                     )}
@@ -287,36 +451,50 @@ const Checkout = () => {
                           </button>
                         </div>
                         <p>
-                          You will pay <strong>${calculateTotal()}</strong> when you
-                          pick up your order.
+                          You will pay <strong>${calculateTotal()}</strong> when
+                          you pick up your order.
                         </p>
                       </div>
                     )}
 
                     <div className="flex gap-4 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowAlert(true)}
-                        className="btn-metal btn-metal-red w-full sm:w-auto flex-1"
-                      >
-                        Cancel Order
-                      </button>
+                      {paymentMethod && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAlert(true)}
+                          className="btn-metal btn-metal-red w-full sm:w-auto flex-1"
+                        >
+                          Cancel Order
+                        </button>
+                      )}
                       {paymentMethod === "cash" && (
                         <button
                           type="submit"
                           disabled={isPaymentProcessing}
-                          className={`btn-metal btn-metal-green flex-1 ${isPaymentProcessing ? 'btn-metal-disabled' : ''}`}
+                          className={`btn-metal btn-metal-green flex-1 ${
+                            isPaymentProcessing ? "btn-metal-disabled" : ""
+                          }`}
                         >
-                          {isPaymentProcessing ? "Processing…" : "Complete Order"}
+                          {isPaymentProcessing
+                            ? "Processing…"
+                            : "Complete Order"}
                         </button>
                       )}
                       {paymentMethod === "square" && showCardForm && (
                         <button
                           type="submit"
                           disabled={isPaymentProcessing || !paymentHandler}
-                          className={`btn-metal btn-metal-blue flex-1 ${isPaymentProcessing || !paymentHandler ? 'btn-metal-disabled' : ''}`}
+                          className={`btn-metal btn-metal-blue flex-1 ${
+                            isPaymentProcessing || !paymentHandler
+                              ? "btn-metal-disabled"
+                              : ""
+                          }`}
                         >
-                          {isPaymentProcessing ? "Processing…" : "Submit Order"}
+                          {isPaymentProcessing
+                            ? "Processing…"
+                            : paymentInstrument === "googlePay"
+                            ? "Pay with Google Pay"
+                            : "Submit Order"}
                         </button>
                       )}
                     </div>
@@ -491,7 +669,9 @@ const Checkout = () => {
                     <input
                       id="phone"
                       value={phone}
-                      onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
+                      onChange={(e) =>
+                        setPhone(formatPhoneNumber(e.target.value))
+                      }
                       required
                       placeholder="(555) 555-5555"
                       maxLength={14}
@@ -500,8 +680,8 @@ const Checkout = () => {
                   </div>
                 </div>
                 <p className="mt-6 text-xs text-gray-500 leading-relaxed">
-                  Your information is used only to process your order. By placing the order you
-                  agree to our terms & pickup policies.
+                  Your information is used only to process your order. By
+                  placing the order you agree to our terms & pickup policies.
                 </p>
               </div>
             </aside>
@@ -516,10 +696,15 @@ const Checkout = () => {
                 )}
                 {!paymentMethod && (
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                      Payment Method
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Payment Method</h3>
                     <div className="flex flex-col sm:flex-row gap-4">
+                      <button
+                        type="button"
+                        onClick={handlePayWithCash}
+                        className="btn-metal btn-metal-green"
+                      >
+                        Cash On-Site
+                      </button>
                       <button
                         type="button"
                         onClick={handlePayWithCard}
@@ -529,10 +714,28 @@ const Checkout = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={handlePayWithCash}
-                        className="btn-metal btn-metal-green"
+                        onClick={handlePayWithGooglePay}
+                        disabled={!walletSupport.googlePaySupported}
+                        className={`rounded-xl px-5 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 border transition ${walletSupport.googlePaySupported ? 'bg-black text-white shadow-[0_2px_4px_rgba(0,0,0,0.4)] border-gray-700 hover:brightness-110' : 'bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300'}`}
+                        title={walletSupport.googlePaySupported ? 'Pay with Google Pay' : 'Google Pay not available'}
                       >
-                        Cash (On-Site)
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z" fill="#4285F4"/>
+                          <path d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z" fill="#34A853"/>
+                          <path d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z" fill="#FBBC05"/>
+                          <path d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z" fill="#EA4335"/>
+                        </svg>
+                        Google Pay
+                      </button>
+                      {!walletSupport.googlePaySupported && (
+                        <span className="text-[10px] text-gray-500 sm:self-center">Google Pay unavailable</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowAlert(true)}
+                        className="btn-metal btn-metal-red sm:hidden"
+                      >
+                        Cancel Order
                       </button>
                     </div>
                   </div>
@@ -542,7 +745,9 @@ const Checkout = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-800">
-                        Card Payment
+                        {paymentInstrument === "googlePay"
+                          ? "Google Pay"
+                          : "Card Payment"}
                       </h3>
                       <button
                         type="button"
@@ -550,17 +755,79 @@ const Checkout = () => {
                           setPaymentMethod(null);
                           setShowCardForm(false);
                           setPaymentError("");
+                          setPaymentInstrument("card");
                         }}
                         className="text-sm font-medium text-blue-600 hover:text-blue-800"
                       >
                         Change
                       </button>
                     </div>
+                    {/* Instrument selector */}
+                    {walletSupport.googlePaySupported && (
+                      <div className="flex gap-3 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPaymentInstrument("card");
+                            setPaymentHandler(null);
+                          }}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition btn-metal btn-metal-blue flex items-center gap-2 ${
+                            paymentInstrument === "card"
+                              ? "ring-2 ring-blue-300"
+                              : ""
+                          }`}
+                        >
+                          Card
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPaymentInstrument("googlePay");
+                            setPaymentHandler(null);
+                          }}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition bg-black text-white flex items-center gap-2 shadow-inner border border-gray-700 ${
+                            paymentInstrument === "googlePay"
+                              ? "ring-2 ring-blue-300"
+                              : ""
+                          }`}
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z"
+                              fill="#4285F4"
+                            />
+                            <path
+                              d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z"
+                              fill="#34A853"
+                            />
+                            <path
+                              d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z"
+                              fill="#FBBC05"
+                            />
+                            <path
+                              d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z"
+                              fill="#EA4335"
+                            />
+                          </svg>
+                          <span className="font-semibold tracking-wide">
+                            Google Pay
+                          </span>
+                        </button>
+                      </div>
+                    )}
                     <SquarePayment
                       orderTotal={calculateTotal()}
                       onPaymentSuccess={handlePaymentSuccess}
                       onPaymentError={handlePaymentError}
                       onPaymentReady={handlePaymentReady}
+                      onWalletSupport={setWalletSupport}
+                      paymentInstrument={paymentInstrument}
                     />
                   </div>
                 )}
@@ -590,18 +857,22 @@ const Checkout = () => {
                 )}
 
                 <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAlert(true)}
-                    className="btn-metal btn-metal-red w-full sm:w-auto flex-1"
-                  >
-                    Cancel Order
-                  </button>
+                  {paymentMethod && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAlert(true)}
+                      className="btn-metal btn-metal-red w-full sm:w-auto flex-1"
+                    >
+                      Cancel Order
+                    </button>
+                  )}
                   {paymentMethod === "cash" && (
                     <button
                       type="submit"
                       disabled={isPaymentProcessing}
-                      className={`btn-metal btn-metal-green w-full sm:w-auto flex-1 ${isPaymentProcessing ? 'btn-metal-disabled' : ''}`}
+                      className={`btn-metal btn-metal-green w-full sm:w-auto flex-1 ${
+                        isPaymentProcessing ? "btn-metal-disabled" : ""
+                      }`}
                     >
                       {isPaymentProcessing ? "Processing…" : "Complete Order"}
                     </button>
@@ -610,9 +881,17 @@ const Checkout = () => {
                     <button
                       type="submit"
                       disabled={isPaymentProcessing || !paymentHandler}
-                      className={`btn-metal btn-metal-blue w-full sm:w-auto flex-1 ${isPaymentProcessing || !paymentHandler ? 'btn-metal-disabled' : ''}`}
+                      className={`btn-metal btn-metal-blue w-full sm:w-auto flex-1 ${
+                        isPaymentProcessing || !paymentHandler
+                          ? "btn-metal-disabled"
+                          : ""
+                      }`}
                     >
-                      {isPaymentProcessing ? "Processing…" : "Submit Order"}
+                      {isPaymentProcessing
+                        ? "Processing…"
+                        : paymentInstrument === "googlePay"
+                        ? "Pay with Google Pay"
+                        : "Submit Order"}
                     </button>
                   )}
                 </div>
@@ -625,7 +904,10 @@ const Checkout = () => {
       {/* Success alert */}
       {showSuccessAlert && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40">
-          <AlertSuccess successMsg={successMsg} successDescription={successDescription} />
+          <AlertSuccess
+            successMsg={successMsg}
+            successDescription={successDescription}
+          />
         </div>
       )}
 
