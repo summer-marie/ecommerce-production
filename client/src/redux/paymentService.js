@@ -1,9 +1,10 @@
 import axios from "axios";
+import { API_BASE } from "../utils/apiBase.js";
 
 const paymentService = {
   createSquarePayment: async (paymentData) => {
     try {
-      const url = `${import.meta.env.VITE_API_SERVER_URL}/payments/square/create-payment`;
+  const url = `${API_BASE}/payments/square/create-payment`;
       if (import.meta.env.DEV) {
         console.log('[Square] create payment request', { url, paymentData });
       }
@@ -20,12 +21,12 @@ const paymentService = {
     }
   },
   getSquarePaymentStatus: async (paymentId) => {
-    const url = `${import.meta.env.VITE_API_SERVER_URL}/payments/square/payments/${paymentId}`;
+  const url = `${API_BASE}/payments/square/payments/${paymentId}`;
     const res = await axios.get(url);
     return res;
   },
   testSquareConnection: async () => {
-    const url = `${import.meta.env.VITE_API_SERVER_URL}/payments/square/test`;
+  const url = `${API_BASE}/payments/square/test`;
     return await axios.get(url);
   },
 };

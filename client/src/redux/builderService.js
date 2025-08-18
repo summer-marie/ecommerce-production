@@ -1,15 +1,17 @@
 import axios from "axios";
+// If we later rename env var to VITE_API_BASE we won't need to touch below template literals
+import { API_BASE } from "../utils/apiBase.js";
 
 const builderService = {
   builderGetMany: async () => {
-    return await axios.get(`${import.meta.env.VITE_API_SERVER_URL}/builders`);
+  return await axios.get(`${API_BASE}/builders`);
   },
 
   builderCreate: async (pizzaData) => {
     try {
       console.log("Sending pizza data to server...", pizzaData);
       const response = await axios.post(
-        `${import.meta.env.VITE_API_SERVER_URL}/builders`,
+  `${API_BASE}/builders`,
         pizzaData,
         {
           headers: {
@@ -30,7 +32,7 @@ const builderService = {
 
   pizzaGetOne: async (id) => {
     const response = await axios.get(
-      `${import.meta.env.VITE_API_SERVER_URL}/builders/pizza-detail/${id}`
+  `${API_BASE}/builders/pizza-detail/${id}`
     );
     return response.data; // just the data, not the whole Axios response
   },
@@ -41,7 +43,7 @@ const builderService = {
       throw new Error("No ID provided in pizza data");
     }
     return axios.put(
-      `${import.meta.env.VITE_API_SERVER_URL}/builders/${id}`,
+  `${API_BASE}/builders/${id}`,
       pizzaData,
       {
         headers: { "Content-Type": "application/json" },
@@ -51,7 +53,7 @@ const builderService = {
 
   builderDeleteOneAlt: async (id) => {
     const response = await axios.delete(
-      `${import.meta.env.VITE_API_SERVER_URL}/builders/${id}`
+  `${API_BASE}/builders/${id}`
     );
     return response.data; // { success: true, id: ... }
   },

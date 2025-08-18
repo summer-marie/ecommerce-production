@@ -6,8 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node --watch index.js",
     "start": "node index.js",
-  "migrate": "node scripts/migrateToAtlas.js",
-  "purge:tokens": "node scripts/purgeEmptyTokens.js"
+    "migrate": "node scripts/migrateToAtlas.js",
+    "purge:tokens": "node scripts/purgeEmptyTokens.js"
   },
   "type": "module",
   "keywords": [],
@@ -36,8 +36,8 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-  "square": "^43.0.1",
-  "winston": "^3.17.0"
+    "square": "^43.0.1",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

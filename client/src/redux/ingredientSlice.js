@@ -189,15 +189,7 @@ export const ingredientSlice = createSlice({
           (ingredient) => ingredient.id !== action.payload
         );
       })
-      // .addCase(ingredientDeleteOne.fulfilled, (state, action) => {
-      //   const index = state.ingredients.findIndex(
-      //     (ingredient) => ingredient.id === action.payload
-      //   );
-      //   if (index !== -1) {
-      //     state.ingredients.splice(index, 1);
-      //   }
-      //   state.loading = false;
-      // });
+
       .addCase(ingredientDeleteOne.rejected, (state, action) => {
         console.log(
           "ingredientSlice ingredientDeleteOne.rejected",

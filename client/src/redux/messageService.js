@@ -1,10 +1,11 @@
 import axios from "axios";
+import { API_BASE } from "../utils/apiBase.js";
 
 const messageService = {
   // Create a new message
   sendMessage: async (messageData) => {
     const response = await axios.post(
-      `${import.meta.env.VITE_API_SERVER_URL}/messages`,
+  `${API_BASE}/messages`,
       messageData
     );
     console.log("messageService sendMessage response:", response);
@@ -14,7 +15,7 @@ const messageService = {
   // Get all messages
   getMessages: async () => {
     const response = await axios.get(
-      `${import.meta.env.VITE_API_SERVER_URL}/messages`
+  `${API_BASE}/messages`
     );
     console.log("messageService getMessages response:", response);
     return response;
@@ -23,7 +24,7 @@ const messageService = {
   // Update message read status
   updateMessageRead: async (id) => {
     const response = await axios.put(
-      `${import.meta.env.VITE_API_SERVER_URL}/messages/${id}`
+  `${API_BASE}/messages/${id}`
     );
     console.log("messageService updateMessageRead response:", response);
     return response;
@@ -32,7 +33,7 @@ const messageService = {
   // Delete a message
   deleteMessage: async (id) => {
     return await axios.delete(
-      `${import.meta.env.VITE_API_SERVER_URL}/messages/${id}`
+  `${API_BASE}/messages/${id}`
     );
   },
 };

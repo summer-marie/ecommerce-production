@@ -1,11 +1,12 @@
 import axios from "axios";
+import { API_BASE } from "../utils/apiBase.js";
 
 const orderService = {
   // Create a new Order (without payment processing)
   // Use for: cash orders, admin-created orders, or unpaid orders
   createOrder: async (order) => {
     return await axios.post(
-      `${import.meta.env.VITE_API_SERVER_URL}/orders`,
+  `${API_BASE}/orders`,
       order
     );
   },
@@ -14,7 +15,7 @@ const orderService = {
   // Use for: customer checkout with Square payment
   createOrderWithPayment: async (orderData, paymentToken) => {
     return await axios.post(
-      `${import.meta.env.VITE_API_SERVER_URL}/orders/with-payment`,
+  `${API_BASE}/orders/with-payment`,
       {
         ...orderData,
         paymentToken
@@ -25,27 +26,27 @@ const orderService = {
   // Soft-cancel an order by orderNumber (payment failed)
   markPaymentFailedByOrderNumber: async (orderNumber, reason) => {
     return await axios.patch(
-      `${import.meta.env.VITE_API_SERVER_URL}/orders/by-number/${orderNumber}/payment-failed`,
+  `${API_BASE}/orders/by-number/${orderNumber}/payment-failed`,
       { reason }
     );
   },
 
   // Get all orders
   orderGetAll: async () => {
-    return await axios.get(`${import.meta.env.VITE_API_SERVER_URL}/orders`);
+  return await axios.get(`${API_BASE}/orders`);
   },
 
   // Get only open orders
   orderGetOpen: async () => {
     return await axios.get(
-      `${import.meta.env.VITE_API_SERVER_URL}/orders/open`
+  `${API_BASE}/orders/open`
     );
   },
 
   // Get only archived orders
   orderGetArchived: async () => {
     return await axios.get(
-      `${import.meta.env.VITE_API_SERVER_URL}/orders/archived`
+  `${API_BASE}/orders/archived`
     );
   },
 
@@ -53,7 +54,7 @@ const orderService = {
   orderUpdateStatus: async (order) => {
     const { id, status } = order;
     return await axios.put(
-      `${import.meta.env.VITE_API_SERVER_URL}/orders/open/${id}`,
+  `${API_BASE}/orders/open/${id}`,
       { status: status }
     );
   },
@@ -61,7 +62,7 @@ const orderService = {
   // Archive order
   orderArchiveOne: async (id) => {
     return await axios.put(
-      `${import.meta.env.VITE_API_SERVER_URL}/orders/archive/${id}`,
+  `${API_BASE}/orders/archive/${id}`,
       { isArchived: true }
     );
   },

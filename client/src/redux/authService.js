@@ -1,10 +1,11 @@
 import axios from "axios";
+import { API_BASE } from "../utils/apiBase.js";
 
 const authService = {
   login: async ({ email, password }) => {
     console.log("NEW authService login", email, password);
     const response = await axios.post(
-      `${import.meta.env.VITE_API_SERVER_URL}/auth/login`,
+  `${API_BASE}/auth/login`,
       { email, password }
     );
     console.log(" NEW response", response.data);
@@ -16,7 +17,7 @@ const authService = {
     const token = JSON.parse(localStorage.getItem("token"));
     console.log("NEW authService status token", token);
     const response = await axios.get(
-      `${import.meta.env.VITE_API_SERVER_URL}/auth/status`,
+  `${API_BASE}/auth/status`,
       {},
       {
         withCredentials: true,
@@ -36,7 +37,7 @@ const authService = {
 
       // Make logout request
       const response = await axios.post(
-        `${import.meta.env.VITE_API_SERVER_URL}/auth/logout/`,
+  `${API_BASE}/auth/logout/`,
         {},
         {
           headers: {
