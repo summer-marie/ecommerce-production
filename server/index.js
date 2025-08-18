@@ -122,6 +122,30 @@ const sessionSecret = process.env.SESSION_SECRET;
 
 const app = express();
 
+// Minimal health endpoint early in the pipeline to satisfy platform health checks
+// This responds before any heavy middleware or DB-dependent logic runs.
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
+
+// Serve favicon if present in client build or public folder to avoid noisy 404s in logs
+try {
+  const favCandidates = [
+    path.join(__dirname, '../client/dist/favicon.ico'),
+    path.join(__dirname, '../client/public/favicon.ico'),
+    path.join(__dirname, 'favicon.ico')
+  ];
+  const favPath = favCandidates.find((p) => fs.existsSync(p));
+  if (favPath) {
+    app.get('/favicon.ico', (req, res) => {
+      res.sendFile(favPath);
+    });
+  }
+} catch (err) {
+  // Non-fatal — just skip favicon serving if anything goes wrong
+  console.warn('Favicon route setup skipped:', err.message);
+}
+
 // Core security middleware - apply before any request processing
 app.use(advancedHelmet); // Enhanced security headers (CSP, HSTS, etc.)
 app.use(securityLogger); // Security-focused request logging with threat detection
