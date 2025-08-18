@@ -135,7 +135,22 @@ try {
     path.join(__dirname, '../client/public/favicon.ico'),
     path.join(__dirname, 'favicon.ico')
   ];
-  const favPath = favCandidates.find((p) => fs.existsSync(p));
+  let favPath = favCandidates.find((p) => fs.existsSync(p));
+  // If no favicon exists, write a tiny default (1x1 transparent PNG) to server/public/favicon.ico
+  if (!favPath) {
+    try {
+      const defaultDir = path.join(__dirname, 'public');
+      if (!fs.existsSync(defaultDir)) fs.mkdirSync(defaultDir, { recursive: true });
+      const target = path.join(defaultDir, 'favicon.ico');
+      if (!fs.existsSync(target)) {
+        const defaultFaviconBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
+        fs.writeFileSync(target, Buffer.from(defaultFaviconBase64, 'base64'));
+      }
+      favPath = target;
+    } catch (writeErr) {
+      console.warn('Failed to write default favicon:', writeErr.message);
+    }
+  }
   if (favPath) {
     app.get('/favicon.ico', (req, res) => {
       res.sendFile(favPath);
