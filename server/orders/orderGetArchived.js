@@ -4,18 +4,15 @@ import orderModel from "./orderModel.js";
 
 const orderGetArchived = async (req, res) => {
   try {
-    const getOrders = await orderModel.aggregate([
-      {
-        $match: {
-          status: "archived", // Only match status "archived"
-        },
-      },
-      {
-        $sort: {
-          Date: -1,
-        },
-      },
-    ]);
+    const pipeline = [
+      { $match: { status: "archived" } },
+      { $sort: { Date: -1 } },
+    ];
+
+    const getOrders = await orderModel.aggregate(pipeline, {
+      maxTimeMS: 5000,
+      allowDiskUse: true,
+    });
 
     console.log("Archived orders found:", getOrders.length);
     res.status(200).json({ success: true, orders: getOrders });

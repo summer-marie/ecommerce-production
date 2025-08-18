@@ -2,7 +2,7 @@
 import rateLimit from 'express-rate-limit';
 import slowDown from 'express-slow-down';
 import helmet from 'helmet';
-import mongoSanitize from 'express-mongo-sanitize';
+// import removed: use a safe custom sanitizer below to avoid assigning to read-only req props
 import hpp from 'hpp';
 import { logInfo, logWarn, logError } from './logger.js';
 
@@ -109,20 +109,41 @@ export const advancedHelmet = helmet({
 });
 
 // MongoDB injection protection with safe sanitization
+// Safe MongoDB injection protection without relying on third-party middleware
+// This avoids attempting to overwrite request properties that may be getters (e.g., req.query)
+const stripMongoOperators = (obj, depth = 0) => {
+  if (depth > 10 || obj == null) return obj;
+  if (Array.isArray(obj)) return obj.map((v) => stripMongoOperators(v, depth + 1));
+  if (typeof obj !== 'object') return obj;
+
+  const clean = {};
+  for (const [key, value] of Object.entries(obj)) {
+    // Remove or rename keys that begin with $ or contain a dot (Mongo operators / injection vectors)
+    if (key.startsWith('$') || key.includes('.')) {
+      const safeKey = key.replace(/^\$+/, '_').replace(/\./g, '_');
+      clean[safeKey] = stripMongoOperators(value, depth + 1);
+    } else {
+      clean[key] = stripMongoOperators(value, depth + 1);
+    }
+  }
+
+  return clean;
+};
+
 export const mongoSanitizer = (req, res, next) => {
   try {
-    // Only sanitize if the object is modifiable
+    // Only sanitize request bodies and params (avoid touching req.query which may be getter-only)
     if (req.body && typeof req.body === 'object') {
-      req.body = mongoSanitize.sanitize(req.body, { replaceWith: '_' });
+      req.body = stripMongoOperators(req.body);
     }
     if (req.params && typeof req.params === 'object') {
-      req.params = mongoSanitize.sanitize(req.params, { replaceWith: '_' });
+      req.params = stripMongoOperators(req.params);
     }
-    next();
   } catch (error) {
     logError('MongoDB sanitization error', { error: error.message });
-    next(); // Continue even if sanitization fails
+    // continue even if sanitization fails
   }
+  next();
 };
 
 // XSS protection with object cloning

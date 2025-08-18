@@ -12,8 +12,7 @@ const builderGetMany = async (req, res) => {
         null,
         { lean: true }
       )
-      .sort({ pizzaPrice: 1, pizzaName: 1 }) // Sort by price, then name
-      .maxTimeMS(5000);
+      .sort({ pizzaPrice: 1, pizzaName: 1 }); // Sort by price, then name
 
     // Map _id to id for consistency across API responses
     const getBuiltPizzas = rawBuilders.map((doc) => {
@@ -24,16 +23,16 @@ const builderGetMany = async (req, res) => {
 
     logInfo("Pizza builders retrieved", { count: getBuiltPizzas.length });
 
-    res.status(200).json({ 
-      success: true, 
-      builders: getBuiltPizzas, 
-      count: getBuiltPizzas.length 
+    res.status(200).json({
+      success: true,
+      builders: getBuiltPizzas,
+      count: getBuiltPizzas.length,
     });
   } catch (error) {
     logError("Error getting pizza builders", { error: error.message });
-    res.status(500).json({ 
-      success: false, 
-      message: "Failed to retrieve pizza builders" 
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve pizza builders",
     });
   }
 };
