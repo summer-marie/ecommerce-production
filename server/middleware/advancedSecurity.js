@@ -4,7 +4,6 @@ import slowDown from 'express-slow-down';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import hpp from 'hpp';
-import xss from 'xss-clean';
 import { logInfo, logWarn, logError } from './logger.js';
 
 // Configurable rate limiting factory
@@ -127,15 +126,36 @@ export const mongoSanitizer = (req, res, next) => {
 };
 
 // XSS protection with object cloning
-export const xssProtection = (req, res, next) => {
-  // Simple XSS protection without modifying immutable objects
-  if (req.body && typeof req.body === 'object') {
-    try {
-      req.body = JSON.parse(JSON.stringify(req.body)); // Deep clone
-      // Add basic XSS filtering here if needed
-    } catch (error) {
-      logWarn('XSS protection error', { error: error.message });
+// Lightweight recursive sanitizer (replace script/style tags & basic event handlers)
+const sanitizeString = (value) => {
+  return value
+    .replace(/<\/(script|style)>/gi, '')
+    .replace(/<(script|style)[^>]*>[\s\S]*?<\/(script|style)>/gi, '')
+    .replace(/on[a-z]+="[^"]*"/gi, '')
+    .replace(/javascript:/gi, '')
+    .trim();
+};
+
+const sanitizeObject = (obj, depth = 0) => {
+  if (depth > 5) return obj; // prevent deep recursion
+  if (Array.isArray(obj)) return obj.map((v) => sanitizeObject(v, depth + 1));
+  if (obj && typeof obj === 'object') {
+    const clean = {};
+    for (const [k, v] of Object.entries(obj)) {
+      clean[k] = sanitizeObject(v, depth + 1);
     }
+    return clean;
+  }
+  if (typeof obj === 'string') return sanitizeString(obj);
+  return obj;
+};
+
+export const xssProtection = (req, res, next) => {
+  try {
+    if (req.body && typeof req.body === 'object') req.body = sanitizeObject(req.body);
+    if (req.query && typeof req.query === 'object') req.query = sanitizeObject(req.query);
+  } catch (error) {
+    logWarn('XSS protection error', { error: error.message });
   }
   next();
 };
