@@ -173,3 +173,69 @@ select option:disabled {
 #contactSection {
   background-color: #d1d5db; /* Tailwind gray-300 */
 }
+
+/* Metallic Button Styles */
+.btn-metal { 
+  position: relative; 
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-weight: 600; 
+  border-radius: 0.75rem; /* rounded-xl */
+  padding: 0.625rem 1.25rem; /* px-5 py-2.5 */
+  font-size: 0.875rem; /* text-sm */
+  line-height: 1.25rem; 
+  border: 1px solid transparent; 
+  overflow: hidden; 
+  transition: all 160ms ease; 
+  cursor: pointer; 
+  user-select: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4), 0 4px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-metal:before { 
+  content: ""; 
+  position: absolute; 
+  top: 0; 
+  left: -110%; 
+  width: 220%; 
+  height: 100%; 
+  background: linear-gradient(115deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.05) 42%, rgba(255,255,255,0) 60%);
+  mix-blend-mode: screen; 
+  transition: all 600ms ease; 
+  opacity: 0.55; 
+}
+.btn-metal:hover:before { left: -40%; }
+.btn-metal:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.4), 0 0 0 6px rgba(56,189,248,0.5); }
+.btn-metal:active { transform: translateY(1px); box-shadow: 0 1px 2px rgba(0,0,0,0.55), inset 0 1px 3px rgba(0,0,0,0.4); }
+
+.btn-metal-blue { 
+  background: linear-gradient(150deg,#0b2545 0%,#133e6d 38%,#1e4f82 55%,#0b2545 100%); 
+  border-color: #1e3a8a; 
+  color: #e3f2ff; 
+  text-shadow: 0 1px 2px rgba(0,0,0,0.65);
+}
+.btn-metal-blue:hover { background: linear-gradient(150deg,#103156 0%,#1d4d7a 40%,#25608f 60%,#103156 100%); }
+.btn-metal-blue:active { background: linear-gradient(160deg,#0a1f39,#123a60,#0a1f39); }
+
+.btn-metal-green { 
+  background: linear-gradient(150deg,#064a32 0%,#0c6f47 40%,#118558 60%,#064a32 100%); 
+  border-color: #047857; 
+  color: #e6fff5; 
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.btn-metal-green:hover { background: linear-gradient(150deg,#0a5d40 0%,#0f8257 40%,#15a06b 60%,#0a5d40 100%); }
+.btn-metal-green:active { background: linear-gradient(160deg,#063a2a,#0b5c3e,#063a2a); }
+
+.btn-metal-red {
+  background: linear-gradient(150deg,#5f0b10 0%,#7d0f17 35%,#991b1f 55%,#5f0b10 100%);
+  border-color: #7f1d1d;
+  color: #ffecec;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.65);
+}
+.btn-metal-red:hover { background: linear-gradient(150deg,#781017 0%,#931920 40%,#b32127 60%,#781017 100%); }
+.btn-metal-red:active { background: linear-gradient(160deg,#47070b,#7a1419,#47070b); }
+
+.btn-metal-disabled { opacity: 0.55; cursor: not-allowed; filter: grayscale(0.3); }
+
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }

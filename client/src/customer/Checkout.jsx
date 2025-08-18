@@ -15,7 +15,6 @@ const alertDescription = "Click to confirm and redirect back to menu";
 
 const Checkout = () => {
   const cartItems = useSelector((state) => state.cart.items);
-
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const dispatch = useDispatch();
@@ -39,15 +38,12 @@ const Checkout = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("handleSubmit");
     setPaymentError("");
-    
-    // Validate form data
+
     if (!firstName || !lastName || !street || !city || !stateVal || !zip || !phone) {
       setPaymentError("Please fill in all required fields");
       return;
     }
-
     if (cartItems.length === 0) {
       setPaymentError("Cart is empty");
       return;
@@ -56,12 +52,7 @@ const Checkout = () => {
     const orderData = {
       firstName,
       lastName,
-      address: {
-        street,
-        city,
-        state: stateVal,
-        zip,
-      },
+      address: { street, city, state: stateVal, zip },
       phone,
       orderDetails: cartItems.map((item) => ({
         pizzaName: item.pizzaName,
@@ -69,31 +60,18 @@ const Checkout = () => {
         quantity: item.quantity || 1,
       })),
       orderTotal: calculateTotal(),
-      // Create as processing; payment will update status to completed via backend
       status: "processing",
     };
 
-    // Process payment based on method
     if (paymentMethod === "square" && paymentHandler) {
       setIsPaymentProcessing(true);
       let createdOrderNumber;
       try {
-        // 1) Create the order first to get a real orderNumber
         const created = await dispatch(createOrder(orderData)).unwrap();
         createdOrderNumber = Number(created?.order?.orderNumber);
-        if (!createdOrderNumber || Number.isNaN(createdOrderNumber)) {
-          throw new Error("Failed to get orderNumber");
-        }
-
-        // 2) Call the Square payment handler with orderNumber
-        await paymentHandler({
-          ...orderData,
-          orderNumber: createdOrderNumber,
-        });
-        // handlePaymentSuccess will finish the UX
+        if (!createdOrderNumber || Number.isNaN(createdOrderNumber)) throw new Error("Failed to get orderNumber");
+        await paymentHandler({ ...orderData, orderNumber: createdOrderNumber });
       } catch (error) {
-        console.error("Payment flow failed:", error);
-        // Attempt soft-cancel via Redux thunk
         if (createdOrderNumber) {
           try {
             await dispatch(
@@ -102,8 +80,8 @@ const Checkout = () => {
                 reason: error?.response?.data?.details || error?.message || "payment_failed",
               })
             ).unwrap();
-          } catch (e) {
-            console.warn("Soft-cancel failed:", e?.message);
+          } catch (softCancelErr) {
+            console.warn('Soft cancel failed', softCancelErr);
           }
         }
         setPaymentError(
@@ -112,7 +90,6 @@ const Checkout = () => {
         setIsPaymentProcessing(false);
       }
     } else if (paymentMethod === "cash") {
-      // Process cash payment
       handleCashPayment(orderData);
     } else {
       setPaymentError("Please select a payment method");
@@ -122,415 +99,451 @@ const Checkout = () => {
   const handleCashPayment = async (orderData) => {
     setIsPaymentProcessing(true);
     try {
-      // Create order with cash payment info
       const cashOrderData = {
         ...orderData,
-        payment: {
-          status: "pending",
-          method: "cash",
-          amountPaid: calculateTotal(),
-          paidAt: null // Will be updated when cash is received
-        }
+        payment: { status: "pending", method: "cash", amountPaid: calculateTotal(), paidAt: null },
       };
-
       await dispatch(createOrder(cashOrderData)).unwrap();
-      
       setShowSuccessAlert(true);
       setTimeout(() => {
         setShowSuccessAlert(false);
         dispatch(clearCart());
         navigate("/order-success");
       }, 1500);
-      
     } catch (error) {
-      console.error("Failed to create cash order:", error);
+      console.error('Cash order creation failed', error);
       setPaymentError("Failed to create order. Please try again.");
     } finally {
       setIsPaymentProcessing(false);
     }
   };
 
-  const handlePayWithCard = () => {
-    setPaymentMethod("square");
-    setShowCardForm(true);
-    setPaymentError("");
-  };
-
-  const handlePayWithCash = () => {
-    setPaymentMethod("cash");
-    setShowCardForm(false);
-    setPaymentError("");
-  };
-
-  const handlePaymentSuccess = async (paymentResult) => {
-    console.log("Payment successful:", paymentResult);
-    
+  const handlePayWithCard = () => { setPaymentMethod("square"); setShowCardForm(true); setPaymentError(""); };
+  const handlePayWithCash = () => { setPaymentMethod("cash"); setShowCardForm(false); setPaymentError(""); };
+  const handlePaymentSuccess = async () => {
     try {
-      // Order was already created. Backend updated it via orderNumber.
-      // Just clear cart and navigate to success.
       setShowSuccessAlert(true);
-      setTimeout(() => {
-        setShowSuccessAlert(false);
-        dispatch(clearCart());
-        navigate("/order-success");
-      }, 1000);
-      
-    } catch (error) {
-      console.error("Post-payment flow failed:", error);
+      setTimeout(() => { setShowSuccessAlert(false); dispatch(clearCart()); navigate("/order-success"); }, 1000);
+    } catch {
       setPaymentError("Payment completed but there was an app error. Please contact support.");
-    } finally {
-      setIsPaymentProcessing(false);
-    }
+    } finally { setIsPaymentProcessing(false); }
   };
+  const handlePaymentError = (error) => { setPaymentError(error); setIsPaymentProcessing(false); };
+  const handlePaymentReady = (handler) => { setPaymentHandler(() => handler); };
+  const handleItemDelete = (cartItemId) => { setShowSuccessAlert(true); dispatch(removeFromCart(cartItemId)); setTimeout(() => setShowSuccessAlert(false), 1500); };
+  const handleCancel = () => { setShowAlert(false); };
+  const handleConfirm = () => { dispatch(clearCart()); setTimeout(() => { setShowAlert(false); navigate("/order-menu"); }, 2000); };
+  const calculateTotal = () => cartItems.reduce((sum, item) => sum + Number(item.pizzaPrice), 0).toFixed(2);
+  const formatPhoneNumber = (value) => { const cleaned = value.replace(/\D/g, ""); const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/); if (!match) return ""; let formatted = ""; if (match[1]) formatted = `(${match[1]}`; if (match[2]) formatted += match[2].length === 3 ? `) ${match[2]}` : match[2]; if (match[3]) formatted += match[3] ? `-${match[3]}` : ""; return formatted; };
 
-  const handlePaymentError = (error) => {
-    console.error("Payment error:", error);
-    setPaymentError(error);
-    setIsPaymentProcessing(false);
-  };
-
-  const handlePaymentReady = (handler) => {
-    setPaymentHandler(() => handler);
-  };
-
-  const handleItemDelete = (cartItemId) => {
-    console.log("Item delete button works!!!");
-    setShowSuccessAlert(true);
-    dispatch(removeFromCart(cartItemId));
-    setTimeout(() => {
-      setShowSuccessAlert(false);
-    }, 1500);
-  };
-
-  const handleCancel = () => {
-    setShowAlert(false);
-  };
-
-  const handleConfirm = () => {
-    dispatch(clearCart());
-    console.log("Order deleted");
-    setTimeout(() => {
-      setShowAlert(false);
-      navigate("/order-menu");
-    }, 2000);
-  };
-
-  // Loops through items
-  // and calculates the total price of all items in the cart
-  // Returns a string with 2 decimal places
-  const calculateTotal = () => {
-    return cartItems
-      .reduce((sum, item) => sum + Number(item.pizzaPrice), 0)
-      .toFixed(2);
-  };
-
-  // Format the phone number as (123) 456-7890
-  const formatPhoneNumber = (value) => {
-    // Remove all non-digit characters
-    const cleaned = value.replace(/\D/g, "");
-    // Match the cleaned value against the phone number pattern
-    const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
-    if (!match) return "";
-    // Format the matched groups into the desired phone number format
-    let formatted = "";
-    // If the first group is not empty, add parentheses
-    if (match[1]) {
-      formatted = `(${match[1]}`;
-    }
-    // If the second group is not empty, add a space and the second group
-    if (match[2]) {
-      formatted += match[2].length === 3 ? `) ${match[2]}` : match[2];
-    }
-    // If the third group is not empty, add a hyphen and the third group
-    if (match[3]) {
-      formatted += match[3] ? `-${match[3]}` : "";
-    }
-    return formatted;
-  };
-
+  // Modern UI Start
   return (
     <>
-      <form onSubmit={handleSubmit} autoComplete="off" className="mt-10 mb-20">
-        <div className="min-h-screen mx-auto w-full">
-          <div className="flex flex-col sm:flex-row items-start justify-center mx-auto space-y-6 sm:space-y-0 sm:space-x-6 w-2/3 bg-gray-100 mb-10 h-full">
-            <ul
-              role="list"
-              className="divide-y w-full border-2 rounded-xl p-5
-              divide-gray-200
-              border-red-700 mb-10 h-full"
-            >
-              {" "}
-              <div className="text-center rounded-t-xl mb-5">
-                <h1 className="font-medium mx-auto capitalize">
-                  Order information
-                </h1>
-              </div>
-              <li className="px-2">
-                <div className="flex justify-between space-x-6 w-full">
-                  <div className="space-y-1 w-3/4">
-                    {cartItems.map((item, idx) => (
-                      <div
-                        key={item.cartItemId || idx}
-                        className="flex items-center space-x-4 mt-1"
-                      >
-                        <button
-                          onClick={() => handleItemDelete(item.cartItemId)}
-                          type="button"
-                          className="text-sm font-medium text-red-700 border-2 border-red-700 rounded-xl px-3 py-1 hover:bg-red-700 hover:text-white hover:border-black cursor-pointer capitalize"
-                        >
-                          remove item
-                        </button>
-                        <span className="text-lg font-medium text-gray-900 capitalize">
-                          {item.pizzaName}
-                        </span>
-                        <span className="text-lg text-gray-500 ml-auto">
-                          $ {item.pizzaPrice}
-                        </span>
-                      </div>
-                    ))}
+      <form onSubmit={handleSubmit} autoComplete="off" className="pb-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 mb-8 text-center berkshireSwashFont">
+            Checkout
+          </h1>
 
-                    <div className="w-full mt-6">
-                      <hr className="w-full mt-3"></hr>
-                      <div className="flex items-center justify-between mt-4">
-                        <dt className="text-xl font-medium text-gray-900">
-                          Total
-                        </dt>
-                        <dd className="text-lg text-gray-500 mr-1">
-                          $ {calculateTotal()}
-                        </dd>
+            {/* GRID LAYOUT */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {/* Order Summary */}
+            <section
+              aria-labelledby="order-summary"
+              className="order-1 lg:order-1 lg:col-span-2 space-y-6"
+            >
+              <div className="bg-white/80 backdrop-blur rounded-2xl shadow ring-1 ring-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2
+                    id="order-summary"
+                    className="text-xl font-semibold text-gray-800 flex items-center gap-2"
+                  >
+                    <span className="inline-block h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    Order Items
+                  </h2>
+                  {cartItems.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAlert(true)}
+                      className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Clear Cart
+                    </button>
+                  )}
+                </div>
+                {cartItems.length === 0 ? (
+                  <p className="text-gray-500 italic text-sm">
+                    Your cart is empty.
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-gray-200">
+                    {cartItems.map((item, idx) => (
+                      <li
+                        key={item.cartItemId || idx}
+                        className="py-4 flex gap-4 items-start"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-medium text-gray-900 capitalize leading-snug">
+                            {item.pizzaName}
+                          </p>
+                          <p className="text-sm text-gray-500">${item.pizzaPrice}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <button
+                            onClick={() => handleItemDelete(item.cartItemId)}
+                            type="button"
+                            className="text-xs font-medium text-red-600 hover:text-white border border-red-500 hover:bg-red-600 px-3 py-1 rounded-full transition"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="mt-6 border-t pt-4 flex items-center justify-between">
+                  <span className="text-lg font-semibold text-gray-900">
+                    Total
+                  </span>
+                  <span className="text-lg font-bold text-green-600">
+                    ${calculateTotal()}
+                  </span>
+                </div>
+
+                {/* Desktop-only payment section (integrated under order items) */}
+                <div className="hidden lg:block mt-10">
+                  <div className="space-y-6">
+                    {paymentError && (
+                      <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                        {paymentError}
                       </div>
+                    )}
+                    {!paymentMethod && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                          Payment Method
+                        </h3>
+                        <div className="flex gap-4">
+                          <button
+                            type="button"
+                            onClick={handlePayWithCard}
+                            className="btn-metal btn-metal-blue w-full lg:w-2/5"
+                          >
+                            Card
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handlePayWithCash}
+                            className="btn-metal btn-metal-green w-full lg:w-2/5"
+                          >
+                            Cash (On-Site)
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {showCardForm && paymentMethod === "square" && (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-gray-800">
+                            Card Payment
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPaymentMethod(null);
+                              setShowCardForm(false);
+                              setPaymentError("");
+                            }}
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                          >
+                            Change
+                          </button>
+                        </div>
+                        <SquarePayment
+                          orderTotal={calculateTotal()}
+                          onPaymentSuccess={handlePaymentSuccess}
+                          onPaymentError={handlePaymentError}
+                          onPaymentReady={handlePaymentReady}
+                        />
+                      </div>
+                    )}
+
+                    {paymentMethod === "cash" && !showCardForm && (
+                      <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-semibold text-green-800">
+                            Cash Selected
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPaymentMethod(null);
+                              setPaymentError("");
+                            }}
+                            className="text-green-600 hover:text-green-800 text-xs font-medium"
+                          >
+                            Change
+                          </button>
+                        </div>
+                        <p>
+                          You will pay <strong>${calculateTotal()}</strong> when you
+                          pick up your order.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-4 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowAlert(true)}
+                        className="btn-metal btn-metal-red w-full sm:w-auto flex-1"
+                      >
+                        Cancel Order
+                      </button>
+                      {paymentMethod === "cash" && (
+                        <button
+                          type="submit"
+                          disabled={isPaymentProcessing}
+                          className={`btn-metal btn-metal-green flex-1 ${isPaymentProcessing ? 'btn-metal-disabled' : ''}`}
+                        >
+                          {isPaymentProcessing ? "Processing…" : "Complete Order"}
+                        </button>
+                      )}
+                      {paymentMethod === "square" && showCardForm && (
+                        <button
+                          type="submit"
+                          disabled={isPaymentProcessing || !paymentHandler}
+                          className={`btn-metal btn-metal-blue flex-1 ${isPaymentProcessing || !paymentHandler ? 'btn-metal-disabled' : ''}`}
+                        >
+                          {isPaymentProcessing ? "Processing…" : "Submit Order"}
+                        </button>
+                      )}
                     </div>
                   </div>
-                  {/* User info form */}
-                  <div className="space-y-2 w-1/2 mb-5 mr-5">
-                    {/* Nested flex box */}
-                    <div className="flex space-x-2">
-                      <div className="w-1/2">
-                        <label
-                          htmlFor="firstName"
-                          className="block text-md font-medium text-gray-900"
-                        >
-                          First Name
-                        </label>
-                        <input
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          type="text"
-                          id="firstName"
-                          className="shadow-sm mt-1 block w-full sm:text-sm rounded-md border-2 p-1
-                      border-red-700  "
-                          placeholder="Sally"
-                          required
-                        />
-                      </div>
-                      <div className="w-1/2">
-                        <label
-                          htmlFor="lastName"
-                          className="block text-md font-medium text-gray-900"
-                        >
-                          Last Name
-                        </label>
-                        <input
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          type="text"
-                          id="lastName"
-                          className="shadow-sm mt-1 block w-full sm:text-sm rounded-md border-2 p-1
-                      border-red-700 "
-                          placeholder="Smith"
-                          required
-                        />
-                      </div>
-                    </div>
+                </div>
+              </div>
+            </section>
 
+            {/* User Info Form */}
+            <aside className="order-2 lg:order-2 lg:col-span-1">
+              <div className="bg-white/80 backdrop-blur rounded-2xl shadow ring-1 ring-gray-200 p-6 sticky top-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                  Your Details
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="firstName"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      First Name
+                    </label>
+                    <input
+                      id="firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      placeholder="Sally"
+                      className="mt-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="lastName"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Last Name
+                    </label>
+                    <input
+                      id="lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      placeholder="Smith"
+                      className="mt-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col sm:col-span-2">
                     <label
                       htmlFor="street"
-                      className="block text-md font-medium text-gray-900"
+                      className="text-sm font-medium text-gray-700"
                     >
                       Street
                     </label>
                     <input
+                      id="street"
                       value={street}
                       onChange={(e) => setStreet(e.target.value)}
-                      type="text"
-                      id="street"
-                      name="street"
-                      autoComplete="address-line1"
-                      className="shadow-sm mt-1 block w-full sm:text-sm rounded-md border-2 p-1 border-red-700"
-                      placeholder="123 Main St"
                       required
+                      placeholder="123 Main St"
+                      className="mt-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
                     />
-
+                  </div>
+                  <div className="flex flex-col">
                     <label
                       htmlFor="city"
-                      className="block text-md font-medium text-gray-900"
+                      className="text-sm font-medium text-gray-700"
                     >
                       City
                     </label>
                     <input
+                      id="city"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
-                      type="text"
-                      id="city"
-                      name="city"
-                      autoComplete="address-level2"
-                      className="shadow-sm mt-1 block w-full sm:text-sm rounded-md border-2 p-1 border-red-700"
-                      placeholder="Goodyear"
                       required
+                      placeholder="Goodyear"
+                      className="mt-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
                     />
-                    <div className="flex space-x-2">
-                      <div className="w-1/2">
-                        <label
-                          htmlFor="state"
-                          className="block text-md font-medium text-gray-900"
-                        >
-                          State
-                        </label>
-                        <select
-                          value={stateVal}
-                          onChange={(e) => setStateVal(e.target.value)}
-                          type="text"
-                          id="state"
-                          className="shadow-sm mt-1 block w-full sm:text-sm rounded-md border-2 p-1 
-                      border-red-700 "
-                          name="state"
-                          required
-                        >
-                          <option value="">Select a state</option>
-                          <option value="AL">Alabama</option>
-                          <option value="AK">Alaska</option>
-                          <option value="AZ">Arizona</option>
-                          <option value="AR">Arkansas</option>
-                          <option value="CA">California</option>
-                          <option value="CO">Colorado</option>
-                          <option value="CT">Connecticut</option>
-                          <option value="DE">Delaware</option>
-                          <option value="FL">Florida</option>
-                          <option value="GA">Georgia</option>
-                          <option value="HI">Hawaii</option>
-                          <option value="ID">Idaho</option>
-                          <option value="IL">Illinois</option>
-                          <option value="IN">Indiana</option>
-                          <option value="IA">Iowa</option>
-                          <option value="KS">Kansas</option>
-                          <option value="KY">Kentucky</option>
-                          <option value="LA">Louisiana</option>
-                          <option value="ME">Maine</option>
-                          <option value="MD">Maryland</option>
-                          <option value="MA">Massachusetts</option>
-                          <option value="MI">Michigan</option>
-                          <option value="MN">Minnesota</option>
-                          <option value="MS">Mississippi</option>
-                          <option value="MO">Missouri</option>
-                          <option value="MT">Montana</option>
-                          <option value="NE">Nebraska</option>
-                          <option value="NV">Nevada</option>
-                          <option value="NH">New Hampshire</option>
-                          <option value="NJ">New Jersey</option>
-                          <option value="NM">New Mexico</option>
-                          <option value="NY">New York</option>
-                          <option value="NC">North Carolina</option>
-                          <option value="ND">North Dakota</option>
-                          <option value="OH">Ohio</option>
-                          <option value="OK">Oklahoma</option>
-                          <option value="OR">Oregon</option>
-                          <option value="PA">Pennsylvania</option>
-                          <option value="RI">Rhode Island</option>
-                          <option value="SC">South Carolina</option>
-                          <option value="SD">South Dakota</option>
-                          <option value="TN">Tennessee</option>
-                          <option value="TX">Texas</option>
-                          <option value="UT">Utah</option>
-                          <option value="VT">Vermont</option>
-                          <option value="VA">Virginia</option>
-                          <option value="WA">Washington</option>
-                          <option value="WV">West Virginia</option>
-                          <option value="WI">Wisconsin</option>
-                          <option value="WY">Wyoming</option>
-                        </select>
-                      </div>
-                      <div className="w-1/2">
-                        <label
-                          htmlFor="zip"
-                          className="block text-md font-medium text-gray-900"
-                        >
-                          Zipcode
-                        </label>
-                        <input
-                          value={zip}
-                          onChange={(e) => setZip(e.target.value)}
-                          type="text"
-                          id="zip"
-                          name="zip"
-                          pattern="[0-9]{5}(-[0-9]{4})?"
-                          maxLength={10}
-                          autoComplete="postal-code"
-                          className="shadow-sm mt-1 block w-full sm:text-sm rounded-md border-2 p-1 border-red-700 focus:ring-2 focus:ring-red-400 focus:border-red-400"
-                          placeholder="12345"
-                          required
-                        />
-                      </div>
-                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="state"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      State
+                    </label>
+                    <select
+                      id="state"
+                      value={stateVal}
+                      onChange={(e) => setStateVal(e.target.value)}
+                      required
+                      className="mt-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
+                    >
+                      <option value="">Select</option>
+                      <option value="AL">Alabama</option>
+                      <option value="AK">Alaska</option>
+                      <option value="AZ">Arizona</option>
+                      <option value="AR">Arkansas</option>
+                      <option value="CA">California</option>
+                      <option value="CO">Colorado</option>
+                      <option value="CT">Connecticut</option>
+                      <option value="DE">Delaware</option>
+                      <option value="FL">Florida</option>
+                      <option value="GA">Georgia</option>
+                      <option value="HI">Hawaii</option>
+                      <option value="ID">Idaho</option>
+                      <option value="IL">Illinois</option>
+                      <option value="IN">Indiana</option>
+                      <option value="IA">Iowa</option>
+                      <option value="KS">Kansas</option>
+                      <option value="KY">Kentucky</option>
+                      <option value="LA">Louisiana</option>
+                      <option value="ME">Maine</option>
+                      <option value="MD">Maryland</option>
+                      <option value="MA">Massachusetts</option>
+                      <option value="MI">Michigan</option>
+                      <option value="MN">Minnesota</option>
+                      <option value="MS">Mississippi</option>
+                      <option value="MO">Missouri</option>
+                      <option value="MT">Montana</option>
+                      <option value="NE">Nebraska</option>
+                      <option value="NV">Nevada</option>
+                      <option value="NH">New Hampshire</option>
+                      <option value="NJ">New Jersey</option>
+                      <option value="NM">New Mexico</option>
+                      <option value="NY">New York</option>
+                      <option value="NC">North Carolina</option>
+                      <option value="ND">North Dakota</option>
+                      <option value="OH">Ohio</option>
+                      <option value="OK">Oklahoma</option>
+                      <option value="OR">Oregon</option>
+                      <option value="PA">Pennsylvania</option>
+                      <option value="RI">Rhode Island</option>
+                      <option value="SC">South Carolina</option>
+                      <option value="SD">South Dakota</option>
+                      <option value="TN">Tennessee</option>
+                      <option value="TX">Texas</option>
+                      <option value="UT">Utah</option>
+                      <option value="VT">Vermont</option>
+                      <option value="VA">Virginia</option>
+                      <option value="WA">Washington</option>
+                      <option value="WV">West Virginia</option>
+                      <option value="WI">Wisconsin</option>
+                      <option value="WY">Wyoming</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="zip"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Zipcode
+                    </label>
+                    <input
+                      id="zip"
+                      value={zip}
+                      onChange={(e) => setZip(e.target.value)}
+                      required
+                      placeholder="12345"
+                      pattern="[0-9]{5}(-[0-9]{4})?"
+                      maxLength={10}
+                      className="mt-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col sm:col-span-2">
                     <label
                       htmlFor="phone"
-                      className="block text-md font-medium text-gray-900"
+                      className="text-sm font-medium text-gray-700"
                     >
                       Phone
                     </label>
                     <input
-                      value={phone}
-                      onChange={(e) =>
-                        setPhone(formatPhoneNumber(e.target.value))
-                      }
-                      type="tel"
                       id="phone"
-                      name="phone"
-                      maxLength={14}
-                      autoComplete="tel"
-                      className="shadow-sm mt-1 block w-full sm:text-sm rounded-md border-2 p-1 border-red-700 focus:ring-2 focus:ring-red-400 focus:border-red-400"
-                      placeholder="555-555-5555"
+                      value={phone}
+                      onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
                       required
+                      placeholder="(555) 555-5555"
+                      maxLength={14}
+                      className="mt-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
                     />
                   </div>
                 </div>
-              </li>
-              
-              {/* Payment Error Display */}
-              <li className="px-2 py-4">
+                <p className="mt-6 text-xs text-gray-500 leading-relaxed">
+                  Your information is used only to process your order. By placing the order you
+                  agree to our terms & pickup policies.
+                </p>
+              </div>
+            </aside>
+
+            {/* Payment Section (mobile below details via order classes) */}
+            <div className="order-3 lg:hidden lg:order-2 lg:col-span-2 space-y-6">
+              <div className="bg-white/80 backdrop-blur rounded-2xl shadow ring-1 ring-gray-200 p-6 space-y-6">
                 {paymentError && (
-                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
                     {paymentError}
                   </div>
                 )}
-
-                {/* Payment Method Selection */}
                 {!paymentMethod && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Choose Payment Method</h3>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                      Payment Method
+                    </h3>
                     <div className="flex flex-col sm:flex-row gap-4">
                       <button
                         type="button"
                         onClick={handlePayWithCard}
-                        className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-300"
+                        className="btn-metal btn-metal-blue"
                       >
-                        Pay with Card
+                        Card
                       </button>
                       <button
                         type="button"
                         onClick={handlePayWithCash}
-                        className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-700 focus:ring-4 focus:ring-green-300"
+                        className="btn-metal btn-metal-green"
                       >
-                        Pay Cash On-Site
+                        Cash (On-Site)
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* Square Payment Form - Only show if card payment selected */}
                 {showCardForm && paymentMethod === "square" && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-medium text-gray-900">Card Payment</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        Card Payment
+                      </h3>
                       <button
                         type="button"
                         onClick={() => {
@@ -538,9 +551,9 @@ const Checkout = () => {
                           setShowCardForm(false);
                           setPaymentError("");
                         }}
-                        className="text-black hover:text-gray-700 cursor-pointer border-gray-700 border-2 rounded-lg px-3 py-1 hover:bg-white bg-green-400"
+                        className="text-sm font-medium text-blue-600 hover:text-blue-800"
                       >
-                        Change Payment Method
+                        Change
                       </button>
                     </div>
                     <SquarePayment
@@ -552,91 +565,73 @@ const Checkout = () => {
                   </div>
                 )}
 
-                {/* Cash Payment Confirmation */}
                 {paymentMethod === "cash" && !showCardForm && (
-                  <div className="mb-6">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-lg font-medium text-green-800">Cash Payment Selected</h3>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPaymentMethod(null);
-                            setPaymentError("");
-                          }}
-                          className="text-green-600 hover:text-green-800"
-                        >
-                          Change Payment Method
-                        </button>
-                      </div>
-                      <p className="text-green-700">
-                        You will pay <strong>${calculateTotal()}</strong> in cash when you pick up your order.
-                      </p>
+                  <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-green-800">
+                        Cash Selected
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPaymentMethod(null);
+                          setPaymentError("");
+                        }}
+                        className="text-green-600 hover:text-green-800 text-xs font-medium"
+                      >
+                        Change
+                      </button>
                     </div>
+                    <p>
+                      You will pay <strong>${calculateTotal()}</strong> when you
+                      pick up your order.
+                    </p>
                   </div>
                 )}
 
-                <div className="flex justify-center mt-5">
+                <div className="flex flex-col sm:flex-row gap-4 pt-2">
                   <button
-                    onClick={() => setShowAlert(true)}
                     type="button"
-                    className="bg-gradient-to-r hover:bg-gradient-to-br focus:ring-4 focus:outline-none shadow-lg shadow-red-500/50  font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 cursor-pointer
-                    text-white 
-                    from-red-400 
-                    via-red-500 
-                    to-red-600  
-                    focus:ring-red-800 "
+                    onClick={() => setShowAlert(true)}
+                    className="btn-metal btn-metal-red w-full sm:w-auto flex-1"
                   >
                     Cancel Order
                   </button>
-
-                  {/* Dynamic submit button based on payment method */}
                   {paymentMethod === "cash" && (
                     <button
                       type="submit"
                       disabled={isPaymentProcessing}
-                      className={`focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 shadow-lg cursor-pointer 
-                      ${isPaymentProcessing 
-                        ? 'bg-gray-400 shadow-gray-400 text-gray-600 cursor-not-allowed' 
-                        : 'shadow-green-600 text-white bg-green-600 hover:bg-green-700 focus:ring-green-800'
-                      }`}
+                      className={`btn-metal btn-metal-green w-full sm:w-auto flex-1 ${isPaymentProcessing ? 'btn-metal-disabled' : ''}`}
                     >
-                      {isPaymentProcessing ? 'Processing...' : 'Complete Order'}
+                      {isPaymentProcessing ? "Processing…" : "Complete Order"}
                     </button>
                   )}
-
                   {paymentMethod === "square" && showCardForm && (
                     <button
                       type="submit"
                       disabled={isPaymentProcessing || !paymentHandler}
-                      className={`focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 shadow-lg cursor-pointer 
-                      ${isPaymentProcessing || !paymentHandler 
-                        ? 'bg-gray-400 shadow-gray-400 text-gray-600 cursor-not-allowed' 
-                        : 'shadow-blue-600 text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-800'
-                      }`}
+                      className={`btn-metal btn-metal-blue w-full sm:w-auto flex-1 ${isPaymentProcessing || !paymentHandler ? 'btn-metal-disabled' : ''}`}
                     >
-                      {isPaymentProcessing ? 'Processing...' : 'Submit Order'}
+                      {isPaymentProcessing ? "Processing…" : "Submit Order"}
                     </button>
                   )}
                 </div>
-              </li>
-            </ul>
+              </div>
+            </div>
           </div>
         </div>
       </form>
-      {/* Success alert  */}
+
+      {/* Success alert */}
       {showSuccessAlert && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-opacity-30 border-green-400">
-          <AlertSuccess
-            successMsg={successMsg}
-            successDescription={successDescription}
-          />
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40">
+          <AlertSuccess successMsg={successMsg} successDescription={successDescription} />
         </div>
       )}
 
-      {/* Delete confirmation alert  */}
+      {/* Delete confirmation alert */}
       {showAlert && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-opacity-30 rounded-2xl border-6 ">
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40">
           <AlertBlack
             alertMsg={alertMsg}
             alertDescription={alertDescription}
