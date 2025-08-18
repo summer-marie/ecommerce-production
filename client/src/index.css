@@ -79,27 +79,42 @@
 }
 
 .header-text2 {
-  /* Todo: make bg color gradient 3 colors to look like italian flag */
+  /* Re-introduced controlled sizing so the cutout fills >=30% of Jumbotron height */
   background-color: white;
-  /* background: linear-gradient(to bottom, red, white 45%, green 100%); */
   color: black;
-  /* Responsive font size */
-  font-size: 9vw;
-  font-weight: bold;
-  /* Center the text container */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30%; /* At least 30% of parent (the Jumbotron section) */
+  font-size: clamp(4rem, 14vw, 11rem); /* Bigger headline */
+  line-height: 0.9; /* Tighter for large size */
+  font-weight: 800;
   margin: 0 auto;
-  padding: 10px;
-  width: 55%;
+  padding: 14px 28px;
+  /* Keep on a single line */
+  white-space: nowrap;
+  width: auto; /* Shrink to fit content */
+  max-width: 95vw; /* Safety cap so it doesn't overflow viewport */
   text-align: center;
-  /* Position text */
   position: absolute;
-  /* Position text in the middle */
-  top: 35%;
-  /* Position text in the middle */
+  top: 40%;
   left: 50%;
-  /* Position text in the middle */
   transform: translate(-50%, -50%);
-  /* mix-blend-mode: screen; */
+  border-radius: 16px;
+  box-sizing: border-box;
+  word-break: normal; /* ensure no forced breaking */
+}
+
+/* Optional: if you still want a responsive override on very small screens, adjust here */
+@media (max-width: 640px) {
+  .header-text2 {
+    /* Make the text occupy more of the cutout on mobile */
+    min-height: auto; /* Remove large empty vertical space */
+    font-size: clamp(3rem, 18vw, 5.4rem); /* Bigger relative scaling */
+    padding: 6px 12px; /* Tighter padding */
+    max-width: 95vw;
+    letter-spacing: -0.01em; /* Slightly tighten to fit single line */
+  }
 }
 
 /*  Custom box shadow Smokey */

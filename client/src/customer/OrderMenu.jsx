@@ -41,7 +41,7 @@ const Order = () => {
 
       {/* Flex container */}
       <div className="mx-auto max-w-[120rem]">
-        <div className="flex flex-wrap justify-center items-start flex-row sm:flex-col sm:items-center md:flex-row lg:flex-col xl:flex-row m-[3rem]">
+        <div className="flex flex-wrap justify-center items-start gap-4 sm:gap-6 m-4 sm:m-6">
           {/* Pizza Menu Cards */}
           {!Array.isArray(builders) || builders.length === 0 ? (
             <div className="w-full text-center py-12">
@@ -101,24 +101,24 @@ const Order = () => {
               return (
                 <div
                   key={builder.id || index}
-                  className="max-w-sm w-1/4 m-4 sm:w-full bg-white border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col h-[30rem] relative"
+                  className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col h-[26rem] sm:h-[28rem] relative"
                 >
-                  <div className="relative w-full aspect-[4/3]">
+                  <div className="relative w-full h-1/2">
                     <LazyImage
-                      className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
+                      className="absolute inset-0 w-full h-full object-cover rounded-t-lg"
                       src={imageSrc}
                       fallbackSrc={fallbackImage}
                       alt={builder.pizzaName || "Pizza"}
                     />
                   </div>
 
-                  <div className="px-5 pt-3 pb-3 flex flex-col flex-1">
-                    <h5 className="text-xl font-semibold tracking-tight text-gray-900">
+                  <div className="px-4 sm:px-5 pt-3 pb-3 flex flex-col h-1/2 relative">
+                    <h5 className="text-xl sm:text-xl lg:text-2xl font-semibold tracking-tight text-gray-900 mb-2">
                       {builder.pizzaName}
                     </h5>
-                    <div className="space-y-1 mb-2">
-                      <ul className="list-disc list-inside ml-2">
-                        <span>
+                    <div className="space-y-1 mb-3">
+                      <div className="text-base sm:text-base lg:text-lg">
+                        <div className="mb-1">
                           <strong>Pizza Base:</strong> {baseNames || "-"}
                           {baseNames && sauceName
                             ? ", "
@@ -126,26 +126,25 @@ const Order = () => {
                             ? ""
                             : ""}
                           {sauceName || ""}
-                        </span>
-                        <span className="block">
+                        </div>
+                        <div>
                           <strong>Toppings:</strong> {allToppings || "-"}
-                        </span>
-                      </ul>
-
-                      <div className="flex-1"></div>
-                      <div className="absolute bottom-0 left-0 w-full px-5 flex items-center justify-between">
-                        <span className="text-3xl font-bold text-gray-900">
-                          $ {Number(builder.pizzaPrice).toFixed(2)}
-                        </span>
-
-                        <button
-                          onClick={() => handleAddToCart(builder)}
-                          type="button"
-                          className="font-medium rounded-lg text-sm px-5 py-2.5 text-center mt-2 top-0 right-0 shadow-lg me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer shadow-green-800/80 hover:text-black text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800 transition-all duration-200"
-                        >
-                          Add to Cart
-                        </button>
+                        </div>
                       </div>
+                    </div>
+
+                    <div className="absolute bottom-3 left-0 w-full px-4 sm:px-5 flex items-center justify-between">
+                      <span className="text-2xl sm:text-3xl font-bold text-gray-900">
+                        $ {Number(builder.pizzaPrice).toFixed(2)}
+                      </span>
+
+                      <button
+                        onClick={() => handleAddToCart(builder)}
+                        type="button"
+                        className="font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 text-center shadow-lg hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer shadow-green-800/80 hover:text-black text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800 transition-all duration-200"
+                      >
+                        Add to Cart
+                      </button>
                     </div>
                   </div>
                 </div>

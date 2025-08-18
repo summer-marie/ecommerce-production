@@ -42,13 +42,13 @@ const Contact = () => {
 
   return (
     <>
-      <section id="contactSection" className="bg-grey-400 mb-20">
-        <div className="py-8 lg:py-16 px-4 mx-auto max-w-screen-md">
-          <h2 className="mb-4 text-4xl tracking-tight font-extrabold text-center text-slate-800">
+      <section id="contactSection" className="bg-grey-400 mb-20 px-4">
+        <div className="py-8 lg:py-16 mx-auto max-w-screen-md">
+          <h2 className="mb-4 text-3xl sm:text-4xl tracking-tight font-extrabold text-center text-slate-800">
             Contact Us
           </h2>
 
-          <p className="mb-8 lg:mb-16 text-center text-gray-700  sm:text-xl leading-relaxed">
+          <p className="mb-8 lg:mb-16 text-center text-gray-700 text-base sm:text-xl leading-relaxed px-2">
             We're a family-owned pizzeria dedicated to crafting the perfect
             slice right here in Goodyear, Arizona. Whether you have questions
             about our menu, want to share your dining experience, or need
@@ -56,10 +56,10 @@ const Contact = () => {
             every customer and looks forward to serving you the best pizza in
             town.
           </p>
-          <p className="text-center text-red-600 italic text-lg">
+          <p className="text-center text-red-600 italic text-base sm:text-lg mb-6">
             ** All fields are required
           </p>
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             <div>
               <label
                 htmlFor="email"
@@ -123,13 +123,13 @@ const Contact = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-[30%] font-medium cursor-pointer
+                className="w-full sm:w-[60%] md:w-[40%] lg:w-[30%] font-medium cursor-pointer
               shadow-green-800/80 
               text-slate-800 
               from-green-300
               via-green-500 
               to-green-600
-              focus:ring-green-800 rounded-lg shadow-lg  text-sm px-5 py-2.5 text-center me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t  focus:ring-4 focus:outline-none"
+              focus:ring-green-800 rounded-lg shadow-lg text-sm px-5 py-3 text-center me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none"
               >
                 {isLoading ? "Sending..." : "Send"}
               </button>

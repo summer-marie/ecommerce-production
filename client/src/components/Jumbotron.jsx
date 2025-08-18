@@ -5,22 +5,20 @@ const Jumbotron = () => {
     <>
       <section
         className="bg-center bg-no-repeat bg-[url('./assets/backyard.jpg')] bg-gray-700 
-      bg-blend-hard-light relative
-      
-      bg-cover"
+      bg-blend-hard-light relative bg-cover min-h-[70vh] sm:min-h-[75vh] lg:min-h-[80vh]"
       >
-        <div className='px-4 w-full text-center py-24 lg:py-56 '>
+        <div className='px-4 w-full text-center py-10 sm:py-32 lg:py-64'>
           <h1
-            className='mb-4 text-4xl font-extrabold tracking-tight leading-none text-white 
-        md:text-5xl lg:text-6xl header-text2 mix-blend-screen barriecitoFont rounded-xl'
+            className='mb-4 sm:mb-0 font-extrabold tracking-tight leading-none text-white 
+        header-text2 mix-blend-screen barriecitoFont rounded-xl'
           >
             OverTheWall
           </h1>
-          <div className='absolute right-0 bottom-15 w-[50%]'>
-            <div className=' bg-green-100 rounded-xl '>
-              <div className='px-4 py-3 mx-auto'>
+          <div className='absolute bottom-8 left-4 right-4 sm:right-0 sm:bottom-20 sm:left-auto sm:w-[50%]'>
+            <div className='bg-green-100 rounded-xl p-2'>
+              <div className='px-2 py-3 sm:px-4'>
                 <div className='flex items-center'>
-                  <p className='amitaFont text-3xl italic'>
+                  <p className='amitaFont text-lg sm:text-2xl lg:text-3xl italic text-center'>
                     Brick oven pie with authentic italian vibe
                   </p>
                 </div>
