@@ -98,12 +98,13 @@ const Order = () => {
                     .filter(Boolean)
                 : [];
               const allToppings = [...meatNames, ...veggieNames].join(", ");
+              const longText = (allToppings && allToppings.length > 45) || (builder.pizzaName && builder.pizzaName.length > 24);
               return (
                 <div
                   key={builder.id || index}
-                  className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col h-[26rem] sm:h-[28rem] relative"
+                  className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col overflow-hidden"
                 >
-                  <div className="relative w-full h-1/2">
+                  <div className="relative w-full h-40 sm:h-44 lg:h-48">
                     <LazyImage
                       className="absolute inset-0 w-full h-full object-cover rounded-t-lg"
                       src={imageSrc}
@@ -111,37 +112,30 @@ const Order = () => {
                       alt={builder.pizzaName || "Pizza"}
                     />
                   </div>
-
-                  <div className="px-4 sm:px-5 pt-3 pb-3 flex flex-col h-1/2 relative">
-                    <h5 className="text-xl sm:text-xl lg:text-2xl font-semibold tracking-tight text-gray-900 mb-2">
+                  <div className="flex flex-col flex-1 px-4 sm:px-5 pt-4 pb-5">
+                    <h5 className={`font-semibold tracking-tight text-gray-900 mb-3 ${longText ? 'text-xl sm:text-xl' : 'text-2xl sm:text-2xl'}`}>
                       {builder.pizzaName}
                     </h5>
-                    <div className="space-y-1 mb-3">
-                      <div className="text-base sm:text-base lg:text-lg">
-                        <div className="mb-1">
+                    <div className="space-y-2 mb-4 flex-1 min-h-0">
+                      <div className={`${longText ? 'text-sm sm:text-sm' : 'text-base sm:text-lg'} leading-snug`}> 
+                        <div className="mb-2 break-words">
                           <strong>Pizza Base:</strong> {baseNames || "-"}
-                          {baseNames && sauceName
-                            ? ", "
-                            : baseNames && !sauceName
-                            ? ""
-                            : ""}
+                          {baseNames && sauceName ? ", " : ''}
                           {sauceName || ""}
                         </div>
-                        <div>
+                        <div className="break-words">
                           <strong>Toppings:</strong> {allToppings || "-"}
                         </div>
                       </div>
                     </div>
-
-                    <div className="absolute bottom-3 left-0 w-full px-4 sm:px-5 flex items-center justify-between">
-                      <span className="text-2xl sm:text-3xl font-bold text-gray-900">
+                    <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                      <span className="text-xl sm:text-2xl font-bold text-gray-900 shrink-0">
                         $ {Number(builder.pizzaPrice).toFixed(2)}
                       </span>
-
                       <button
                         onClick={() => handleAddToCart(builder)}
                         type="button"
-                        className="font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 text-center shadow-lg hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer shadow-green-800/80 hover:text-black text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800 transition-all duration-200"
+                        className="font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 text-center shadow-lg hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer shadow-green-800/80 hover:text-black text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800 transition-all duration-200 max-w-[60%]"
                       >
                         Add to Cart
                       </button>
