@@ -109,6 +109,7 @@ import builderIndex from "./builders/builderIndex.js";
 import msgIndex from "./messages/msgIndex.js";
 import monitoringRouter from "./monitoring/index.js";
 import paymentRoutes from "./payments/squareRoutes.js";
+import scheduleMessageCleanup from "./utils/messageScheduler.js";
 
 // Replace console.log with proper logging
 logInfo("Environment check", {
@@ -292,7 +293,7 @@ try {
     app.use("/orders", orderIndex);
     app.use("/ingredients", cacheMiddleware(600), ingredientsIndex);
     app.use("/builders", cacheMiddleware(300), builderIndex);
-    app.use("/messages", contactRateLimit, msgIndex);
+    app.use("/messages", msgIndex);
     app.use("/payments", paymentRoutes);
     app.use("/monitoring", adminRateLimit, monitoringRouter);
 
@@ -358,6 +359,9 @@ try {
       environment: process.env.NODE_ENV || 'development',
       database: mongoURL.includes('mongodb+srv') ? 'Atlas Cloud' : 'Local'
     });
+    
+    // Start message cleanup scheduler
+    scheduleMessageCleanup();
   });
 } catch (err) {
   console.error("❌ Startup error:", err);

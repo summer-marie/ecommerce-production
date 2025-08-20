@@ -1,5 +1,6 @@
 import messageModel from "./msgModel.js";
 import sgMail from "@sendgrid/mail";
+import { checkMessageLimit, cleanupOldMessages, cleanupOldestMessages } from "../utils/messageCleanup.js";
 
 // Environment-driven behavior:
 // - If SAVE_CONTACTS is 'true' (default), messages are saved to DB.
@@ -47,11 +48,28 @@ const messageCreate = async (req, res) => {
       console.warn("SendGrid API key not configured; skipping email send. Set SENDGRID_API_KEY.");
     }
 
-    // Optionally save to DB
+    // Optionally save to DB with cleanup and limits
     let saved = null;
+    let limitInfo = null;
+    
     if (shouldSave) {
       try {
+        // First, run automatic cleanup of old messages
+        await cleanupOldMessages();
+        
+        // Check current message limits
+        limitInfo = await checkMessageLimit();
+        
+        // If at limit, remove oldest messages to make room
+        if (limitInfo.limitReached) {
+          await cleanupOldestMessages(1);
+          console.log("📝 Message limit reached, removed oldest message to make room");
+        }
+        
+        // Save the new message
         saved = await messageModel.create({ email, subject, message });
+        console.log("💾 Message saved to database");
+        
       } catch (err) {
         console.error("Failed to save contact message:", err?.message || err);
       }
