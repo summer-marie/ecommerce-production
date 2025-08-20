@@ -41,7 +41,11 @@ const AdminInbox = () => {
   // handle delete selected messages
   const handleDeleteSelected = () => {
     if (
-      window.confirm(`Delete ${selectedMessages.length} selected messages?`)
+      window.confirm(
+        `Remove ${selectedMessages.length} selected messages from dashboard?\n\n` +
+        `Note: This only removes messages from this admin panel. ` +
+        `Original emails will remain in your Gmail inbox.`
+      )
     ) {
       // Delete each selected message
       selectedMessages.forEach((id) => {
@@ -89,6 +93,7 @@ const AdminInbox = () => {
                 <button
                   onClick={handleDeleteSelected}
                   className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition flex items-center text-sm"
+                  title="Remove from dashboard (emails remain in Gmail)"
                 >
                   <svg
                     className="w-4 h-4 mr-1"
@@ -98,9 +103,22 @@ const AdminInbox = () => {
                   >
                     <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Delete ({selectedMessages.length})
+                  Remove ({selectedMessages.length})
                 </button>
               )}
+            </div>
+
+            {/* Info note about delete behavior */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <div className="flex items-start">
+                <svg className="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <div className="text-xs text-blue-800">
+                  <strong>Note:</strong> Removing messages here only clears them from this dashboard. 
+                  Original emails remain safely stored in your Gmail inbox for permanent reference.
+                </div>
+              </div>
             </div>
 
             {loading && <div className="text-gray-500">Loading...</div>}
