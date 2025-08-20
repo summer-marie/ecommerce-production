@@ -1,16 +1,17 @@
 import { useNavigate } from "react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { builderGetMany, builderDeleteOneAlt } from "../redux/builderSlice";
 import { useSelector, useDispatch } from "react-redux";
 import AlertBlack from "../components/AlertBlack";
 
 const alertMsg = "Delete Pizza from Menu";
-const alertDescription =
-  "This action cannot be undone. The pizza will be permanently removed from the customer menu.";
+const alertDescription = "This action cannot be undone. The pizza will be permanently removed from the customer menu.";
 
 const AdminMenu = () => {
   const [showAlert, setShowAlert] = useState(false);
   const { builders } = useSelector((state) => state.builder);
+  // State to track the pizza being deleted
+  const [alertPizza, setAlertPizza] = useState(null);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -19,17 +20,14 @@ const AdminMenu = () => {
     dispatch(builderGetMany());
   }, [dispatch]);
 
-  // Use a ref to store the ID of the pizza to be deleted
-  const deleteIdRef = useRef(null);
-
-  const handleDeleteClick = (id) => {
-    deleteIdRef.current = id;
+  const handleDeleteClick = (builder) => {
+    setAlertPizza(builder);
     setShowAlert(true);
   };
 
   const handleConfirm = async () => {
     setShowAlert(false);
-    const id = deleteIdRef.current;
+    const id = alertPizza?.id;
     if (!id) {
       console.error("No pizza id set for deletion");
       return;
@@ -37,18 +35,31 @@ const AdminMenu = () => {
     await dispatch(builderDeleteOneAlt(id)).unwrap();
     // Refresh the builders list after deletion
     await dispatch(builderGetMany()).unwrap();
-    deleteIdRef.current = null;
+    setAlertPizza(null);
     console.log("Pizza deleted with ID:", id);
   };
 
   const handleCancel = () => {
     setShowAlert(false);
+    setAlertPizza(null);
   };
 
   const handleClick = (id) => {
     // Navigate to the EditPizza page with the selected pizza ID
     navigate(`/admin-update-one/${id}`);
   };
+
+  // Pass the pizza name dynamically to the alert
+  const dynamicAlertMsg = alertPizza ? (
+    <>
+      Are you sure you want to delete{" "}
+      <span className="text-red-500 italic p-2">{alertPizza.pizzaName}</span>?
+    </>
+  ) : (
+    alertMsg
+  );
+
+
 
   return (
     <>
@@ -134,7 +145,7 @@ const AdminMenu = () => {
                           Update Pizza
                         </button>
                         <button
-                          onClick={() => handleDeleteClick(builder.id)}
+                          onClick={() => handleDeleteClick(builder)}
                           type="button"
                           className="absolute z-10 mt-2 top-0 left-2 font-medium rounded-lg shadow-lg  text-sm px-5 py-2.5 text-center me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t  focus:ring-4 focus:outline-none cursor-pointer
                 shadow-red-800/80 
@@ -193,7 +204,7 @@ const AdminMenu = () => {
       {showAlert && (
         <div className="fixed top-1/2 left-[calc(50%+8rem)] transform -translate-x-1/2 -translate-y-1/2 z-50">
           <AlertBlack
-            alertMsg={alertMsg}
+            alertMsg={dynamicAlertMsg}
             alertDescription={alertDescription}
             handleCancel={handleCancel}
             handleConfirm={handleConfirm}
