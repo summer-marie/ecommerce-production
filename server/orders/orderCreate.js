@@ -40,6 +40,7 @@ const orderCreate = async (req, res) => {
       orderTotal,
       status,
       isArchived,
+      payment,
     } = req.body;
 
     // Generate order number if not provided
@@ -65,7 +66,7 @@ const orderCreate = async (req, res) => {
     }
     // Set date and status if not provided
     if (!date) date = new Date();
-    if (!status) status = "processing";
+    if (!status) status = "pending_payment"; // Default to pending payment
     if (isArchived === undefined) isArchived = false;
 
     const newOrder = await orderModel.create({
@@ -78,6 +79,8 @@ const orderCreate = async (req, res) => {
       lastName,
       orderTotal,
       status,
+      isArchived,
+      payment,
     });
     // Format the date before logging and sending the response
     const formattedDate = new Intl.DateTimeFormat("en-US", {

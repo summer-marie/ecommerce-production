@@ -453,10 +453,9 @@ const AdminUpdateOne = () => {
       </div>
       {showSuccessAlert && (
         <div
-          // className="fixed inset-0 flex items-center justify-center z-50 animate-fade-in-up"
           className="fixed bottom-52 left-1/2  
         -translate-x-1/2 ml-30
-        bg-green-400
+        bg-gray-700
         text-white  
         p-2         
         rounded-lg  

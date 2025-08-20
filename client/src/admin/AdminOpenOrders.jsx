@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import AlertBlack from "../components/AlertBlack";
-import SpinnerBubbles from "../components/SpinnerBubbles";
 import {
   orderGetOpen,
   orderUpdateStatus,
@@ -16,11 +15,7 @@ import {
 const AdminOpenOrders = () => {
   const { orders } = useSelector((state) => state.order);
   const dispatch = useDispatch();
-  // const [newStatus, setNewStatus] = useState({});
-  const [localStatus, setLocalStatus] = useState({});
-  const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [savingId, setSavingId] = useState(null);
   const [archiveOrder, setArchiveOrder] = useState(null);
 
   const alertMsg = archiveOrder
@@ -28,13 +23,12 @@ const AdminOpenOrders = () => {
     : "Are you sure you want to archive this order?";
   const alertDescription = "Click to confirm";
 
-  const statusArray = ["processing", "completed", "delivered", "cancelled"];
+  const statusArray = ["processing", "completed", "cancelled"];
 
   // Grab open order
   useEffect(() => {
     dispatch(orderGetOpen());
-    console.log("useEffect", orders);
-  }, []);
+  }, [dispatch]);
 
   const getStatusCounts = () => {
     return orders.reduce(
@@ -47,7 +41,6 @@ const AdminOpenOrders = () => {
       {
         processing: 0,
         completed: 0,
-        delivered: 0,
         cancelled: 0,
       }
     );
@@ -56,8 +49,7 @@ const AdminOpenOrders = () => {
     const statusOrder = {
       processing: 1,
       completed: 2,
-      delivered: 3,
-      cancelled: 4,
+      cancelled: 3,
     };
 
     return [...orders].sort((a, b) => {
@@ -70,43 +62,51 @@ const AdminOpenOrders = () => {
     });
   };
 
-  const handleStatusUpdate = (id) => {
-    setSavingId(id);
-    setLoading(true);
+  // Helper function to get payment status display
+  const getPaymentStatusDisplay = (order) => {
+    // Check if payment exists and is completed
+    if (order.payment && order.payment.status === "completed") {
+      return {
+        text: "PAID",
+        className: "text-green-600 font-semibold"
+      };
+    }
+    // Check if payment method is cash
+    if (order.payment && order.payment.method === "cash") {
+      return {
+        text: "CASH PAYMENT DUE",
+        className: "text-blue-800 font-semibold"
+      };
+    }
+    // If no payment info, show cash payment due as default
+    return {
+      text: "CASH PAYMENT DUE", 
+      className: "text-blue-800 font-semibold"
+    };
+  };
 
-    const statusToUpdate =
-      localStatus[id] ?? orders.find((o) => o.id === id)?.status;
-    // Add delay before dispatch
-    setTimeout(() => {
-      dispatch(
-        orderUpdateStatus({
-          id: id,
-          status: { status: statusToUpdate },
-        })
-      )
-        .then(() => {
-          return new Promise((resolve) => setTimeout(resolve, 2000));
-        })
-        .then(() => {
-          setSavingId(null);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Status update failed:", {
-            id,
-            error,
-            time: new Date().toISOString(),
-          });
-          setSavingId(null);
-          setLoading(false);
+  // Direct status update function for badge buttons
+  const handleDirectStatusUpdate = (id, newStatus) => {
+    console.log("Updating order:", { id, newStatus });
+
+    dispatch(
+      orderUpdateStatus({
+        id: id,
+        status: { status: newStatus },
+      })
+    )
+      .unwrap()
+      .then((response) => {
+        console.log("Status update successful:", response);
+      })
+      .catch((error) => {
+        console.error("Status update failed:", {
+          id,
+          newStatus,
+          error,
+          time: new Date().toISOString(),
         });
-    }, 1000);
-
-    console.log("Initial states:", {
-      savingId: id,
-      loading: true,
-      time: new Date().toISOString(),
-    });
+      });
   };
 
   // When Archive Order button is clicked
@@ -126,19 +126,15 @@ const AdminOpenOrders = () => {
   const handleConfirm = async () => {
     if (archiveOrder) {
       try {
-        // First update the status to "archived"
-        await dispatch(
-          orderUpdateStatus({
-            id: archiveOrder._id,
-            status: { status: "archived" },
-          })
-        ).unwrap();
-
-        // Then archive the order
+        console.log("Archiving order:", archiveOrder._id);
+        
+        // Just archive the order directly
         await dispatch(orderArchiveOne(archiveOrder._id)).unwrap();
 
-        // Finally refresh the open orders
+        // Refresh the open orders to remove archived order from list
         await dispatch(orderGetOpen()).unwrap();
+        
+        console.log("Order archived successfully");
         setArchiveOrder(null);
       } catch (error) {
         console.error("Error archiving order:", error);
@@ -186,11 +182,6 @@ const AdminOpenOrders = () => {
                     : ""
                 }
                 ${
-                  status === "delivered"
-                    ? "bg-green-100 text-green-800 border-green-800"
-                    : ""
-                }
-                ${
                   status === "cancelled"
                     ? "bg-red-100 text-red-800 border-red-800"
                     : ""
@@ -224,7 +215,7 @@ const AdminOpenOrders = () => {
                   Order Details/Quantity
                 </th>
                 <th scope="col" className="px-6 py-3 w-[15%] text-center">
-                  Destination
+                  Payment Status
                 </th>
                 <th scope="col" className="px-6 py-3 w-[10%] text-center">
                   Customer Name
@@ -232,10 +223,7 @@ const AdminOpenOrders = () => {
                 <th scope="col" className="px-6 py-3 w-[8%] text-center">
                   Total $
                 </th>
-                <th scope="col" className="px-6 py-3 w-[10%] text-center">
-                  Status
-                </th>
-                <th scope="col" className="px-6 py-3 w-[10%] text-center">
+                <th scope="col" className="px-6 py-3 w-[15%] text-center">
                   Update Status
                 </th>
                 <th scope="col" className="px-6 py-3 w-[7%] text-center">
@@ -272,63 +260,42 @@ const AdminOpenOrders = () => {
                     ))}
                   </td>
                   <td className="px-2 py-2 w-[15%] text-center">
-                    {order.address.street}
-                    <br />
-                    {order.address.zip}
+                    {(() => {
+                      const paymentStatus = getPaymentStatusDisplay(order);
+                      return (
+                        <span className={paymentStatus.className}>
+                          {paymentStatus.text}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-2 py-2 w-[10%] text-center">
-                    {order.firstName} {order.lastName}
+                    {order.firstName}
                   </td>
                   <td className="px-2 py-2 w-[8%] text-center">
                     ${order.orderTotal}
                   </td>
 
-                  <td className="px-2 py-2 w-auto min-w-full text-center">
-                    <select
-                      value={localStatus[order._id] ?? order.status}
-                      onChange={(e) => {
-                        setLocalStatus((prev) => ({
-                          ...prev,
-                          [order._id]: e.target.value,
-                        }));
-                      }}
-                      className="text-sm rounded-lg block w-full p-2.5 text-center
-                          dark:text-cyan-700 
-                          bg-slate-100
-                          border-slate-500
-                          focus:ring-white
-                          focus:border-sky-500"
-                      style={{ textAlignLast: "center" }}
-                    >
+                  <td className="px-2 py-2 w-[15%] text-center">
+                    <div className="flex flex-col gap-1">
                       {statusArray.map((status) => (
-                        <option
-                          className="text-center"
-                          style={{ textAlign: "left" }}
-                          key={status}
-                          value={status}
-                        >
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-
-                  <td className="px-4 py-4 w-[10%] text-center">
-                    <div className="relative w-32 h-12">
-                      {" "}
-                      {/* Fixed width/height container */}
-                      {savingId === order._id && loading ? (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <SpinnerBubbles loading={loading} />
-                        </div>
-                      ) : (
                         <button
-                          onClick={() => handleStatusUpdate(order._id)}
-                          className="w-full h-full px-4 py-2 cursor-pointer hover:underline disabled:cursor-not-allowed text-blue-600 disabled:hover:text-slate-600 font-semibold"
+                          key={status}
+                          onClick={() => handleDirectStatusUpdate(order._id, status)}
+                          disabled={order.status === status}
+                          className={`
+                            px-3 py-2 rounded-full text-xs font-semibold border transition-all
+                            ${order.status === status 
+                              ? 'bg-blue-600 text-white border-blue-600 cursor-default' 
+                              : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-500 hover:text-white hover:border-blue-500 cursor-pointer'
+                            }
+                            ${order.status === status ? 'opacity-100' : 'opacity-100'}
+                          `}
                         >
-                          Save Status
+                          {order.status === status ? '✓ ' : ''}
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
                         </button>
-                      )}
+                      ))}
                     </div>
                   </td>
                   <td className="px-4 py-4 w-[7%] text-center">

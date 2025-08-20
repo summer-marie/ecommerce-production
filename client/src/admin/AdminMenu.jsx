@@ -5,7 +5,8 @@ import { useSelector, useDispatch } from "react-redux";
 import AlertBlack from "../components/AlertBlack";
 
 const alertMsg = "Delete Pizza from Menu";
-const alertDescription = "This action cannot be undone. The pizza will be permanently removed from the customer menu.";
+const alertDescription =
+  "This action cannot be undone. The pizza will be permanently removed from the customer menu.";
 
 const AdminMenu = () => {
   const [showAlert, setShowAlert] = useState(false);
@@ -58,8 +59,6 @@ const AdminMenu = () => {
   ) : (
     alertMsg
   );
-
-
 
   return (
     <>

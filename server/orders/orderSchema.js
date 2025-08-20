@@ -101,12 +101,11 @@ const orderSchema = new Schema({
 
   status: {
     type: String,
-    // Allowable entries
+    // Allowable entries - removed "delivered" since pickup only
     enum: [
       "pending_payment",
       "processing",
       "completed",
-      "delivered",
       "archived",
       "cancelled",
     ],
