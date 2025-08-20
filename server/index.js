@@ -122,6 +122,9 @@ const sessionSecret = process.env.SESSION_SECRET;
 
 const app = express();
 
+// Trust proxy for Railway (fixes rate limiting X-Forwarded-For errors)
+app.set('trust proxy', 1);
+
 // Minimal health endpoint early in the pipeline to satisfy platform health checks
 // This responds before any heavy middleware or DB-dependent logic runs.
 app.get('/health', (req, res) => {
