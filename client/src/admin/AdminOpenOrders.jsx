@@ -7,9 +7,13 @@ import {
   orderArchiveOne,
 } from "../redux/orderSlice";
 
-// TODO: explore other gui interface and user controls to make tracking orders easier
 
-// TODO: Refresh issue when new orders are being created. have to reload to see them 
+
+// TODO: update status doesnt work
+// TODO: archive doesnt work
+//  TODO: remove all cancled orders that are 12 hours old 
+// TODO: implement order search and filtering
+// TODO: add pagination for order list 
 
 
 const AdminOpenOrders = () => {
@@ -46,20 +50,20 @@ const AdminOpenOrders = () => {
     );
   };
   const getSortedOrders = () => {
-    const statusOrder = {
-      processing: 1,
-      completed: 2,
-      cancelled: 3,
-    };
-
+    // Sort by newest first
     return [...orders].sort((a, b) => {
-      // First sort by status order
-      const statusDiff = statusOrder[a.status] - statusOrder[b.status];
-      if (statusDiff !== 0) return statusDiff;
-
-      // Then sort by date within same status
       return new Date(b.date) - new Date(a.date);
     });
+  };
+
+  // Separate orders by status
+  const getOrdersByStatus = () => {
+    const sortedOrders = getSortedOrders();
+    return {
+      processing: sortedOrders.filter(order => order.status === 'processing'),
+      completed: sortedOrders.filter(order => order.status === 'completed'),
+      cancelled: sortedOrders.filter(order => order.status === 'cancelled')
+    };
   };
 
   // Helper function to get payment status display
@@ -147,7 +151,6 @@ const AdminOpenOrders = () => {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString("en-US", {
-      // year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
@@ -156,165 +159,321 @@ const AdminOpenOrders = () => {
     });
   };
 
+  // Get status badge styling
+  const getStatusBadgeStyle = (status) => {
+    switch (status) {
+      case "processing":
+        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-300";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-300";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-300";
+    }
+  };
+
   return (
     <>
       <div className="ml-64 px-4">
-        <h2 className="berkshireSwashFont mt-5 text-center text-2xl font-bold text-slate-800">
-          Open Orders
-        </h2>
+        {/* Header with title on left and badges on right */}
+        <div className="flex justify-between items-center mt-5 mb-6">
+          <h2 className="berkshireSwashFont text-2xl font-bold text-slate-800">
+            Open Orders
+          </h2>
+          
+          {/* Badge counts on the right */}
+          <div className="flex gap-4">
+            {Object.entries(getStatusCounts()).map(([status, count]) => (
+              <div
+                key={status}
+                className={`
+                  px-4 py-2 rounded-full font-semibold
+                  ${
+                    status === "processing"
+                      ? "bg-yellow-100 text-yellow-800 border-yellow-800"
+                      : ""
+                  }
+                  ${
+                    status === "completed"
+                      ? "bg-blue-100 text-blue-800 border-blue-800"
+                      : ""
+                  }
+                  ${
+                    status === "cancelled"
+                      ? "bg-red-100 text-red-800 border-red-800"
+                      : ""
+                  }
+                  border-2
+                `}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)}: {count}
+              </div>
+            ))}
+          </div>
+        </div>
         <hr className="my-6 sm:mx-auto lg:my-8 border-gray-700" />
 
-        {/* Badge counts */}
-        <div className="flex justify-center gap-4 mb-6">
-          {Object.entries(getStatusCounts()).map(([status, count]) => (
-            <div
-              key={status}
-              className={`
-                px-4 py-2 rounded-full font-semibold
-                ${
-                  status === "processing"
-                    ? "bg-yellow-100 text-yellow-800 border-yellow-800"
-                    : ""
-                }
-                ${
-                  status === "completed"
-                    ? "bg-blue-100 text-blue-800 border-blue-800"
-                    : ""
-                }
-                ${
-                  status === "cancelled"
-                    ? "bg-red-100 text-red-800 border-red-800"
-                    : ""
-                }
-                border-2
-              `}
-            >
-              {status.charAt(0).toUpperCase() + status.slice(1)}: {count}
-            </div>
-          ))}
-        </div>
+        {/* Processing Orders Grid */}
+        {(() => {
+          const ordersByStatus = getOrdersByStatus();
+          return (
+            <>
+              {ordersByStatus.processing.length > 0 && (
+                <div className="mb-12">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Processing Orders ({ordersByStatus.processing.length})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {ordersByStatus.processing.map((order) => (
+                      <div
+                        key={order._id}
+                        className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col"
+                      >
+                        {/* Header: Order Number and Date */}
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900">
+                              #{order.orderNumber}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {formatDate(order.date)}
+                            </p>
+                          </div>
+                          <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeStyle(order.status)}`}>
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </div>
+                        </div>
 
-        <div id="openOrdersTAble" className="overflow-x-auto shadow-2xl mb-20">
-          <table
-            className="w-full text-sm text-left rtl:text-right rounded-2xl
-        text-gray-500"
-          >
-            <thead
-              className="text-xs uppercase 
-          bg-gray-400
-          text-teal-950"
-            >
-              <tr>
-                <th scope="col" className="px-6 py-3 w-[8%] text-center">
-                  Order Number
-                </th>
-                <th scope="col" className="px-6 py-3 w-[12%] text-center">
-                  Date/Time Order
-                </th>
-                <th scope="col" className="px-6 py-3 w-[20%] text-center">
-                  Order Details/Quantity
-                </th>
-                <th scope="col" className="px-6 py-3 w-[15%] text-center">
-                  Payment Status
-                </th>
-                <th scope="col" className="px-6 py-3 w-[10%] text-center">
-                  Customer Name
-                </th>
-                <th scope="col" className="px-6 py-3 w-[8%] text-center">
-                  Total $
-                </th>
-                <th scope="col" className="px-6 py-3 w-[15%] text-center">
-                  Update Status
-                </th>
-                <th scope="col" className="px-6 py-3 w-[7%] text-center">
-                  Archive Order
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {getSortedOrders().map((order) => (
-                <tr
-                  key={order._id}
-                  order={order}
-                  className=" border-b px-4 py-4
-              odd:bg-stone-200
-              even:bg-gray-300 
-              border-gray-700"
-                >
-                  <th
-                    scope="row"
-                    className="px-4 py-3 font-medium text-gray-900  w-[8%] text-center"
-                  >
-                    <p className="">{order.orderNumber}</p>
-                  </th>
-                  <td className="px-2 py-2 w-[12%] text-center">
-                    <p className=""> {formatDate(order.date)}</p>
-                  </td>
-                  <td className="px-2 py-2 w-[20%] text-center">
-                    {/* Map over order details to show items in order */}
+                        {/* Customer Info */}
+                        <div className="mb-4">
+                          <p className="font-semibold text-gray-800">{order.firstName} {order.lastName}</p>
+                          <p className="text-lg font-bold text-green-600">${order.orderTotal}</p>
+                        </div>
 
-                    {order.orderDetails.map((item, index) => (
-                      <div key={index}>
-                        {item.pizzaName} x{item.quantity}
+                        {/* Order Details */}
+                        <div className="mb-4">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Order Items:</h4>
+                          <div className="space-y-1">
+                            {order.orderDetails.map((item, index) => (
+                              <div key={index} className="flex justify-between text-sm">
+                                <span className="text-gray-600">{item.pizzaName}</span>
+                                <span className="font-medium">x{item.quantity}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Status Update Buttons */}
+                        <div className="mb-4 flex-grow">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Update Status:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {statusArray.map((status) => (
+                              <button
+                                key={status}
+                                onClick={() => handleDirectStatusUpdate(order._id, status)}
+                                disabled={order.status === status}
+                                className={`
+                                  px-3 py-1 rounded-full text-xs font-semibold border transition-all
+                                  ${order.status === status 
+                                    ? 'bg-blue-600 text-white border-blue-600 cursor-default' 
+                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-500 hover:text-white hover:border-blue-500 cursor-pointer'
+                                  }
+                                `}
+                              >
+                                {order.status === status ? '✓ ' : ''}
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Payment Status and Archive - Fixed at bottom */}
+                        <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
+                          <div>
+                            {(() => {
+                              const paymentStatus = getPaymentStatusDisplay(order);
+                              return (
+                                <span className={`text-sm font-semibold ${paymentStatus.className}`}>
+                                  {paymentStatus.text}
+                                </span>
+                              );
+                            })()}
+                          </div>
+                          <button
+                            onClick={() => handleArchiveClick(order)}
+                            className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1 rounded-full border border-red-200 hover:border-red-300 transition-colors"
+                          >
+                            Archive
+                          </button>
+                        </div>
                       </div>
                     ))}
-                  </td>
-                  <td className="px-2 py-2 w-[15%] text-center">
-                    {(() => {
-                      const paymentStatus = getPaymentStatusDisplay(order);
-                      return (
-                        <span className={paymentStatus.className}>
-                          {paymentStatus.text}
-                        </span>
-                      );
-                    })()}
-                  </td>
-                  <td className="px-2 py-2 w-[10%] text-center">
-                    {order.firstName}
-                  </td>
-                  <td className="px-2 py-2 w-[8%] text-center">
-                    ${order.orderTotal}
-                  </td>
+                  </div>
+                </div>
+              )}
 
-                  <td className="px-2 py-2 w-[15%] text-center">
-                    <div className="flex flex-col gap-1">
-                      {statusArray.map((status) => (
-                        <button
-                          key={status}
-                          onClick={() => handleDirectStatusUpdate(order._id, status)}
-                          disabled={order.status === status}
-                          className={`
-                            px-3 py-2 rounded-full text-xs font-semibold border transition-all
-                            ${order.status === status 
-                              ? 'bg-blue-600 text-white border-blue-600 cursor-default' 
-                              : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-500 hover:text-white hover:border-blue-500 cursor-pointer'
-                            }
-                            ${order.status === status ? 'opacity-100' : 'opacity-100'}
-                          `}
-                        >
-                          {order.status === status ? '✓ ' : ''}
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 w-[7%] text-center">
-                    <div className="relative">
-                      <div className="w-full top-0 right-2 "></div>
-                      <button
-                        onClick={() => handleArchiveClick(order)}
-                        type="submit"
-                        className="font-medium text-red-700 w-full h-full border-3 rounded-xl hover:bg-red-700 hover:text-white hover:border-black cursor-pointer"
+              {/* Separator HR */}
+              {(ordersByStatus.completed.length > 0 || ordersByStatus.cancelled.length > 0) && (
+                <hr className="my-8 border-gray-300" />
+              )}
+
+              {/* Completed Orders Grid */}
+              {ordersByStatus.completed.length > 0 && (
+                <div className="mb-12">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Completed Orders ({ordersByStatus.completed.length})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {ordersByStatus.completed.map((order) => (
+                      <div
+                        key={order._id}
+                        className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col opacity-75"
                       >
-                        Archive Order
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        {/* Same card structure as processing orders */}
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900">
+                              #{order.orderNumber}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {formatDate(order.date)}
+                            </p>
+                          </div>
+                          <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeStyle(order.status)}`}>
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <p className="font-semibold text-gray-800">{order.firstName} {order.lastName}</p>
+                          <p className="text-lg font-bold text-green-600">${order.orderTotal}</p>
+                        </div>
+
+                        <div className="mb-4">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Order Items:</h4>
+                          <div className="space-y-1">
+                            {order.orderDetails.map((item, index) => (
+                              <div key={index} className="flex justify-between text-sm">
+                                <span className="text-gray-600">{item.pizzaName}</span>
+                                <span className="font-medium">x{item.quantity}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="mb-4 flex-grow">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Status:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-300">
+                              ✓ Completed
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
+                          <div>
+                            {(() => {
+                              const paymentStatus = getPaymentStatusDisplay(order);
+                              return (
+                                <span className={`text-sm font-semibold ${paymentStatus.className}`}>
+                                  {paymentStatus.text}
+                                </span>
+                              );
+                            })()}
+                          </div>
+                          <button
+                            onClick={() => handleArchiveClick(order)}
+                            className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1 rounded-full border border-red-200 hover:border-red-300 transition-colors"
+                          >
+                            Archive
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Cancelled Orders Grid */}
+              {ordersByStatus.cancelled.length > 0 && (
+                <div className="mb-20">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Cancelled Orders ({ordersByStatus.cancelled.length})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {ordersByStatus.cancelled.map((order) => (
+                      <div
+                        key={order._id}
+                        className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col opacity-60"
+                      >
+                        {/* Same card structure but with cancelled styling */}
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900">
+                              #{order.orderNumber}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {formatDate(order.date)}
+                            </p>
+                          </div>
+                          <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeStyle(order.status)}`}>
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <p className="font-semibold text-gray-800">{order.firstName} {order.lastName}</p>
+                          <p className="text-lg font-bold text-red-600">${order.orderTotal}</p>
+                        </div>
+
+                        <div className="mb-4">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Order Items:</h4>
+                          <div className="space-y-1">
+                            {order.orderDetails.map((item, index) => (
+                              <div key={index} className="flex justify-between text-sm">
+                                <span className="text-gray-600">{item.pizzaName}</span>
+                                <span className="font-medium">x{item.quantity}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="mb-4 flex-grow">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Status:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-300">
+                              ✗ Cancelled
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
+                          <div>
+                            {(() => {
+                              const paymentStatus = getPaymentStatusDisplay(order);
+                              return (
+                                <span className={`text-sm font-semibold ${paymentStatus.className}`}>
+                                  {paymentStatus.text}
+                                </span>
+                              );
+                            })()}
+                          </div>
+                          <button
+                            onClick={() => handleArchiveClick(order)}
+                            className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1 rounded-full border border-red-200 hover:border-red-300 transition-colors"
+                          >
+                            Archive
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
       {showAlert && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-opacity-30">
