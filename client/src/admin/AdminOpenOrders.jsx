@@ -23,7 +23,12 @@ const AdminOpenOrders = () => {
   const [archiveOrder, setArchiveOrder] = useState(null);
 
   const alertMsg = archiveOrder
-    ? `Are you sure you want to archive order #${archiveOrder.orderNumber}?`
+    ? (
+      <>
+        Are you sure you want to archive order #{" "}
+        <span className="text-red-500 font-bold">{archiveOrder.orderNumber}</span> ?
+      </>
+    )
     : "Are you sure you want to archive this order?";
   const alertDescription = "Click to confirm";
 
@@ -476,15 +481,13 @@ const AdminOpenOrders = () => {
         })()}
       </div>
       {showAlert && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-opacity-30">
-          <div className="rounded-xl shadow-2xl max-w-md w-full">
-            <AlertBlack
-              alertMsg={alertMsg}
-              alertDescription={alertDescription}
-              handleCancel={handleCancel}
-              handleConfirm={handleConfirm}
-            />
-          </div>
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <AlertBlack
+            alertMsg={alertMsg}
+            alertDescription={alertDescription}
+            handleCancel={handleCancel}
+            handleConfirm={handleConfirm}
+          />
         </div>
       )}
     </>

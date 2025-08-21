@@ -113,6 +113,7 @@ import msgIndex from "./messages/msgIndex.js";
 import monitoringRouter from "./monitoring/index.js";
 import paymentRoutes from "./payments/squareRoutes.js";
 import scheduleMessageCleanup from "./utils/messageScheduler.js";
+import { initializeScheduledTasks } from "./scheduledTasks.js";
 
 // Replace console.log with proper logging
 logInfo("Environment check", {
@@ -374,6 +375,9 @@ try {
 
     // Start message cleanup scheduler
     scheduleMessageCleanup();
+
+    // Start all other scheduled tasks (archived orders cleanup, etc.)
+    initializeScheduledTasks();
   });
 } catch (err) {
   console.error("❌ Startup error:", err);

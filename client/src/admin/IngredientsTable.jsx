@@ -614,20 +614,26 @@ const IngredientsTable = () => {
       </div>
 
       {showAlert && (
-        <div
-          className="absolute z-30 min-w-sm"
-          style={{
-            top: `${alertPosition.top - 50}px`, // Adjusted to center vertically
-            left: `${Math.min(alertPosition.left, window.innerWidth - 800)}px`, // Prevent overflow
-          }}
-        >
-          <AlertBlack
-            alertMsg={dynamicAlertMsg}
-            alertDescription={alertDescription}
-            handleCancel={handleCancel}
-            handleConfirm={handleConfirm}
-          />
-        </div>
+        <>
+          {/* Background overlay */}
+          <div className="fixed inset-0 bg-black/60 z-40"></div>
+          
+          {/* Alert positioned relative to clicked button */}
+          <div
+            className="absolute z-50 min-w-sm"
+            style={{
+              top: `${alertPosition.top - 50}px`, // Adjusted to center vertically
+              left: `${Math.min(alertPosition.left, window.innerWidth - 800)}px`, // Prevent overflow
+            }}
+          >
+            <AlertBlack
+              alertMsg={dynamicAlertMsg}
+              alertDescription={alertDescription}
+              handleCancel={handleCancel}
+              handleConfirm={handleConfirm}
+            />
+          </div>
+        </>
       )}
     </>
   );

@@ -52,6 +52,16 @@ const orderService = {
       isArchived: true,
     });
   },
+
+  // Get cleanup preview (how many orders would be deleted)
+  getCleanupPreview: async () => {
+    return await axios.get(`${API_BASE}/orders/cleanup-preview`);
+  },
+
+  // Manual cleanup of archived orders older than 30 days
+  cleanupArchivedOrders: async () => {
+    return await axios.delete(`${API_BASE}/orders/cleanup-archived`);
+  },
 };
 
 export default orderService;

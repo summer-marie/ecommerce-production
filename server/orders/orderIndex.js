@@ -8,6 +8,7 @@ import orderGetOpen from "./orderGetOpen.js";
 import orderUpdateStatus from "./orderUpdateStatus.js";
 import { orderRateLimit } from "../middleware/advancedSecurity.js";
 import orderMarkPaymentFailed from "./orderMarkPaymentFailed.js";
+import { orderCleanupArchived, orderGetCleanupPreview } from "./orderCleanup.js";
 
 const orderIndex = express.Router();
 
@@ -38,6 +39,12 @@ orderIndex.patch(
   orderRateLimit,
   orderMarkPaymentFailed
 );
+
+// Get cleanup preview (how many orders would be deleted) - No rate limit (admin viewing)
+orderIndex.get("/cleanup-preview", orderGetCleanupPreview);
+
+// Manual cleanup of archived orders older than 30 days - Rate limited (admin action)
+orderIndex.delete("/cleanup-archived", orderRateLimit, orderCleanupArchived);
 
 export default orderIndex;
 

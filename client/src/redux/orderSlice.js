@@ -33,6 +33,12 @@ const initialState = {
     },
   },
   orders: [],
+  cleanup: {
+    loading: false,
+    preview: null,
+    lastCleanupResult: null,
+    error: null,
+  },
 };
 
 // Order create
@@ -113,6 +119,35 @@ export const markOrderPaymentFailed = createAsyncThunk(
       // Normalize axios error structure
       const payload = err?.response?.data || {
         message: err.message || "Payment failed",
+      };
+      return rejectWithValue(payload);
+    }
+  }
+);
+
+// Get cleanup preview
+export const getCleanupPreview = createAsyncThunk(
+  "order/getCleanupPreview",
+  async () => {
+    console.log("redux getCleanupPreview");
+    const response = await orderService.getCleanupPreview();
+    console.log("redux getCleanupPreview response", response);
+    return response.data;
+  }
+);
+
+// Manual cleanup of archived orders
+export const cleanupArchivedOrders = createAsyncThunk(
+  "order/cleanupArchived",
+  async (_, { rejectWithValue }) => {
+    try {
+      console.log("redux cleanupArchivedOrders");
+      const response = await orderService.cleanupArchivedOrders();
+      console.log("redux cleanupArchivedOrders response", response);
+      return response.data;
+    } catch (err) {
+      const payload = err?.response?.data || {
+        message: err.message || "Cleanup failed",
       };
       return rejectWithValue(payload);
     }
@@ -268,6 +303,42 @@ export const orderSlice = createSlice({
         state.loading = false;
         // Optionally capture error for UI
         state.error = action.payload || action.error;
+      })
+
+      // Get cleanup preview
+      .addCase(getCleanupPreview.pending, (state, action) => {
+        console.log("orderSlice getCleanupPreview.pending", action.payload);
+        state.cleanup.loading = true;
+        state.cleanup.error = null;
+      })
+      .addCase(getCleanupPreview.fulfilled, (state, action) => {
+        console.log("orderSlice getCleanupPreview.fulfilled", action.payload);
+        state.cleanup.loading = false;
+        state.cleanup.preview = action.payload.preview;
+      })
+      .addCase(getCleanupPreview.rejected, (state, action) => {
+        console.log("orderSlice getCleanupPreview.rejected", action.payload);
+        state.cleanup.loading = false;
+        state.cleanup.error = action.payload?.message || "Failed to get cleanup preview";
+      })
+
+      // Cleanup archived orders
+      .addCase(cleanupArchivedOrders.pending, (state, action) => {
+        console.log("orderSlice cleanupArchivedOrders.pending", action.payload);
+        state.cleanup.loading = true;
+        state.cleanup.error = null;
+      })
+      .addCase(cleanupArchivedOrders.fulfilled, (state, action) => {
+        console.log("orderSlice cleanupArchivedOrders.fulfilled", action.payload);
+        state.cleanup.loading = false;
+        state.cleanup.lastCleanupResult = action.payload;
+        // If we're on the archived orders page, we should refresh the orders list
+        // This will be handled by the component
+      })
+      .addCase(cleanupArchivedOrders.rejected, (state, action) => {
+        console.log("orderSlice cleanupArchivedOrders.rejected", action.payload);
+        state.cleanup.loading = false;
+        state.cleanup.error = action.payload?.message || "Failed to cleanup archived orders";
       });
   },
 });

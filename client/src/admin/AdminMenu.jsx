@@ -201,7 +201,7 @@ const AdminMenu = () => {
       </div>
 
       {showAlert && (
-        <div className="fixed top-1/2 left-[calc(50%+8rem)] transform -translate-x-1/2 -translate-y-1/2 z-50">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <AlertBlack
             alertMsg={dynamicAlertMsg}
             alertDescription={alertDescription}
