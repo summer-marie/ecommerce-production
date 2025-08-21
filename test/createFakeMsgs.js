@@ -11,7 +11,7 @@ const subjects = [
   "Complaint",
   "Compliment",
   "Allergen Information",
-  "Job Application"
+  "Job Application",
 ];
 
 // Create a single fake message
@@ -21,14 +21,14 @@ const fakeMessage = () => {
     subject: faker.helpers.arrayElement(subjects),
     message: faker.lorem.paragraphs({ min: 1, max: 3 }, "\n\n"),
     date: faker.date.between({ from: "2025-04-01", to: Date.now() }),
-    isRead: faker.datatype.boolean({ probability: 0.3 }) // 30% chance of being read
+    isRead: faker.datatype.boolean({ probability: 0.3 }), // 30% chance of being read
   };
 };
 
 // Create multiple fake messages
 export const createFakeMessages = (length) => {
   const messages = [];
-  
+
   // Start from current time
   let currentDate = new Date();
 
@@ -36,16 +36,16 @@ export const createFakeMessages = (length) => {
     // Create message with current date
     const message = {
       ...fakeMessage(),
-      date: new Date(currentDate)
+      date: new Date(currentDate),
     };
 
     // Subtract random minutes (1-180) for next message
     currentDate.setMinutes(
       currentDate.getMinutes() - faker.number.int({ min: 1, max: 180 })
     );
-    
+
     messages.push(message);
   });
-  
+
   return messages;
 };

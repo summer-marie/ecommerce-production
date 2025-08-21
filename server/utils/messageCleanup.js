@@ -5,12 +5,14 @@ export const cleanupOldMessages = async () => {
   try {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+
     const result = await messageModel.deleteMany({
-      date: { $lt: thirtyDaysAgo }
+      date: { $lt: thirtyDaysAgo },
     });
-    
-    console.log(`🧹 Cleanup: Deleted ${result.deletedCount} messages older than 30 days`);
+
+    console.log(
+      `🧹 Cleanup: Deleted ${result.deletedCount} messages older than 30 days`
+    );
     return result.deletedCount;
   } catch (error) {
     console.error("❌ Message cleanup failed:", error);
@@ -23,12 +25,12 @@ export const checkMessageLimit = async () => {
   try {
     const messageLimit = parseInt(process.env.MESSAGE_LIMIT || "100");
     const currentCount = await messageModel.countDocuments();
-    
+
     return {
       limit: messageLimit,
       current: currentCount,
       available: Math.max(0, messageLimit - currentCount),
-      limitReached: currentCount >= messageLimit
+      limitReached: currentCount >= messageLimit,
     };
   } catch (error) {
     console.error("❌ Message limit check failed:", error);
@@ -43,15 +45,17 @@ export const cleanupOldestMessages = async (countToRemove = 1) => {
       .find()
       .sort({ date: 1 })
       .limit(countToRemove)
-      .select('_id');
-    
-    const idsToDelete = oldestMessages.map(msg => msg._id);
-    
+      .select("_id");
+
+    const idsToDelete = oldestMessages.map((msg) => msg._id);
+
     const result = await messageModel.deleteMany({
-      _id: { $in: idsToDelete }
+      _id: { $in: idsToDelete },
     });
-    
-    console.log(`🧹 Cleanup: Removed ${result.deletedCount} oldest messages to make room`);
+
+    console.log(
+      `🧹 Cleanup: Removed ${result.deletedCount} oldest messages to make room`
+    );
     return result.deletedCount;
   } catch (error) {
     console.error("❌ Oldest message cleanup failed:", error);

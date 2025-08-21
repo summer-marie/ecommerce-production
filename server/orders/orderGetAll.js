@@ -1,11 +1,11 @@
-import orderModel from "./orderModel.js"
+import orderModel from "./orderModel.js";
 
 const orderGetAll = async (req, res) => {
-  const getOrders = await orderModel.find()
+  const getOrders = await orderModel.find();
 
-  console.log("getOrders", getOrders)
+  console.log("getOrders", getOrders);
 
-  res.status(200).json({ success: true, orders: getOrders })
-}
+  res.status(200).json({ success: true, orders: getOrders });
+};
 
-export default orderGetAll
+export default orderGetAll;

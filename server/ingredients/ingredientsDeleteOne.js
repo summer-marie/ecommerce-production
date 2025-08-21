@@ -14,7 +14,7 @@ const ingredientDelete = async (req, res) => {
     console.log("Successfully deleted ingredient:", deletedIngredient); // Log successful deletion
 
     // Invalidate cached ingredient lists
-    await invalidateCache('api:/ingredients*');
+    await invalidateCache("api:/ingredients*");
 
     res.status(200).json({ success: true, id });
   } catch (err) {

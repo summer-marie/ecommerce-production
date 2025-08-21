@@ -34,9 +34,6 @@ paymentIndex.post(
 paymentIndex.get("/square/payments/:paymentId", getPaymentStatus);
 
 // Webhook endpoint (raw body already handled in main app)
-paymentIndex.post(
-  "/square/webhook",
-  handleSquareWebhook
-);
+paymentIndex.post("/square/webhook", handleSquareWebhook);
 
 export default paymentIndex;

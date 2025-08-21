@@ -12,45 +12,48 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 
 // Verify critical environment variables are loaded
 if (!process.env.JWT_SECRET) {
-  console.error('❌ JWT_SECRET environment variable is required');
-  console.error('Please check your .env file and ensure JWT_SECRET is set');
-  console.error('Current JWT_SECRET value:', process.env.JWT_SECRET ? '[SET]' : '[MISSING]');
+  console.error("❌ JWT_SECRET environment variable is required");
+  console.error("Please check your .env file and ensure JWT_SECRET is set");
+  console.error(
+    "Current JWT_SECRET value:",
+    process.env.JWT_SECRET ? "[SET]" : "[MISSING]"
+  );
   process.exit(1);
 }
 
 if (!process.env.MONGODB_ATLAS_URL) {
-  console.error('❌ MONGODB_ATLAS_URL environment variable is required');
+  console.error("❌ MONGODB_ATLAS_URL environment variable is required");
   process.exit(1);
 }
 
-console.log('✅ Environment variables loaded successfully');
+console.log("✅ Environment variables loaded successfully");
 
 // Add global error handlers to catch unhandled errors
-process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', {
+process.on("uncaughtException", (error) => {
+  console.error("❌ Uncaught Exception:", {
     message: error.message,
     stack: error.stack,
-    name: error.name
+    name: error.name,
   });
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection:', {
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Unhandled Rejection:", {
     reason: reason,
     promise: promise,
-    stack: reason?.stack
+    stack: reason?.stack,
   });
   process.exit(1);
 });
 
-process.on('SIGTERM', () => {
-  console.log('❌ SIGTERM received, shutting down gracefully');
+process.on("SIGTERM", () => {
+  console.log("❌ SIGTERM received, shutting down gracefully");
   process.exit(0);
 });
 
-process.on('SIGINT', () => {
-  console.log('❌ SIGINT received, shutting down gracefully');
+process.on("SIGINT", () => {
+  console.log("❌ SIGINT received, shutting down gracefully");
   process.exit(0);
 });
 
@@ -79,7 +82,7 @@ import {
   logError,
   logWarn,
 } from "./middleware/logger.js";
-// Advanced Security Middleware 
+// Advanced Security Middleware
 import {
   advancedHelmet,
   mongoSanitizer,
@@ -93,7 +96,7 @@ import {
   contactRateLimit,
 } from "./middleware/advancedSecurity.js";
 import { requireApiKey, createApiKeyRoutes } from "./middleware/apiKeyAuth.js";
-// Performance Middleware 
+// Performance Middleware
 import {
   compressionMiddleware,
   cacheMiddleware,
@@ -124,45 +127,47 @@ const sessionSecret = process.env.SESSION_SECRET;
 const app = express();
 
 // Trust proxy for Railway (fixes rate limiting X-Forwarded-For errors)
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 
 // Minimal health endpoint early in the pipeline to satisfy platform health checks
 // This responds before any heavy middleware or DB-dependent logic runs.
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy' });
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "healthy" });
 });
 
 // Serve favicon if present in client build or public folder to avoid noisy 404s in logs
 try {
   const favCandidates = [
-    path.join(__dirname, '../client/dist/favicon.ico'),
-    path.join(__dirname, '../client/public/favicon.ico'),
-    path.join(__dirname, 'favicon.ico')
+    path.join(__dirname, "../client/dist/favicon.ico"),
+    path.join(__dirname, "../client/public/favicon.ico"),
+    path.join(__dirname, "favicon.ico"),
   ];
   let favPath = favCandidates.find((p) => fs.existsSync(p));
   // If no favicon exists, write a tiny default (1x1 transparent PNG) to server/public/favicon.ico
   if (!favPath) {
     try {
-      const defaultDir = path.join(__dirname, 'public');
-      if (!fs.existsSync(defaultDir)) fs.mkdirSync(defaultDir, { recursive: true });
-      const target = path.join(defaultDir, 'favicon.ico');
+      const defaultDir = path.join(__dirname, "public");
+      if (!fs.existsSync(defaultDir))
+        fs.mkdirSync(defaultDir, { recursive: true });
+      const target = path.join(defaultDir, "favicon.ico");
       if (!fs.existsSync(target)) {
-        const defaultFaviconBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
-        fs.writeFileSync(target, Buffer.from(defaultFaviconBase64, 'base64'));
+        const defaultFaviconBase64 =
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
+        fs.writeFileSync(target, Buffer.from(defaultFaviconBase64, "base64"));
       }
       favPath = target;
     } catch (writeErr) {
-      console.warn('Failed to write default favicon:', writeErr.message);
+      console.warn("Failed to write default favicon:", writeErr.message);
     }
   }
   if (favPath) {
-    app.get('/favicon.ico', (req, res) => {
+    app.get("/favicon.ico", (req, res) => {
       res.sendFile(favPath);
     });
   }
 } catch (err) {
   // Non-fatal — just skip favicon serving if anything goes wrong
-  console.warn('Favicon route setup skipped:', err.message);
+  console.warn("Favicon route setup skipped:", err.message);
 }
 
 // Core security middleware - apply before any request processing
@@ -180,10 +185,7 @@ app.use(generalRateLimit); // Global rate limit: 100 requests per 15 minutes
 // Note: requestLogger removed to avoid duplicate logging with securityLogger
 
 // Webhook raw body (must be BEFORE express.json so signature can be verified)
-app.use(
-  "/payments/square/webhook",
-  express.raw({ type: "application/json" })
-);
+app.use("/payments/square/webhook", express.raw({ type: "application/json" }));
 
 // Input sanitization and protection against common attacks (after raw webhook)
 app.use(express.json({ limit: "10mb" })); // JSON parser with size limit for image uploads
@@ -215,11 +217,11 @@ app.use(cors(corsOptions));
 
 // Simple health check endpoint
 app.get("/", (req, res) => {
-  res.json({ 
-    status: "ok", 
+  res.json({
+    status: "ok",
     message: "Pizza app server is running",
     timestamp: new Date().toISOString(),
-    port: process.env.PORT || 8010
+    port: process.env.PORT || 8010,
   });
 });
 
@@ -236,13 +238,19 @@ app.get("/health", (req, res) => {
 try {
   // Use Atlas URL exclusively to avoid accidental localhost fallback
   const mongoURL = process.env.MONGODB_ATLAS_URL;
-    
+
   if (!mongoURL) {
-    throw new Error('No MongoDB connection string found in environment variables');
+    throw new Error(
+      "No MongoDB connection string found in environment variables"
+    );
   }
-  
-  console.log(`🔌 Connecting to MongoDB (${process.env.NODE_ENV === 'production' ? 'Atlas Cloud' : 'Local/Atlas'})...`);
-  
+
+  console.log(
+    `🔌 Connecting to MongoDB (${
+      process.env.NODE_ENV === "production" ? "Atlas Cloud" : "Local/Atlas"
+    })...`
+  );
+
   // Connect to MongoDB with better error handling
   await mongoose.connect(mongoURL, {
     // These options help with connection stability
@@ -250,42 +258,44 @@ try {
     serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
     socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
   });
-  
+
   logInfo(`✅ Pizza app connected to database`, {
-    host: mongoURL.includes('mongodb+srv') ? 'MongoDB Atlas Cloud' : 'Local MongoDB',
-    environment: process.env.NODE_ENV || 'development'
+    host: mongoURL.includes("mongodb+srv")
+      ? "MongoDB Atlas Cloud"
+      : "Local MongoDB",
+    environment: process.env.NODE_ENV || "development",
   });
 
-  console.log('🔧 Setting up MongoDB session store...');
-  
+  console.log("🔧 Setting up MongoDB session store...");
+
   // Configure session store after MongoDB connection is established
   try {
     app.use(
       session({
-        secret: sessionSecret || 'change_this_session_secret',
+        secret: sessionSecret || "change_this_session_secret",
         resave: false,
         saveUninitialized: false,
         store: MongoStore.create({
           client: mongoose.connection.getClient(),
           dbName: mongoose.connection.db.databaseName,
-          collectionName: 'sessions',
+          collectionName: "sessions",
           ttl: 24 * 60 * 60,
           touchAfter: 24 * 3600,
         }),
         cookie: {
-          secure: process.env.NODE_ENV === 'production',
+          secure: process.env.NODE_ENV === "production",
           maxAge: 24 * 60 * 60 * 1000,
           httpOnly: true,
         },
-        name: 'sessionId',
+        name: "sessionId",
       })
     );
-    console.log('✅ MongoDB session store configured successfully');
+    console.log("✅ MongoDB session store configured successfully");
 
     // Initialize passport & session support AFTER express-session
     app.use(passport.initialize());
     app.use(passport.session());
-    console.log('✅ Passport initialized with session support');
+    console.log("✅ Passport initialized with session support");
 
     // API route registration with appropriate security and caching middleware
     app.use("/auth", authRateLimit, authRouter);
@@ -332,34 +342,36 @@ try {
     // Global error handling middleware (must remain last after routes)
     app.use(errorLogger);
   } catch (sessionError) {
-    console.error('❌ Failed to setup session store:', sessionError);
+    console.error("❌ Failed to setup session store:", sessionError);
     throw sessionError;
   }
 
   // Lightweight verification of key collections (non-blocking)
   try {
-    const collectionsToCheck = ['ingredients', 'builders'];
+    const collectionsToCheck = ["ingredients", "builders"];
     for (const name of collectionsToCheck) {
       if (mongoose.connection.collections[name]) {
-        const count = await mongoose.connection.collections[name].countDocuments();
-        logInfo('Collection count', { collection: name, count });
+        const count = await mongoose.connection.collections[
+          name
+        ].countDocuments();
+        logInfo("Collection count", { collection: name, count });
       }
     }
   } catch (verifyErr) {
-    logWarn('Collection count check failed', { error: verifyErr.message });
+    logWarn("Collection count check failed", { error: verifyErr.message });
   }
 
-  console.log('🚀 Starting server...');
-  
-  app.listen(port, '0.0.0.0', () => {
-    console.log('✅ Server is now listening for connections');
+  console.log("🚀 Starting server...");
+
+  app.listen(port, "0.0.0.0", () => {
+    console.log("✅ Server is now listening for connections");
     logInfo(`🚀 Pizza app server started`, {
       port,
-      host: '0.0.0.0',
-      environment: process.env.NODE_ENV || 'development',
-      database: mongoURL.includes('mongodb+srv') ? 'Atlas Cloud' : 'Local'
+      host: "0.0.0.0",
+      environment: process.env.NODE_ENV || "development",
+      database: mongoURL.includes("mongodb+srv") ? "Atlas Cloud" : "Local",
     });
-    
+
     // Start message cleanup scheduler
     scheduleMessageCleanup();
   });

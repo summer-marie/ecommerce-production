@@ -1,11 +1,6 @@
 import { faker } from "@faker-js/faker";
 
-const names = [
-  "Double Trouble",
-  "Supreme",
-  "Peperoni Deluxe",
-  "Cheese Me",
-];
+const names = ["Double Trouble", "Supreme", "Peperoni Deluxe", "Cheese Me"];
 
 const ZIP_CODES = ["95338", "85395"];
 

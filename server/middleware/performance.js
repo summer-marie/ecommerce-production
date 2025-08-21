@@ -62,7 +62,7 @@ export const cacheMiddleware = (duration = 300) => {
         if (res.statusCode === 200) {
           memoryCache.set(cacheKey, {
             data: data,
-            expires: now + (duration * 1000) // Convert seconds to milliseconds
+            expires: now + duration * 1000, // Convert seconds to milliseconds
           });
         }
 
@@ -85,7 +85,7 @@ export const invalidateCache = async (pattern) => {
   try {
     let removed = 0;
     for (const key of memoryCache.keys()) {
-      if (key.includes(pattern.replace('*', ''))) {
+      if (key.includes(pattern.replace("*", ""))) {
         memoryCache.delete(key);
         removed++;
       }

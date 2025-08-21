@@ -30,11 +30,9 @@ const findOneAndUpdate = async (req, res) => {
     };
 
     // Invalidate any cached ingredient lists
-    await invalidateCache('api:/ingredients*');
+    await invalidateCache("api:/ingredients*");
 
-    res
-      .status(200)
-      .json({ success: true, ingredient: updatedResponse });
+    res.status(200).json({ success: true, ingredient: updatedResponse });
   } catch (error) {
     console.error(error);
     res

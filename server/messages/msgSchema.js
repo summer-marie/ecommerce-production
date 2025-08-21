@@ -22,7 +22,7 @@ const messageSchema = new Schema({
   isRead: {
     type: Boolean,
     default: false,
-  }
+  },
 });
 
 export default messageSchema;

@@ -6,7 +6,7 @@ const ingredientsCreate = async (req, res) => {
   try {
     const { name, description, itemType, price } = req.body;
 
-    logInfo('Creating new ingredient', { name, itemType });
+    logInfo("Creating new ingredient", { name, itemType });
 
     // Validate the incoming data using Mongoose's built-in schema validator
     const newIngredient = await ingredientsModel.create({
@@ -17,9 +17,9 @@ const ingredientsCreate = async (req, res) => {
     });
 
     // Invalidate ingredients cache when new ingredient is created
-    await invalidateCache('api:/ingredients*');
+    await invalidateCache("api:/ingredients*");
 
-    logInfo('New ingredient created', { id: newIngredient._id, name });
+    logInfo("New ingredient created", { id: newIngredient._id, name });
 
     res.status(201).json({
       success: true,
@@ -27,11 +27,11 @@ const ingredientsCreate = async (req, res) => {
       ingredient: newIngredient,
     });
   } catch (error) {
-    logError('Error creating ingredient', { error: error.message });
+    logError("Error creating ingredient", { error: error.message });
     res.status(500).json({
       success: false,
       message: "Failed to create ingredient",
-      error: error.message
+      error: error.message,
     });
   }
 };

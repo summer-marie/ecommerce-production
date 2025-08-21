@@ -1,4 +1,3 @@
-
 import orderModel from "./orderModel.js";
 
 const orderCreate = async (req, res) => {
@@ -6,26 +5,28 @@ const orderCreate = async (req, res) => {
     // Sequential order number with yearly reset (6 digits max)
     const generateOrderNumber = async () => {
       const currentYear = new Date().getFullYear();
-      
+
       // Find the highest order number for this year
-      const lastOrder = await orderModel.findOne({
-        $expr: {
-          $eq: [{ $year: "$date" }, currentYear]
-        }
-      }).sort({ orderNumber: -1 });
-      
+      const lastOrder = await orderModel
+        .findOne({
+          $expr: {
+            $eq: [{ $year: "$date" }, currentYear],
+          },
+        })
+        .sort({ orderNumber: -1 });
+
       if (!lastOrder || !lastOrder.orderNumber) {
         return "100001"; // Start from 100001 for first order of the year
       }
-      
+
       // Convert to number, add 1, convert back to string
       const nextNumber = parseInt(lastOrder.orderNumber) + 1;
-      
+
       // If we hit 999999, reset to 100001 (shouldn't happen with yearly reset)
       if (nextNumber > 999999) {
         return "100001";
       }
-      
+
       return nextNumber.toString();
     };
 

@@ -45,9 +45,9 @@ const builderSchema = new Schema({
     },
   ],
   image: {
-    data: String,        // Base64 encoded image data
-    filename: String,    // Original filename for reference
-    mimetype: String,    // Image MIME type (image/jpeg, image/png, etc.)
+    data: String, // Base64 encoded image data
+    filename: String, // Original filename for reference
+    mimetype: String, // Image MIME type (image/jpeg, image/png, etc.)
   },
 });
 

@@ -4,7 +4,10 @@ import messageGetAll from "./msgGetAll.js";
 import messageUpdateRead from "./msgUpdateRead.js";
 import messageDelete from "./msgDelete.js";
 import messageStats from "./msgStats.js";
-import { contactRateLimit, adminRateLimit } from "../middleware/advancedSecurity.js";
+import {
+  contactRateLimit,
+  adminRateLimit,
+} from "../middleware/advancedSecurity.js";
 
 const msgIndex = express.Router();
 

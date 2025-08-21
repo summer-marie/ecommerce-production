@@ -32,7 +32,7 @@ function toJsonSafe(value) {
 }
 
 // Initialize Square client
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   console.log("Square module keys:", Object.keys(Square));
   console.log("Resolved ClientCtor type:", typeof ClientCtor);
   console.log(
@@ -54,7 +54,7 @@ const squareClient = new ClientCtor({
 });
 
 // Debug: Check if Square client is properly initialized
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   console.log("Square client initialized:", !!squareClient);
   console.log("Square client keys:", Object.keys(squareClient));
   if (squareClient.paymentsApi) {
@@ -73,7 +73,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Extra introspection for payments API shape
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   try {
     const p = squareClient.payments;
     console.log("payments typeof:", typeof p);
@@ -161,16 +161,17 @@ export const createSquarePayment = async (req, res) => {
       req.body;
 
     // Debug: log sanitized incoming request
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== "production") {
       const safeLog = {
         hasSourceId: !!sourceId,
-        sourceIdPrefix: typeof sourceId === 'string' ? sourceId.slice(0, 6) : null,
+        sourceIdPrefix:
+          typeof sourceId === "string" ? sourceId.slice(0, 6) : null,
         amountType: typeof amount,
         amountValue: amount,
         orderId,
         orderNumber,
       };
-      console.log('[Square] Incoming create payment request', safeLog);
+      console.log("[Square] Incoming create payment request", safeLog);
     }
 
     // Prefer orderNumber; fall back to orderId for backward compatibility
@@ -180,29 +181,37 @@ export const createSquarePayment = async (req, res) => {
     if (!sourceId || amount == null || orderRef == null) {
       return res.status(400).json({
         error: "Missing required fields: sourceId, amount, orderNumber",
-        received: { hasSourceId: !!sourceId, amount, orderRef }
+        received: { hasSourceId: !!sourceId, amount, orderRef },
       });
     }
 
     let normalizedAmount = amount;
-    if (typeof normalizedAmount !== 'number') {
+    if (typeof normalizedAmount !== "number") {
       const parsed = Number(normalizedAmount);
       if (Number.isNaN(parsed)) {
-        return res.status(400).json({ error: 'Amount must be a number', receivedType: typeof amount, receivedValue: amount });
+        return res
+          .status(400)
+          .json({
+            error: "Amount must be a number",
+            receivedType: typeof amount,
+            receivedValue: amount,
+          });
       }
       normalizedAmount = parsed;
     }
 
     if (!process.env.SQUARE_LOCATION_ID) {
-      return res.status(500).json({ error: 'Square location not configured' });
+      return res.status(500).json({ error: "Square location not configured" });
     }
 
     if (!process.env.SQUARE_ACCESS_TOKEN) {
-      return res.status(500).json({ error: 'Square access token not configured' });
+      return res
+        .status(500)
+        .json({ error: "Square access token not configured" });
     }
 
     // Convert dollars to cents (Square requires cents)
-  const amountInCents = Math.round(normalizedAmount * 100);
+    const amountInCents = Math.round(normalizedAmount * 100);
 
     // Minimum amount validation (50 cents)
     if (amountInCents < 50) {
@@ -219,8 +228,8 @@ export const createSquarePayment = async (req, res) => {
 
     const paymentRequest = {
       sourceId,
-  // Square SDK version in use expects bigint for amountMoney.amount
-  amountMoney: { amount: BigInt(amountInCents), currency: "USD" },
+      // Square SDK version in use expects bigint for amountMoney.amount
+      amountMoney: { amount: BigInt(amountInCents), currency: "USD" },
       locationId: process.env.SQUARE_LOCATION_ID,
       referenceId,
       note: `Pizza Order #${referenceId}${
@@ -232,7 +241,7 @@ export const createSquarePayment = async (req, res) => {
         crypto.randomUUID?.() ?? crypto.randomBytes(16).toString("hex"),
     };
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== "production") {
       console.log("[Square] Creating payment", {
         orderRef: referenceId,
         amountInCents,
@@ -262,19 +271,21 @@ export const createSquarePayment = async (req, res) => {
     try {
       resp = await createFn(paymentRequest);
     } catch (sdkErr) {
-      console.error('[Square] SDK createPayment error raw:', sdkErr); 
+      console.error("[Square] SDK createPayment error raw:", sdkErr);
       if (sdkErr?.errors) {
         return res.status(400).json({
-          error: 'Payment failed',
+          error: "Payment failed",
           details: sdkErr.errors[0]?.detail || sdkErr.errors[0]?.code,
           category: sdkErr.errors[0]?.category,
         });
       }
-      return res.status(400).json({ error: 'Payment failed', details: sdkErr.message });
+      return res
+        .status(400)
+        .json({ error: "Payment failed", details: sdkErr.message });
     }
     const result = resp.result ?? resp;
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== "production") {
       console.log("[Square] Payment success", {
         paymentId: result.payment?.id,
         status: result.payment?.status,
@@ -318,7 +329,7 @@ export const createSquarePayment = async (req, res) => {
       orderUpdate,
     });
   } catch (error) {
-  console.error("[Square] Payment controller failure:", error);
+    console.error("[Square] Payment controller failure:", error);
 
     // Handle Square-specific errors
     if (error.errors) {

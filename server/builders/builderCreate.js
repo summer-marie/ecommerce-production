@@ -5,7 +5,8 @@ const builderCreate = async (req, res) => {
   try {
     console.log("Request body:", req.body);
 
-    const { pizzaName, base, sauce, meatTopping, veggieTopping, image } = req.body;
+    const { pizzaName, base, sauce, meatTopping, veggieTopping, image } =
+      req.body;
 
     // Validation
     if (!pizzaName || pizzaName === "") {
@@ -42,15 +43,19 @@ const builderCreate = async (req, res) => {
 
     console.log("New pizza created with Base64 image:", {
       ...newPizza.toObject(),
-      image: newPizza.image ? { 
-        filename: newPizza.image.filename, 
-        mimetype: newPizza.image.mimetype,
-        dataSize: newPizza.image.data ? `${(newPizza.image.data.length / 1024).toFixed(2)} KB` : '0 KB'
-      } : null
+      image: newPizza.image
+        ? {
+            filename: newPizza.image.filename,
+            mimetype: newPizza.image.mimetype,
+            dataSize: newPizza.image.data
+              ? `${(newPizza.image.data.length / 1024).toFixed(2)} KB`
+              : "0 KB",
+          }
+        : null,
     });
 
     // Invalidate builders cache so new pizza appears immediately
-    await invalidateCache('api:/builders');
+    await invalidateCache("api:/builders");
 
     res.status(200).json({
       success: true,
