@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,6 +10,7 @@ const AdminSidenav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const messages = useSelector((state) => state.message);
 
   console.log("location", location);
@@ -41,6 +41,10 @@ const AdminSidenav = () => {
     }
   };
 
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   if (loading) {
     return (
       <div
@@ -57,19 +61,42 @@ const AdminSidenav = () => {
 
   return (
     <>
-      <aside
+      {/* Pass sidebar state to parent components via CSS custom property */}
+      <div style={{ '--sidebar-width': isCollapsed ? '64px' : '256px' }}>
+        <aside
         id="default-sidebar"
-        className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
+        className={`fixed top-0 left-0 z-40 h-screen transition-all duration-300 -translate-x-full sm:translate-x-0 ${
+          isCollapsed ? 'w-16' : 'w-64'
+        }`}
         aria-label="Sidebar"
       >
         <div
-          className="h-full px-3 py-4 overflow-y-auto 
-        bg-emerald-950"
+          className="h-full px-3 py-4 overflow-y-auto bg-emerald-950 relative"
         >
-          <ul className="space-y-2 font-medium">
-            <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
-              Orders
-            </h2>
+          {/* Toggle Button */}
+          <button
+            onClick={toggleSidebar}
+            className={`absolute top-4 bg-emerald-800 hover:bg-emerald-700 text-white p-2 rounded-full transition-all duration-300 z-50 ${
+              isCollapsed ? 'right-2' : 'right-4'
+            }`}
+          >
+            {isCollapsed ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            )}
+          </button>
+
+          <ul className={`space-y-2 font-medium ${isCollapsed ? 'mt-16' : 'mt-8'}`}>
+            {!isCollapsed && (
+              <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
+                Orders
+              </h2>
+            )}
             <hr className="border-gray-500 " />
             <li>
               <Link
@@ -81,6 +108,7 @@ const AdminSidenav = () => {
                      : "hover:bg-gray-700 text-stone-200"
                  }
                 `}
+                title={isCollapsed ? "Open Orders" : ""}
               >
                 <svg
                   className={`w-6 h-6 transition duration-75 group-hover:text-white ${
@@ -103,7 +131,7 @@ const AdminSidenav = () => {
                   />
                 </svg>
 
-                <span className="ms-3">Open Orders</span>
+                {!isCollapsed && <span className="ms-3">Open Orders</span>}
               </Link>
             </li>
             <li>
@@ -116,6 +144,7 @@ const AdminSidenav = () => {
                       : "hover:bg-gray-700 text-stone-200"
                   }
                  `}
+                title={isCollapsed ? "Completed Orders" : ""}
               >
                 <svg
                   className={`w-6 h-6 transition duration-75 group-hover:text-white ${
@@ -138,10 +167,12 @@ const AdminSidenav = () => {
                   />
                 </svg>
 
-                <span className="ms-3">Completed Orders</span>
+                {!isCollapsed && <span className="ms-3">Completed Orders</span>}
               </Link>
             </li>
-            <h2 className="mt-5 text-md font-bold text-stone-200 py-2">Menu</h2>
+            {!isCollapsed && (
+              <h2 className="mt-5 text-md font-bold text-stone-200 py-2">Menu</h2>
+            )}
             <hr className="border-gray-500 " />
             <li>
               <Link
@@ -153,6 +184,7 @@ const AdminSidenav = () => {
                       : "hover:bg-gray-700 text-stone-200"
                   }
                  `}
+                title={isCollapsed ? "Add New Pizza" : ""}
               >
                 <svg
                   className={`w-6 h-6 transition duration-75 group-hover:text-white ${
@@ -175,9 +207,11 @@ const AdminSidenav = () => {
                   />
                 </svg>
 
-                <span className="flex-1 ms-3 whitespace-nowrap">
-                  Add New Pizza
-                </span>
+                {!isCollapsed && (
+                  <span className="flex-1 ms-3 whitespace-nowrap">
+                    Add New Pizza
+                  </span>
+                )}
               </Link>
             </li>
 
@@ -191,6 +225,7 @@ const AdminSidenav = () => {
                       : "hover:bg-gray-700 text-stone-200"
                   }
                  `}
+                title={isCollapsed ? "Current Menu" : ""}
               >
                 <svg
                   className={`w-6 h-6 transition duration-75 group-hover:text-white ${
@@ -220,9 +255,11 @@ const AdminSidenav = () => {
                   </defs>
                 </svg>
 
-                <span className="flex-1 ms-3 whitespace-nowrap">
-                  Current Menu
-                </span>
+                {!isCollapsed && (
+                  <span className="flex-1 ms-3 whitespace-nowrap">
+                    Current Menu
+                  </span>
+                )}
               </Link>
             </li>
             <li>
@@ -234,6 +271,7 @@ const AdminSidenav = () => {
                       ? "bg-lime-300/70"
                       : "hover:bg-gray-700 text-stone-200"
                   }`}
+                title={isCollapsed ? "Ingredients Table" : ""}
               >
                 <svg
                   className={`w-6 h-6 transition duration-75 group-hover:text-white ${
@@ -257,15 +295,19 @@ const AdminSidenav = () => {
                   />
                 </svg>
 
-                <span className="flex-1 ms-3 whitespace-nowrap">
-                  Ingredients Table
-                </span>
+                {!isCollapsed && (
+                  <span className="flex-1 ms-3 whitespace-nowrap">
+                    Ingredients Table
+                  </span>
+                )}
               </Link>
             </li>
 
-            <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
-              Customer Feedback
-            </h2>
+            {!isCollapsed && (
+              <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
+                Customer Feedback
+              </h2>
+            )}
             <hr className="border-gray-500 " />
             <li>
               <Link
@@ -277,6 +319,7 @@ const AdminSidenav = () => {
                       : "hover:bg-gray-700 text-stone-200"
                   }
                  `}
+                title={isCollapsed ? "Inbox" : ""}
               >
                 <svg
                   className={`w-6 h-6 transition duration-75 group-hover:text-white ${
@@ -293,22 +336,27 @@ const AdminSidenav = () => {
                   <path d="M17 6h-2V5h1a1 1 0 1 0 0-2h-2a1 1 0 0 0-1 1v2h-.541A5.965 5.965 0 0 1 14 10v4a1 1 0 1 1-2 0v-4c0-2.206-1.794-4-4-4-.075 0-.148.012-.22.028C7.686 6.022 7.596 6 7.5 6A4.505 4.505 0 0 0 3 10.5V16a1 1 0 0 0 1 1h7v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3h5a1 1 0 0 0 1-1v-6c0-2.206-1.794-4-4-4Zm-9 8.5H7a1 1 0 1 1 0-2h1a1 1 0 1 1 0 2Z" />
                 </svg>
 
-                <span className="flex-1 ms-3 whitespace-nowrap">Inbox</span>
+                {!isCollapsed && <span className="flex-1 ms-3 whitespace-nowrap">Inbox</span>}
 
-                <span className="inline-flex items-center justify-center w-4 h-4 p-3.5 ms-3 text-sm font-bold rounded-full text-white bg-blue-800 border-2 border-green-300 shadow-md animate-pulse">
+                <span className={`inline-flex items-center justify-center w-4 h-4 p-3.5 text-sm font-bold rounded-full text-white bg-blue-800 border-2 border-green-300 shadow-md animate-pulse ${
+                  isCollapsed ? 'ml-0' : 'ms-3'
+                }`}>
                   {messages?.messages?.length || 0}
                 </span>
               </Link>
             </li>
-            <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
-              Your Account
-            </h2>
+            {!isCollapsed && (
+              <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
+                Your Account
+              </h2>
+            )}
             <hr className="border-gray-500 " />
             <li>
               <button
                 type="button"
                 onClick={handleLogout}
                 className="flex items-center p-2 rounded-lg group hover:bg-red-800 text-stone-200 w-full cursor-pointer"
+                title={isCollapsed ? "Sign Out" : ""}
               >
                 <svg
                   className="w-6 h-6 transition duration-75 group-hover:text-white text-gray-400"
@@ -323,7 +371,7 @@ const AdminSidenav = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="flex ms-3 whitespace-nowrap">Sign Out</span>
+                {!isCollapsed && <span className="flex ms-3 whitespace-nowrap">Sign Out</span>}
               </button>
             </li>
             <li>
@@ -336,6 +384,7 @@ const AdminSidenav = () => {
                             : "hover:bg-gray-700 text-stone-200"
                         }
                        `}
+                title={isCollapsed ? "Settings" : ""}
               >
                 <svg
                   className={`w-6 h-6 transition duration-75 group-hover:text-white ${
@@ -358,12 +407,13 @@ const AdminSidenav = () => {
                   />
                 </svg>
 
-                <span className="flex-1 ms-3 whitespace-nowrap">Settings</span>
+                {!isCollapsed && <span className="flex-1 ms-3 whitespace-nowrap">Settings</span>}
               </Link>
             </li>
           </ul>
         </div>
       </aside>
+      </div>
     </>
   );
 };
