@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { orderGetArchived } from "../redux/orderSlice";
 
-const AdminCompletedOrders = () => {
+const AdminArchivedOrders = () => {
   const { orders } = useSelector((state) => state.order);
   const dispatch = useDispatch();
 
@@ -42,7 +42,7 @@ const AdminCompletedOrders = () => {
     <>
       <div className="px-4">
         <h2 className="berkshireSwashFont mt-5 text-center text-2xl font-bold text-slate-800">
-          Completed (Archived) Orders Database
+          Archived Orders Database
         </h2>
         <hr className="my-6 sm:mx-auto lg:my-8 border-gray-700 " />
 
@@ -168,4 +168,4 @@ const AdminCompletedOrders = () => {
   );
 };
 
-export default AdminCompletedOrders;
+export default AdminArchivedOrders;

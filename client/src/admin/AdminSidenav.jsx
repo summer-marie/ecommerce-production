@@ -164,19 +164,19 @@ const AdminSidenav = () => {
             </li>
             <li>
               <Link
-                to="/completed-orders"
+                to="/archived-orders"
                 className={`flex items-center p-2 rounded-lg group 
                   ${
-                    location.pathname === "/completed-orders"
+                    location.pathname === "/archived-orders"
                       ? "bg-lime-300/70"
                       : "hover:bg-gray-700 text-stone-200"
                   }
                  `}
-                title={isCollapsed ? "Completed Orders" : ""}
+                title={isCollapsed ? "Archived Orders" : ""}
               >
                 <svg
                   className={`w-6 h-6 transition duration-75 group-hover:text-white ${
-                    location.pathname === "/completed-orders"
+                    location.pathname === "/archived-orders"
                       ? "text-gray-700"
                       : "text-gray-400 "
                   }
@@ -195,7 +195,7 @@ const AdminSidenav = () => {
                   />
                 </svg>
 
-                {!isCollapsed && <span className="ms-3">Completed Orders</span>}
+                {!isCollapsed && <span className="ms-3">Archived Orders</span>}
               </Link>
             </li>
             {!isCollapsed && (

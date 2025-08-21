@@ -21,7 +21,7 @@ const OrderSuccess = lazy(() => import("./customer/OrderSuccess"));
 
 // Admin components (only loaded when accessing admin)
 const AdminOpenOrders = lazy(() => import("./admin/AdminOpenOrders"));
-const AdminCompletedOrders = lazy(() => import("./admin/AdminCompletedOrders"));
+const AdminArchivedOrders = lazy(() => import("./admin/AdminArchivedOrders"));
 const AdminMenu = lazy(() => import("./admin/AdminMenu"));
 const AdminLogin = lazy(() => import("./admin/AdminLogin"));
 const AdminUpdateOne = lazy(() => import("./admin/AdminUpdateOne"));
@@ -132,10 +132,10 @@ function App() {
               }
             />
             <Route
-              path="/completed-orders"
+              path="/archived-orders"
               element={
                 <Suspense fallback={<LoadingFallback />}>
-                  <AdminCompletedOrders />
+                  <AdminArchivedOrders />
                 </Suspense>
               }
             />
