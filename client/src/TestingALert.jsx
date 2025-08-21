@@ -11,7 +11,7 @@ const alertDescription = "Please try again later.";
 
 const TestingALert = () => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       <AlertSuccess2
         successMsg={successMsg}
         successDescription={successDescription}
@@ -25,7 +25,6 @@ const TestingALert = () => {
       <AlertRed alertMsg={alertMsg} alertDescription={alertDescription} />
 
       <AlertBlack alertMsg={alertMsg} alertDescription={alertDescription} />
-
     </div>
   );
 };

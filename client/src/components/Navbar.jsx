@@ -8,7 +8,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const cartCount = useSelector((state) => state.cart.items.length);
-  
+
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -27,7 +27,7 @@ const Navbar = () => {
               OverTheWall
             </span>
           </div>
-          
+
           {/* Mobile menu button */}
           <button
             type="button"
@@ -83,7 +83,7 @@ const Navbar = () => {
                 Contact
               </Link>
             </div>
-            
+
             {/* Cart section */}
             <div className="flex items-center space-x-3">
               <p className="text-stone-300 berkshireSwashFont">Check</p>
@@ -98,12 +98,18 @@ const Navbar = () => {
         </div>
 
         {/* Mobile menu */}
-        <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} w-full md:hidden`}>
+        <div
+          className={`${
+            isMobileMenuOpen ? "block" : "hidden"
+          } w-full md:hidden`}
+        >
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-red-800">
             <Link
               to="/"
               className={`berkshireSwashFont block px-3 py-2 text-xl rounded-md hover:bg-red-700 ${
-                location.pathname === "/" ? "text-green-300 bg-red-700" : "text-white"
+                location.pathname === "/"
+                  ? "text-green-300 bg-red-700"
+                  : "text-white"
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -112,7 +118,9 @@ const Navbar = () => {
             <Link
               to="/order-menu"
               className={`berkshireSwashFont block px-3 py-2 text-xl rounded-md hover:bg-red-700 ${
-                location.pathname === "/order-menu" ? "text-green-300 bg-red-700" : "text-white"
+                location.pathname === "/order-menu"
+                  ? "text-green-300 bg-red-700"
+                  : "text-white"
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -121,7 +129,9 @@ const Navbar = () => {
             <Link
               to="/contact"
               className={`berkshireSwashFont block px-3 py-2 text-xl rounded-md hover:bg-red-700 ${
-                location.pathname === "/contact" ? "text-green-300 bg-red-700" : "text-white"
+                location.pathname === "/contact"
+                  ? "text-green-300 bg-red-700"
+                  : "text-white"
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >

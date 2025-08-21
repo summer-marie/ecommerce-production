@@ -29,8 +29,8 @@ const initialState = {
       squarePaymentId: "",
       receiptNumber: "",
       amountPaid: 0,
-      paidAt: null
-    }
+      paidAt: null,
+    },
   },
   orders: [],
 };
@@ -104,11 +104,16 @@ export const markOrderPaymentFailed = createAsyncThunk(
   "order/markPaymentFailed",
   async ({ orderNumber, reason }, { rejectWithValue }) => {
     try {
-      const response = await orderService.markPaymentFailedByOrderNumber(orderNumber, reason);
+      const response = await orderService.markPaymentFailedByOrderNumber(
+        orderNumber,
+        reason
+      );
       return response.data;
     } catch (err) {
       // Normalize axios error structure
-      const payload = err?.response?.data || { message: err.message || "Payment failed" };
+      const payload = err?.response?.data || {
+        message: err.message || "Payment failed",
+      };
       return rejectWithValue(payload);
     }
   }
@@ -235,16 +240,24 @@ export const orderSlice = createSlice({
 
       // Mark order payment failed
       .addCase(markOrderPaymentFailed.pending, (state, action) => {
-        console.log("orderSlice markOrderPaymentFailed.pending", action.payload);
+        console.log(
+          "orderSlice markOrderPaymentFailed.pending",
+          action.payload
+        );
         state.loading = true;
       })
       .addCase(markOrderPaymentFailed.fulfilled, (state, action) => {
-        console.log("orderSlice markOrderPaymentFailed.fulfilled", action.payload);
+        console.log(
+          "orderSlice markOrderPaymentFailed.fulfilled",
+          action.payload
+        );
         state.loading = false;
         // Optionally update state.orders with returned order
         const updated = action.payload?.order;
         if (updated && state.orders?.length) {
-          state.orders = state.orders.map(o => (o.orderNumber === updated.orderNumber ? updated : o));
+          state.orders = state.orders.map((o) =>
+            o.orderNumber === updated.orderNumber ? updated : o
+          );
         }
       })
       .addCase(markOrderPaymentFailed.rejected, (state, action) => {

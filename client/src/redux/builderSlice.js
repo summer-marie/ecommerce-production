@@ -84,10 +84,14 @@ export const builderSlice = createSlice({
         // Optimistically add new pizza to list if returned shape matches
         if (action.payload?.pizza) {
           // Normalize id field
-            const newPizza = action.payload.pizza;
-            if (!state.builders.find(p => p.id === newPizza.id || p._id === newPizza._id)) {
-              state.builders.push(newPizza);
-            }
+          const newPizza = action.payload.pizza;
+          if (
+            !state.builders.find(
+              (p) => p.id === newPizza.id || p._id === newPizza._id
+            )
+          ) {
+            state.builders.push(newPizza);
+          }
         }
       })
       .addCase(builderCreate.rejected, (state, action) => {

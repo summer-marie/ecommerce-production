@@ -4,10 +4,10 @@ import { API_BASE } from "../utils/apiBase.js";
 const authService = {
   login: async ({ email, password }) => {
     console.log("NEW authService login", email, password);
-    const response = await axios.post(
-  `${API_BASE}/auth/login`,
-      { email, password }
-    );
+    const response = await axios.post(`${API_BASE}/auth/login`, {
+      email,
+      password,
+    });
     console.log(" NEW response", response.data);
     return response.data;
   },
@@ -17,7 +17,7 @@ const authService = {
     const token = JSON.parse(localStorage.getItem("token"));
     console.log("NEW authService status token", token);
     const response = await axios.get(
-  `${API_BASE}/auth/status`,
+      `${API_BASE}/auth/status`,
       {},
       {
         withCredentials: true,
@@ -37,7 +37,7 @@ const authService = {
 
       // Make logout request
       const response = await axios.post(
-  `${API_BASE}/auth/logout/`,
+        `${API_BASE}/auth/logout/`,
         {},
         {
           headers: {

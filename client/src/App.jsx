@@ -58,7 +58,7 @@ function App() {
     );
 
     // Log performance metrics in development
-    if (import.meta.env.MODE === 'development') {
+    if (import.meta.env.MODE === "development") {
       logBundlePerformance();
     }
   }, [dispatch]);
@@ -70,86 +70,128 @@ function App() {
 
         {/* Public/customer routes */}
         <Route element={<CustomerLayout />}>
-          <Route path="/" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <About />
-            </Suspense>
-          } />
-          <Route path="/order-menu" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <OrderMenu />
-            </Suspense>
-          } />
-          <Route path="/contact" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <Contact />
-            </Suspense>
-          } />
-          <Route path="/checkout" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <Checkout />
-            </Suspense>
-          } />
-          <Route path="/order-success" element={
-            <Suspense fallback={<LoadingFallback />}>
-              <OrderSuccess />
-            </Suspense>
-          } />
+          <Route
+            path="/"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <About />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/order-menu"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <OrderMenu />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/contact"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Contact />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Checkout />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/order-success"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <OrderSuccess />
+              </Suspense>
+            }
+          />
         </Route>
 
         {/* Protected routes */}
         <Route element={<PrivateRoute />}>
           <Route element={<AdminLayout />}>
-            <Route path="/pizza-builder" element={
-              <Suspense fallback={<LoadingFallback />}>
-                <AdminBuilderCreate />
-              </Suspense>
-            } />
-            <Route path="/open-orders" element={
-              <Suspense fallback={<LoadingFallback />}>
-                <AdminOpenOrders />
-              </Suspense>
-            } />
-            <Route path="/completed-orders" element={
-              <Suspense fallback={<LoadingFallback />}>
-                <AdminCompletedOrders />
-              </Suspense>
-            } />
-            <Route path="/admin-menu/:id?" element={
-              <Suspense fallback={<LoadingFallback />}>
-                <AdminMenu />
-              </Suspense>
-            } />
-            <Route path="/admin-update-one/:id" element={
-              <Suspense fallback={<LoadingFallback />}>
-                <AdminUpdateOne />
-              </Suspense>
-            } />
-            <Route path="/ingredient-table" element={
-              <Suspense fallback={<LoadingFallback />}>
-                <IngredientsTable />
-              </Suspense>
-            } />
-            <Route path="/admin-inbox" element={
-              <Suspense fallback={<LoadingFallback />}>
-                <AdminInbox />
-              </Suspense>
-            } />
+            <Route
+              path="/pizza-builder"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminBuilderCreate />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/open-orders"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminOpenOrders />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/completed-orders"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminCompletedOrders />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/admin-menu/:id?"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminMenu />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/admin-update-one/:id"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminUpdateOne />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/ingredient-table"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <IngredientsTable />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/admin-inbox"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminInbox />
+                </Suspense>
+              }
+            />
           </Route>
         </Route>
 
-        <Route path="/admin-login" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminLogin />
-          </Suspense>
-        } />
-        <Route path="*" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <NoMatch />
-          </Suspense>
-        } />
+        <Route
+          path="/admin-login"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <AdminLogin />
+            </Suspense>
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <NoMatch />
+            </Suspense>
+          }
+        />
       </Routes>
-      
+
       {/* Performance monitoring in development */}
       <PerformanceMonitor />
     </Suspense>

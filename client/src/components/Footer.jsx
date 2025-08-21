@@ -5,9 +5,7 @@ import { Link } from "react-router";
 const Footer = () => {
   return (
     <>
-      <footer
-        className="bg-white rounded-lg shadow-sm mt-8 w-full"
-      >
+      <footer className="bg-white rounded-lg shadow-sm mt-8 w-full">
         <div className="w-full mx-auto max-w-screen-xl p-4 md:flex md:items-center md:justify-between">
           <span className="text-sm text-gray-500 text-center block sm:text-left">
             © 2025 OverTheWall™ . All Rights Reserved.

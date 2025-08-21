@@ -32,14 +32,14 @@ export const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-// This action takes a payload containing the token and user data.
-// It updates the token and authUser properties in the Redux state.
-// It also sets loading to false to indicate that the authentication state has been restored.
-  setAuthFromStorage: (state, action) => {
-    state.token = action.payload.token;
-    state.authUser = action.payload.user;
-    state.loading = false;  
-  },
+    // This action takes a payload containing the token and user data.
+    // It updates the token and authUser properties in the Redux state.
+    // It also sets loading to false to indicate that the authentication state has been restored.
+    setAuthFromStorage: (state, action) => {
+      state.token = action.payload.token;
+      state.authUser = action.payload.user;
+      state.loading = false;
+    },
   },
   extraReducers: (builder) => {
     builder

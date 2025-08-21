@@ -6,20 +6,20 @@
 export const convertImageToBase64 = (file) => {
   return new Promise((resolve, reject) => {
     if (!file) {
-      reject(new Error('No file provided'));
+      reject(new Error("No file provided"));
       return;
     }
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      reject(new Error('File must be an image'));
+    if (!file.type.startsWith("image/")) {
+      reject(new Error("File must be an image"));
       return;
     }
 
     // Validate file size (limit to 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      reject(new Error('Image size must be less than 5MB'));
+      reject(new Error("Image size must be less than 5MB"));
       return;
     }
 
@@ -32,15 +32,15 @@ export const convertImageToBase64 = (file) => {
           data: base64String,
           filename: file.name,
           mimetype: file.type,
-          size: file.size
+          size: file.size,
         });
       } catch {
-        reject(new Error('Failed to convert image to Base64'));
+        reject(new Error("Failed to convert image to Base64"));
       }
     };
 
     reader.onerror = () => {
-      reject(new Error('Failed to read file'));
+      reject(new Error("Failed to read file"));
     };
 
     reader.readAsDataURL(file);
@@ -56,8 +56,8 @@ export const convertImageToBase64 = (file) => {
  */
 export const compressImage = (file, quality = 0.8, maxWidth = 800) => {
   return new Promise((resolve, reject) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
     const img = new Image();
 
     img.onload = () => {
@@ -73,7 +73,7 @@ export const compressImage = (file, quality = 0.8, maxWidth = 800) => {
 
       // Draw and compress
       ctx.drawImage(img, 0, 0, width, height);
-      
+
       canvas.toBlob(
         (blob) => {
           if (blob) {
@@ -83,7 +83,7 @@ export const compressImage = (file, quality = 0.8, maxWidth = 800) => {
             });
             resolve(compressedFile);
           } else {
-            reject(new Error('Failed to compress image'));
+            reject(new Error("Failed to compress image"));
           }
         },
         file.type,
@@ -91,7 +91,7 @@ export const compressImage = (file, quality = 0.8, maxWidth = 800) => {
       );
     };
 
-    img.onerror = () => reject(new Error('Failed to load image'));
+    img.onerror = () => reject(new Error("Failed to load image"));
     img.src = URL.createObjectURL(file);
   });
 };

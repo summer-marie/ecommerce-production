@@ -4,21 +4,17 @@ import { API_BASE } from "../utils/apiBase.js";
 
 const builderService = {
   builderGetMany: async () => {
-  return await axios.get(`${API_BASE}/builders`);
+    return await axios.get(`${API_BASE}/builders`);
   },
 
   builderCreate: async (pizzaData) => {
     try {
       console.log("Sending pizza data to server...", pizzaData);
-      const response = await axios.post(
-  `${API_BASE}/builders`,
-        pizzaData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await axios.post(`${API_BASE}/builders`, pizzaData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log("Server response:", response.data);
       return response.data;
     } catch (error) {
@@ -31,9 +27,7 @@ const builderService = {
   },
 
   pizzaGetOne: async (id) => {
-    const response = await axios.get(
-  `${API_BASE}/builders/pizza-detail/${id}`
-    );
+    const response = await axios.get(`${API_BASE}/builders/pizza-detail/${id}`);
     return response.data; // just the data, not the whole Axios response
   },
 
@@ -42,19 +36,13 @@ const builderService = {
     if (!id) {
       throw new Error("No ID provided in pizza data");
     }
-    return axios.put(
-  `${API_BASE}/builders/${id}`,
-      pizzaData,
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return axios.put(`${API_BASE}/builders/${id}`, pizzaData, {
+      headers: { "Content-Type": "application/json" },
+    });
   },
 
   builderDeleteOneAlt: async (id) => {
-    const response = await axios.delete(
-  `${API_BASE}/builders/${id}`
-    );
+    const response = await axios.delete(`${API_BASE}/builders/${id}`);
     return response.data; // { success: true, id: ... }
   },
 };
