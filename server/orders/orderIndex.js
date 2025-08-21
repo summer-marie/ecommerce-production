@@ -18,8 +18,8 @@ orderIndex.post("/", orderRateLimit, orderCreate);
 // Get all, no validation - No rate limit (admin viewing)
 orderIndex.get("/", orderGetAll);
 
-// Archive order - Rate limited (prevents abuse)
-orderIndex.put("/archive/:id", orderRateLimit, orderArchiveOne);
+// Archive order - No rate limit (admin function)
+orderIndex.put("/archive/:id", orderArchiveOne);
 
 // Get all archived orders - No rate limit (admin viewing)
 orderIndex.get("/archived", orderGetArchived);

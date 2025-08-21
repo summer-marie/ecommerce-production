@@ -135,15 +135,20 @@ const AdminOpenOrders = () => {
   const handleConfirm = async () => {
     if (archiveOrder) {
       try {
-        console.log("Archiving order:", archiveOrder._id);
+        // Use the order ID (model transforms _id to id automatically)
+        const orderId = archiveOrder.id;
         
-        // Just archive the order directly
-        await dispatch(orderArchiveOne(archiveOrder._id)).unwrap();
+        if (!orderId) {
+          console.error("No valid order ID found in archiveOrder object");
+          return;
+        }
+        
+        // Archive the order
+        await dispatch(orderArchiveOne(orderId)).unwrap();
 
         // Refresh the open orders to remove archived order from list
         await dispatch(orderGetOpen()).unwrap();
         
-        console.log("Order archived successfully");
         setArchiveOrder(null);
       } catch (error) {
         console.error("Error archiving order:", error);

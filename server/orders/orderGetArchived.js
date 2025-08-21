@@ -4,9 +4,11 @@ import orderModel from "./orderModel.js";
 
 const orderGetArchived = async (req, res) => {
   try {
+    console.log("Fetching archived orders...");
+    
     const pipeline = [
       { $match: { status: "archived" } },
-      { $sort: { Date: -1 } },
+      { $sort: { date: -1 } }, // Fixed: was "Date" now "date"
     ];
 
     const getOrders = await orderModel.aggregate(pipeline, {
