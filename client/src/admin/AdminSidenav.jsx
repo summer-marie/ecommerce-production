@@ -45,6 +45,14 @@ const AdminSidenav = () => {
     setIsCollapsed(!isCollapsed);
   };
 
+  // Update CSS variable when sidebar state changes
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--sidebar-width",
+      isCollapsed ? "64px" : "256px"
+    );
+  }, [isCollapsed]);
+
   if (loading) {
     return (
       <div
@@ -61,37 +69,57 @@ const AdminSidenav = () => {
 
   return (
     <>
-      {/* Pass sidebar state to parent components via CSS custom property */}
-      <div style={{ '--sidebar-width': isCollapsed ? '64px' : '256px' }}>
-        <aside
+      <aside
         id="default-sidebar"
         className={`fixed top-0 left-0 z-40 h-screen transition-all duration-300 -translate-x-full sm:translate-x-0 ${
-          isCollapsed ? 'w-16' : 'w-64'
+          isCollapsed ? "w-16" : "w-64"
         }`}
         aria-label="Sidebar"
       >
-        <div
-          className="h-full px-3 py-4 overflow-y-auto bg-emerald-950 relative"
-        >
+        <div className="h-full px-3 py-4 overflow-y-auto bg-emerald-950 relative">
           {/* Toggle Button */}
           <button
             onClick={toggleSidebar}
             className={`absolute top-4 bg-emerald-800 hover:bg-emerald-700 text-white p-2 rounded-full transition-all duration-300 z-50 ${
-              isCollapsed ? 'right-2' : 'right-4'
+              isCollapsed ? "right-2" : "right-4"
             }`}
           >
             {isCollapsed ? (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             )}
           </button>
 
-          <ul className={`space-y-2 font-medium ${isCollapsed ? 'mt-16' : 'mt-8'}`}>
+          <ul
+            className={`space-y-2 font-medium ${
+              isCollapsed ? "mt-16" : "mt-8"
+            }`}
+          >
             {!isCollapsed && (
               <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
                 Orders
@@ -171,7 +199,9 @@ const AdminSidenav = () => {
               </Link>
             </li>
             {!isCollapsed && (
-              <h2 className="mt-5 text-md font-bold text-stone-200 py-2">Menu</h2>
+              <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
+                Menu
+              </h2>
             )}
             <hr className="border-gray-500 " />
             <li>
@@ -336,11 +366,15 @@ const AdminSidenav = () => {
                   <path d="M17 6h-2V5h1a1 1 0 1 0 0-2h-2a1 1 0 0 0-1 1v2h-.541A5.965 5.965 0 0 1 14 10v4a1 1 0 1 1-2 0v-4c0-2.206-1.794-4-4-4-.075 0-.148.012-.22.028C7.686 6.022 7.596 6 7.5 6A4.505 4.505 0 0 0 3 10.5V16a1 1 0 0 0 1 1h7v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3h5a1 1 0 0 0 1-1v-6c0-2.206-1.794-4-4-4Zm-9 8.5H7a1 1 0 1 1 0-2h1a1 1 0 1 1 0 2Z" />
                 </svg>
 
-                {!isCollapsed && <span className="flex-1 ms-3 whitespace-nowrap">Inbox</span>}
+                {!isCollapsed && (
+                  <span className="flex-1 ms-3 whitespace-nowrap">Inbox</span>
+                )}
 
-                <span className={`inline-flex items-center justify-center w-4 h-4 p-3.5 text-sm font-bold rounded-full text-white bg-blue-800 border-2 border-green-300 shadow-md animate-pulse ${
-                  isCollapsed ? 'ml-0' : 'ms-3'
-                }`}>
+                <span
+                  className={`inline-flex items-center justify-center w-4 h-4 p-3.5 text-sm font-bold rounded-full text-white bg-blue-800 border-2 border-green-300 shadow-md animate-pulse ${
+                    isCollapsed ? "ml-0" : "ms-3"
+                  }`}
+                >
                   {messages?.messages?.length || 0}
                 </span>
               </Link>
@@ -371,7 +405,9 @@ const AdminSidenav = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                {!isCollapsed && <span className="flex ms-3 whitespace-nowrap">Sign Out</span>}
+                {!isCollapsed && (
+                  <span className="flex ms-3 whitespace-nowrap">Sign Out</span>
+                )}
               </button>
             </li>
             <li>
@@ -407,13 +443,16 @@ const AdminSidenav = () => {
                   />
                 </svg>
 
-                {!isCollapsed && <span className="flex-1 ms-3 whitespace-nowrap">Settings</span>}
+                {!isCollapsed && (
+                  <span className="flex-1 ms-3 whitespace-nowrap">
+                    Settings
+                  </span>
+                )}
               </Link>
             </li>
           </ul>
         </div>
       </aside>
-      </div>
     </>
   );
 };

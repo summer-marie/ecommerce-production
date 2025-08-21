@@ -13,6 +13,9 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* Dynamic sidebar width for admin layout */
+  --sidebar-width: 256px;
 }
 
 /* Google Fonts */
@@ -239,3 +242,10 @@ select option:disabled {
 
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
+
+/* Admin layout - content takes full viewport minus sidebar */
+.admin-content {
+  margin-left: var(--sidebar-width);
+  width: calc(100vw - var(--sidebar-width));
+  transition: all 300ms ease;
+}

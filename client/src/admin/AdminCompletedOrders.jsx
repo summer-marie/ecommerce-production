@@ -40,7 +40,7 @@ const AdminCompletedOrders = () => {
 
   return (
     <>
-      <div className="ml-64 px-4">
+      <div className="px-4">
         <h2 className="berkshireSwashFont mt-5 text-center text-2xl font-bold text-slate-800">
           Completed (Archived) Orders Database
         </h2>

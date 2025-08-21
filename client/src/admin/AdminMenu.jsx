@@ -62,7 +62,7 @@ const AdminMenu = () => {
 
   return (
     <>
-      <div className="ml-64 px-4">
+      <div className="px-4">
         {/* Header  */}
         <h2 className="berkshireSwashFont mt-5 text-center text-2xl font-bold text-slate-800">
           Current Customer Menu

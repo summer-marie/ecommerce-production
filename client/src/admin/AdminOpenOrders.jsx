@@ -175,7 +175,7 @@ const AdminOpenOrders = () => {
 
   return (
     <>
-      <div className="ml-64 px-4">
+      <div className="px-4">
         {/* Header with title on left and badges on right */}
         <div className="flex justify-between items-center mt-5 mb-6">
           <h2 className="berkshireSwashFont text-2xl font-bold text-slate-800">

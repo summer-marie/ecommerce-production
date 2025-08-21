@@ -356,7 +356,7 @@ const IngredientsTable = () => {
 
   return (
     <>
-      <div className="ml-64 px-4">
+      <div className="px-4">
         {/* Centers Button above table */}
         <div className="flex items-center justify-center w-full">
           <button onClick={handleOpenModal} className="p-5">

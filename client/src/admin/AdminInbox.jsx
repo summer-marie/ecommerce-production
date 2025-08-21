@@ -74,7 +74,7 @@ const AdminInbox = () => {
 
   return (
     <>
-      <div className="ml-64 px-4">
+      <div className="px-4">
         {/* Message Policy Header */}
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 mt-4">
           <div className="flex items-start">
