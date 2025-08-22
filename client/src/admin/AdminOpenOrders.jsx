@@ -9,9 +9,6 @@ import {
 
 
 
-// TODO: update status doesnt work
-// TODO: archive doesnt work
-//  TODO: remove all cancled orders that are 12 hours old 
 // TODO: implement order search and filtering
 // TODO: add pagination for order list 
 
@@ -21,16 +18,28 @@ const AdminOpenOrders = () => {
   const dispatch = useDispatch();
   const [showAlert, setShowAlert] = useState(false);
   const [archiveOrder, setArchiveOrder] = useState(null);
+  const [bulkArchiveData, setBulkArchiveData] = useState(null); // For bulk archiving
+  const [updatingOrderId, setUpdatingOrderId] = useState(null); // Track which order is being updated
 
-  const alertMsg = archiveOrder
+  const alertMsg = bulkArchiveData
     ? (
       <>
-        Are you sure you want to archive order #{" "}
-        <span className="text-red-500 font-bold">{archiveOrder.orderNumber}</span> ?
+        Are you sure you want to archive{" "}
+        <span className="text-red-800 font-bold">{bulkArchiveData.count}</span>{" "}
+        <span className="text-red-800 font-bold">{bulkArchiveData.status}</span> orders?
+      </>
+    )
+    : archiveOrder
+    ? (
+      <>
+        Are you sure you want to archive order{" "}
+        <span className="text-red-800 font-bold">#{archiveOrder.orderNumber}</span>?
       </>
     )
     : "Are you sure you want to archive this order?";
-  const alertDescription = "Click to confirm";
+  const alertDescription = bulkArchiveData 
+    ? `This will archive ${bulkArchiveData.count} orders and move them to the archived orders database. This action cannot be undone.`
+    : "This will move the order to the archived orders database. This action cannot be undone.";
 
   const statusArray = ["processing", "completed", "cancelled"];
 
@@ -55,7 +64,7 @@ const AdminOpenOrders = () => {
     );
   };
   const getSortedOrders = () => {
-    // Sort by newest first
+    // Sort by newest 
     return [...orders].sort((a, b) => {
       return new Date(b.date) - new Date(a.date);
     });
@@ -64,11 +73,15 @@ const AdminOpenOrders = () => {
   // Separate orders by status
   const getOrdersByStatus = () => {
     const sortedOrders = getSortedOrders();
-    return {
-      processing: sortedOrders.filter(order => order.status === 'processing'),
+    const result = {
+      // Processing orders should be oldest first (first-come, first-served)
+      processing: sortedOrders.filter(order => order.status === 'processing').sort((a, b) => {
+        return new Date(a.date) - new Date(b.date);
+      }),
       completed: sortedOrders.filter(order => order.status === 'completed'),
       cancelled: sortedOrders.filter(order => order.status === 'cancelled')
     };
+    return result;
   };
 
   // Helper function to get payment status display
@@ -95,32 +108,66 @@ const AdminOpenOrders = () => {
   };
 
   // Direct status update function for badge buttons
-  const handleDirectStatusUpdate = (id, newStatus) => {
+  const handleDirectStatusUpdate = async (id, newStatus) => {
+    console.log("=== STATUS UPDATE START ===");
     console.log("Updating order:", { id, newStatus });
+    
+    // Prevent double-clicks
+    if (updatingOrderId === id) {
+      console.log("Update already in progress for order:", id);
+      return;
+    }
+    
+    setUpdatingOrderId(id);
+    
+    // Log current counts before update
+    const beforeCounts = getStatusCounts();
+    console.log("Counts BEFORE update:", beforeCounts);
 
-    dispatch(
-      orderUpdateStatus({
-        id: id,
-        status: { status: newStatus },
-      })
-    )
-      .unwrap()
-      .then((response) => {
-        console.log("Status update successful:", response);
-      })
-      .catch((error) => {
-        console.error("Status update failed:", {
-          id,
-          newStatus,
-          error,
-          time: new Date().toISOString(),
-        });
+    try {
+      const result = await dispatch(
+        orderUpdateStatus({
+          id: id,
+          status: { status: newStatus },
+        })
+      ).unwrap();
+      
+      console.log("Server returned orders count:", result.orders?.length);
+      
+      // Log counts after update
+      setTimeout(() => {
+        const afterCounts = getStatusCounts();
+        console.log("Counts AFTER update:", afterCounts);
+        console.log("=== STATUS UPDATE END ===");
+      }, 100);
+      
+    } catch (error) {
+      console.error("Status update failed:", {
+        id,
+        newStatus,
+        error,
+        time: new Date().toISOString(),
       });
+    } finally {
+      setUpdatingOrderId(null);
+    }
   };
 
   // When Archive Order button is clicked
   const handleArchiveClick = (order) => {
     setArchiveOrder(order); // Store the order object
+    setBulkArchiveData(null); // Clear bulk data
+    setShowAlert(true);
+  };
+
+  // When Bulk Archive button is clicked
+  const handleBulkArchiveClick = (status, orders) => {
+    setBulkArchiveData({
+      status,
+      count: orders.length,
+      orders
+    });
+    setArchiveOrder(null); // Clear single order data
     setShowAlert(true);
   };
 
@@ -129,13 +176,30 @@ const AdminOpenOrders = () => {
     console.log("Cancel Clicked");
     setShowAlert(false);
     setArchiveOrder(null); // Clear the archive order
+    setBulkArchiveData(null); // Clear bulk data
   };
 
   // When user confirms Archive in the alert
   const handleConfirm = async () => {
-    if (archiveOrder) {
-      try {
-        // Use the order ID (model transforms _id to id automatically)
+    try {
+      // Store current scroll position before archiving
+      const currentScrollY = window.scrollY;
+      
+      if (bulkArchiveData) {
+        // Handle bulk archiving
+        console.log(`Bulk archiving ${bulkArchiveData.count} ${bulkArchiveData.status} orders`);
+        
+        // Archive all orders in the bulk selection
+        for (const order of bulkArchiveData.orders) {
+          const orderId = order.id;
+          if (orderId) {
+            await dispatch(orderArchiveOne(orderId)).unwrap();
+          }
+        }
+        
+        setBulkArchiveData(null);
+      } else if (archiveOrder) {
+        // Handle single order archiving
         const orderId = archiveOrder.id;
         
         if (!orderId) {
@@ -145,15 +209,21 @@ const AdminOpenOrders = () => {
         
         // Archive the order
         await dispatch(orderArchiveOne(orderId)).unwrap();
-
-        // Refresh the open orders to remove archived order from list
-        await dispatch(orderGetOpen()).unwrap();
-        
         setArchiveOrder(null);
-      } catch (error) {
-        console.error("Error archiving order:", error);
       }
+
+      // Refresh the open orders to remove archived order(s) from list
+      await dispatch(orderGetOpen()).unwrap();
+      
+      // Restore scroll position after state updates
+      setTimeout(() => {
+        window.scrollTo(0, currentScrollY);
+      }, 100);
+      
+    } catch (error) {
+      console.error("Error archiving order(s):", error);
     }
+    
     setShowAlert(false);
   };
 
@@ -281,17 +351,19 @@ const AdminOpenOrders = () => {
                             {statusArray.map((status) => (
                               <button
                                 key={status}
-                                onClick={() => handleDirectStatusUpdate(order._id, status)}
-                                disabled={order.status === status}
+                                onClick={() => handleDirectStatusUpdate(order.id, status)}
+                                disabled={order.status === status || updatingOrderId === order.id}
                                 className={`
                                   px-3 py-1 rounded-full text-xs font-semibold border transition-all
                                   ${order.status === status 
                                     ? 'bg-blue-600 text-white border-blue-600 cursor-default' 
+                                    : updatingOrderId === order.id
+                                    ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
                                     : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-500 hover:text-white hover:border-blue-500 cursor-pointer'
                                   }
                                 `}
                               >
-                                {order.status === status ? '✓ ' : ''}
+                                {order.status === status ? '✓ ' : updatingOrderId === order.id ? '⏳ ' : ''}
                                 {status.charAt(0).toUpperCase() + status.slice(1)}
                               </button>
                             ))}
@@ -324,16 +396,24 @@ const AdminOpenOrders = () => {
               )}
 
               {/* Separator HR */}
-              {(ordersByStatus.completed.length > 0 || ordersByStatus.cancelled.length > 0) && (
+              {(ordersByStatus.completed.length > 0 || ordersByStatus.cancelled.length > 0 || ordersByStatus.delivered.length > 0) && (
                 <hr className="my-8 border-gray-300" />
               )}
 
               {/* Completed Orders Grid */}
               {ordersByStatus.completed.length > 0 && (
                 <div className="mb-12">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    Completed Orders ({ordersByStatus.completed.length})
-                  </h3>
+                  <div className="flex items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Completed Orders ({ordersByStatus.completed.length})
+                    </h3>
+                    <button
+                      onClick={() => handleBulkArchiveClick('completed', ordersByStatus.completed)}
+                      className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-md border border-blue-300 hover:border-blue-400 transition-colors ml-16"
+                    >
+                      Archive All ({ordersByStatus.completed.length})
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {ordersByStatus.completed.map((order) => (
                       <div
@@ -408,9 +488,17 @@ const AdminOpenOrders = () => {
               {/* Cancelled Orders Grid */}
               {ordersByStatus.cancelled.length > 0 && (
                 <div className="mb-20">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    Cancelled Orders ({ordersByStatus.cancelled.length})
-                  </h3>
+                  <div className="flex items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Cancelled Orders ({ordersByStatus.cancelled.length})
+                    </h3>
+                    <button
+                      onClick={() => handleBulkArchiveClick('cancelled', ordersByStatus.cancelled)}
+                      className="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-md border border-red-300 hover:border-red-400 transition-colors ml-16"
+                    >
+                      Archive All ({ordersByStatus.cancelled.length})
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {ordersByStatus.cancelled.map((order) => (
                       <div

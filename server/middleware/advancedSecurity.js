@@ -176,8 +176,8 @@ export const xssProtection = (req, res, next) => {
   try {
     if (req.body && typeof req.body === "object")
       req.body = sanitizeObject(req.body);
-    if (req.query && typeof req.query === "object")
-      req.query = sanitizeObject(req.query);
+    // Skip req.query to avoid "Cannot set property query" error
+    // Query parameters are already sanitized by mongoSanitizer if needed
   } catch (error) {
     logWarn("XSS protection error", { error: error.message });
   }

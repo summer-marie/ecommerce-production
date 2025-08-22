@@ -50,10 +50,13 @@ export default defineConfig(({ mode }) => {
       // let Vite listen on the platform-provided port only when provided by the platform
       host: true,
       port: env.PORT ? Number(env.PORT) : undefined,
-      // explicitly allow the Railway-generated frontend and backend domains
+      // explicitly allow the Railway-generated frontend and backend domains + custom domains
       allowedHosts: [
         "client-production-24fd.up.railway.app",
         "server-production-6620.up.railway.app",
+        "otwpizza.com",
+        "www.otwpizza.com",
+        "api.otwpizza.com",
         "localhost",
       ],
     },
