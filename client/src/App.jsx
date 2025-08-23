@@ -18,6 +18,7 @@ const OrderMenu = lazy(() => import("./customer/OrderMenu"));
 const Contact = lazy(() => import("./customer/Contact"));
 const Checkout = lazy(() => import("./customer/Checkout"));
 const OrderSuccess = lazy(() => import("./customer/OrderSuccess"));
+const PrivacyPolicy = lazy(() => import("./customer/PrivacyPolicy"));
 
 // Admin components (only loaded when accessing admin)
 const AdminOpenOrders = lazy(() => import("./admin/AdminOpenOrders"));
@@ -107,6 +108,14 @@ function App() {
             element={
               <Suspense fallback={<LoadingFallback />}>
                 <OrderSuccess />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/privacy-policy"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <PrivacyPolicy />
               </Suspense>
             }
           />

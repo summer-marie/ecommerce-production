@@ -154,6 +154,9 @@ BASE64_IMAGE_SETUP.md
 SQUARE_INTEGRATION_GUIDE.md
 CLIENT_SQUARE_SETUP_GUIDE.md
 
+# Privacy policy (client-specific information)
+PRIVACY_POLICY.md
+
 # yarn v2
 .yarn/cache
 .yarn/unplugged
