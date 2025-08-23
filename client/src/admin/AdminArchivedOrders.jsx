@@ -246,8 +246,8 @@ const AdminArchivedOrders = () => {
                   Order Details/Quantity
                 </th>
                 <th scope="col" className="px-4 py-4">
-                  {/* **Address (Shipping/Delivery Address)** */}
-                  Destination
+                  {/* **Customer Email Address** */}
+                  Customer Email
                 </th>
                 <th scope="col" className="px-4 py-4">
                   {/* **Name (or User Email)** */}
@@ -306,7 +306,7 @@ const AdminArchivedOrders = () => {
                     </ul>
                   </td>
                   <td className="px-4 py-4 text-gray-900">
-                    {order.address.street}
+                    {order.email || "(Unavailable)"}
                   </td>
                   <td className="px-4 py-4 text-gray-900">
                     {" "}

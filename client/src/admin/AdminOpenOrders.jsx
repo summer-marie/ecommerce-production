@@ -328,6 +328,7 @@ const AdminOpenOrders = () => {
                         {/* Customer Info */}
                         <div className="mb-4">
                           <p className="font-semibold text-gray-800">{order.firstName} {order.lastName}</p>
+                          <p className="text-sm text-gray-600">{order.email || "(Email Unavailable)"}</p>
                           <p className="text-lg font-bold text-green-600">${order.orderTotal}</p>
                         </div>
 
@@ -437,6 +438,7 @@ const AdminOpenOrders = () => {
 
                         <div className="mb-4">
                           <p className="font-semibold text-gray-800">{order.firstName} {order.lastName}</p>
+                          <p className="text-sm text-gray-600">{order.email || "(Email Unavailable)"}</p>
                           <p className="text-lg font-bold text-green-600">${order.orderTotal}</p>
                         </div>
 
@@ -522,6 +524,7 @@ const AdminOpenOrders = () => {
 
                         <div className="mb-4">
                           <p className="font-semibold text-gray-800">{order.firstName} {order.lastName}</p>
+                          <p className="text-sm text-gray-600">{order.email || "(Email Unavailable)"}</p>
                           <p className="text-lg font-bold text-red-600">${order.orderTotal}</p>
                         </div>
 
