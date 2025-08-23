@@ -157,6 +157,9 @@ CLIENT_SQUARE_SETUP_GUIDE.md
 # Privacy policy (client-specific information)
 PRIVACY_POLICY.md
 
+# Terms and conditions (client-specific legal documents)
+TERMS_AND_CONDITIONS.md
+
 # yarn v2
 .yarn/cache
 .yarn/unplugged
