@@ -75,6 +75,31 @@
   /* filter: brightness(0.6) contrast(1); */
 }
 
+/* Order Success page with tomato background */
+.order-success-bg {
+  background-image: url("./assets/tomato.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  position: relative;
+}
+
+.order-success-bg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.55); /* White overlay with opacity */
+  z-index: 1;
+}
+
+.order-success-content {
+  position: relative;
+  z-index: 2; /* Ensure content appears above the overlay */
+}
+
 .myText {
   top: 50%;
   left: 50%;
