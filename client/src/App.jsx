@@ -20,6 +20,7 @@ const Checkout = lazy(() => import("./customer/Checkout"));
 const OrderSuccess = lazy(() => import("./customer/OrderSuccess"));
 const PrivacyPolicy = lazy(() => import("./legal/PrivacyPolicy"));
 const TermsCond = lazy(() => import("./legal/TermsCond"));
+const Licensing = lazy(() => import("./legal/Licensing"));
 
 // Admin components (only loaded when accessing admin)
 const AdminOpenOrders = lazy(() => import("./admin/AdminOpenOrders"));
@@ -125,6 +126,14 @@ function App() {
             element={
               <Suspense fallback={<LoadingFallback />}>
                 <TermsCond />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/licensing"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Licensing />
               </Suspense>
             }
           />
