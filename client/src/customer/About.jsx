@@ -29,22 +29,22 @@ const ourIngredients = (
       From Hearth to Table: Freshness & Flavor That Set Us Apart
     </h1>
     <hr className="p-1 border-gray-700" />
-    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-lg">
+    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-2xl">
       We're passionate about using only the freshest, highest quality
       ingredients in every pizza. Our commitment to flavor starts with locally
       sourced produce and time-honored traditions.
     </p>
-    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-lg">
+    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-2xl">
       Our tomatoes are picked at their peak for a sauce that's perfectly
       balanced and vibrant. We choose cheeses from trusted dairies for a creamy,
       rich melt, and select meats for their bold, savory taste.
     </p>
-    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-lg">
+    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-2xl">
       Every vegetable is hand-prepared, and our dough is crafted daily for the
       ideal texture and flavor. It's this attention to detail that makes our
       pizzas truly stand out.
     </p>
-    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-lg">
+    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-2xl">
       When you dine with us, you're enjoying a meal made with care, passion, and
       the finest ingredients—because you deserve nothing less.
     </p>
@@ -57,16 +57,16 @@ const ourPurpose = (
       Our Purpose
     </h1>
     <hr className="p-1 border-black mb-1" />
-    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-lg">
+    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-2xl">
       At OverTheWall, our purpose is to bring neighbors together with
       handcrafted Boston-style pizza, made from quality ingredients and family
       tradition.
     </p>
-    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-lg">
+    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-2xl">
       We're a small, family-owned business dedicated to sharing comfort, flavor,
       and a welcoming space with our community.
     </p>
-    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-lg">
+    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-2xl">
       Thank you for letting us serve you and be part of your neighborhood!
     </p>
   </div>
@@ -79,12 +79,12 @@ const ourMissionStatement = (
     </h1>
     <hr className="border-black mb-1 p-1" />
 
-    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-lg">
+    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-2xl">
       As a family-owned small business, our mission is to share the art of
       Boston and New York-style pizza with our neighbors. Every pie is crafted
       with care, tradition, and a love for bringing people together.
     </p>
-    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-lg">
+    <p className="p-1 sm:p-2 text-sm sm:text-base lg:text-2xl">
       We believe great pizza connects communities—so let's raise a slice,
       celebrate good times, and enjoy a taste of home, made just for you.
     </p>

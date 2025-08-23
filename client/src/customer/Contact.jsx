@@ -5,11 +5,31 @@ import { sendMessage } from "../redux/messageSlice";
 const Contact = () => {
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     subject: "",
     message: "",
   });
+
+  const handleCopyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText("support@otwpizza.com");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    } catch (err) {
+      console.error("Failed to copy email:", err);
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = "support@otwpizza.com";
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,8 +62,8 @@ const Contact = () => {
 
   return (
     <>
-      <section id="contactSection" className="bg-grey-400 mb-20 px-4">
-        <div className="py-8 lg:py-16 mx-auto max-w-screen-md">
+      <section id="contactSection" className="min-h-screen flex items-center">
+        <div className="py-8 lg:py-16 mx-auto max-w-screen-md w-full min-h-full">
           <h2 className="mb-4 text-3xl sm:text-4xl tracking-tight font-extrabold text-center text-slate-800">
             Contact Us
           </h2>
@@ -56,6 +76,54 @@ const Contact = () => {
             every customer and looks forward to serving you the best pizza in
             town.
           </p>
+          
+          {/* Contact Info */}
+          <div className="mb-8 lg:mb-12 text-center">
+            <div className="inline-flex items-center justify-center bg-white/80 backdrop-blur rounded-xl px-6 py-4 shadow-lg border border-gray-200">
+              <svg 
+                className="w-10 h-10 text-teal-600 mr-3" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <div className="flex-grow">
+                <p className="text-sm text-gray-600 mb-1 text-left">Email us directly at:</p>
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-lg font-semibold text-teal-700 select-all">
+                    support@otwpizza.com
+                  </span>
+                  <button
+                    onClick={handleCopyEmail}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                      copied 
+                        ? 'bg-green-100 border-green-300 text-green-700' 
+                        : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    title="Copy email address"
+                  >
+                    {copied ? (
+                      <div className="flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Copied!
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <p className="text-center text-red-600 italic text-base sm:text-lg mb-6">
             ** All fields are required
           </p>

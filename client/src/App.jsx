@@ -193,7 +193,7 @@ function App() {
       </Routes>
 
       {/* Performance monitoring in development */}
-      <PerformanceMonitor />
+      {/* <PerformanceMonitor /> */}
     </Suspense>
   );
 }
