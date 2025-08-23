@@ -18,6 +18,7 @@ import {
   updateOrderPaymentStatus,
   getOrderByPaymentId,
 } from "../orders/orderPaymentHelpers.js";
+import { sendPaymentReceiptEmail } from "../utils/receiptService.js";
 
 // Helper: sanitize objects for JSON (convert BigInt recursively)
 function toJsonSafe(value) {
@@ -295,6 +296,7 @@ export const createSquarePayment = async (req, res) => {
 
     // Try to update order, but don't fail payment response if not found
     let orderUpdate = { updated: false };
+    let customerOrder = null;
     try {
       if (orderRefNumber != null) {
         await updateOrderPaymentStatus(orderRefNumber, {
@@ -309,6 +311,14 @@ export const createSquarePayment = async (req, res) => {
             ) / 100,
         });
         orderUpdate = { updated: true };
+
+        // Get the updated order for email receipt
+        try {
+          const orderModel = (await import("../orders/orderModel.js")).default;
+          customerOrder = await orderModel.findOne({ orderNumber: orderRefNumber });
+        } catch (orderFetchError) {
+          console.warn("Could not fetch order for email receipt:", orderFetchError.message);
+        }
       } else {
         console.warn(
           `Order reference '${referenceId}' is not numeric; skipped DB update.`
@@ -318,6 +328,25 @@ export const createSquarePayment = async (req, res) => {
     } catch (e) {
       console.error(`Order update failed for ref ${referenceId}:`, e?.message);
       orderUpdate = { updated: false, error: e?.message };
+    }
+
+    // Send payment receipt email if customer order found and has email
+    if (customerOrder && customerOrder.email) {
+      try {
+        const receiptData = {
+          paymentId: result.payment.id,
+          receiptNumber: result.payment.receiptNumber,
+          amount: Number(result.payment.amountMoney.amount) / 100,
+          method: customerDetails?.wallet === "googlePay" ? "Google Pay" : "Credit/Debit Card",
+          status: result.payment.status,
+        };
+        
+        const emailResult = await sendPaymentReceiptEmail(receiptData, customerOrder.email);
+        console.log("Payment receipt email result:", emailResult);
+      } catch (emailError) {
+        console.warn("Failed to send payment receipt email:", emailError.message);
+        // Don't fail payment response if email fails
+      }
     }
 
     res.json({

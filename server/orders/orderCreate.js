@@ -1,4 +1,5 @@
 import orderModel from "./orderModel.js";
+import { sendOrderConfirmationEmail } from "../utils/receiptService.js";
 
 const orderCreate = async (req, res) => {
   try {
@@ -38,6 +39,7 @@ const orderCreate = async (req, res) => {
       phone,
       firstName,
       lastName,
+      email,
       orderTotal,
       status,
       isArchived,
@@ -49,14 +51,12 @@ const orderCreate = async (req, res) => {
       orderNumber = await generateOrderNumber();
     }
 
-    // Validation
+    // Validation - address is optional for pickup-only orders
     if (
       !orderNumber ||
       orderNumber == "" ||
       !orderDetails ||
       orderDetails == "" ||
-      !address ||
-      address == "" ||
       !firstName ||
       firstName == "" ||
       orderTotal === undefined ||
@@ -78,6 +78,7 @@ const orderCreate = async (req, res) => {
       phone,
       firstName,
       lastName,
+      email,
       orderTotal,
       status,
       isArchived,
@@ -100,6 +101,22 @@ const orderCreate = async (req, res) => {
     };
 
     console.log("newOrder", formattedOrder);
+
+    // Send order confirmation email if email provided
+    if (email) {
+      try {
+        console.log("🐛 DEBUG - About to send email with data:");
+        console.log("newOrder keys:", Object.keys(newOrder.toObject ? newOrder.toObject() : newOrder));
+        console.log("payment:", payment);
+        
+        const emailResult = await sendOrderConfirmationEmail(newOrder, payment);
+        console.log("Order confirmation email result:", emailResult);
+      } catch (emailError) {
+        console.error("Failed to send order confirmation email:", emailError.message);
+        console.error("Full email error:", emailError);
+        // Don't fail the order creation if email fails
+      }
+    }
 
     res.status(200).json({
       success: true,

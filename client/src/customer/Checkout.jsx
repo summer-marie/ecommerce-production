@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
 import { clearCart, removeFromCart } from "../redux/cartSlice";
@@ -24,10 +24,7 @@ const Checkout = () => {
   // User info state
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [street, setStreet] = useState("");
-  const [city, setCity] = useState("");
-  const [stateVal, setStateVal] = useState("");
-  const [zip, setZip] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
   // Payment state
@@ -41,6 +38,12 @@ const Checkout = () => {
   const [walletSupport, setWalletSupport] = useState({
     googlePaySupported: false,
   });
+
+  // Calculate total function - defined early since it's used in many places
+  const calculateTotal = useCallback(() =>
+    cartItems
+      .reduce((sum, item) => sum + Number(item.pizzaPrice), 0)
+      .toFixed(2), [cartItems]);
 
   // Detect Google Pay support early so we can show/hide button group appropriately
   useEffect(() => {
@@ -77,10 +80,7 @@ const Checkout = () => {
     if (
       !firstName ||
       !lastName ||
-      !street ||
-      !city ||
-      !stateVal ||
-      !zip ||
+      !email ||
       !phone
     ) {
       setPaymentError("Please fill in all required fields");
@@ -94,7 +94,7 @@ const Checkout = () => {
     const orderData = {
       firstName,
       lastName,
-      address: { street, city, state: stateVal, zip },
+      email,
       phone,
       orderDetails: cartItems.map((item) => ({
         pizzaName: item.pizzaName,
@@ -156,12 +156,25 @@ const Checkout = () => {
           paidAt: null,
         },
       };
-      await dispatch(createOrder(cashOrderData)).unwrap();
+      const result = await dispatch(createOrder(cashOrderData)).unwrap();
+      
+      // Prepare success data for cash orders
+      const successData = {
+        orderNumber: result?.order?.orderNumber || "N/A",
+        firstName,
+        lastName,
+        email,
+        phone,
+        orderDetails: cartItems,
+        orderTotal: calculateTotal(),
+        paymentMethod: "Cash on Pickup",
+      };
+
       setShowSuccessAlert(true);
       setTimeout(() => {
         setShowSuccessAlert(false);
         dispatch(clearCart());
-        navigate("/order-success");
+        navigate("/order-success", { state: { orderData: successData } });
       }, 1500);
     } catch (error) {
       console.error("Cash order creation failed", error);
@@ -188,13 +201,29 @@ const Checkout = () => {
     setShowCardForm(false);
     setPaymentError("");
   };
-  const handlePaymentSuccess = async () => {
+  const handlePaymentSuccess = useCallback(async (paymentResult) => {
     try {
       setShowSuccessAlert(true);
+      
+      // Prepare order data for success page
+      const successData = {
+        orderNumber: paymentResult.orderRef || "N/A",
+        firstName,
+        lastName,
+        email,
+        phone,
+        orderDetails: cartItems,
+        orderTotal: calculateTotal(),
+        paymentMethod: paymentInstrument === "googlePay" ? "Google Pay" : "Credit/Debit Card",
+        receiptNumber: paymentResult.receiptNumber,
+        paymentId: paymentResult.paymentId,
+        status: paymentResult.status
+      };
+
       setTimeout(() => {
         setShowSuccessAlert(false);
         dispatch(clearCart());
-        navigate("/order-success");
+        navigate("/order-success", { state: { orderData: successData } });
       }, 1000);
     } catch {
       setPaymentError(
@@ -203,14 +232,17 @@ const Checkout = () => {
     } finally {
       setIsPaymentProcessing(false);
     }
-  };
-  const handlePaymentError = (error) => {
+  }, [firstName, lastName, email, phone, cartItems, calculateTotal, paymentInstrument, dispatch, navigate]);
+
+  const handlePaymentError = useCallback((error) => {
     setPaymentError(error);
     setIsPaymentProcessing(false);
-  };
-  const handlePaymentReady = (handler) => {
+  }, []);
+  
+  const handlePaymentReady = useCallback((handler) => {
     setPaymentHandler(() => handler);
-  };
+  }, []);
+  
   const handleItemDelete = (cartItemId) => {
     setShowSuccessAlert(true);
     dispatch(removeFromCart(cartItemId));
@@ -226,10 +258,7 @@ const Checkout = () => {
       navigate("/order-menu");
     }, 2000);
   };
-  const calculateTotal = () =>
-    cartItems
-      .reduce((sum, item) => sum + Number(item.pizzaPrice), 0)
-      .toFixed(2);
+  
   const formatPhoneNumber = (value) => {
     const cleaned = value.replace(/\D/g, "");
     const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
@@ -420,6 +449,8 @@ const Checkout = () => {
                             <span className="text-xs text-gray-500 basis-full">Google Pay unavailable on this browser</span>
                           )}
                         </div>
+                        
+                        {/* Square Payment Component */}
                         <SquarePayment
                           orderTotal={calculateTotal()}
                           onPaymentSuccess={handlePaymentSuccess}
@@ -507,6 +538,30 @@ const Checkout = () => {
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
                   Your Details
                 </h2>
+                
+                {/* Pickup Location Notice */}
+                <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-blue-800 text-sm mb-1">
+                        Pickup Location
+                      </h3>
+                      <p className="text-blue-700 text-sm leading-relaxed">
+                        2682 S. 156th Dr.<br />
+                        Goodyear, AZ 85338
+                      </p>
+                      <p className="text-blue-600 text-xs mt-1">
+                        All orders are pickup only
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col">
                     <label
@@ -542,118 +597,19 @@ const Checkout = () => {
                   </div>
                   <div className="flex flex-col sm:col-span-2">
                     <label
-                      htmlFor="street"
-                      className="text-sm font-medium text-gray-700"
+                      htmlFor="email"
+                      className="text-sm font-medium text-gray-700 flex items-center gap-2"
                     >
-                      Street
+                      Email Address
+                      <span className="text-xs text-gray-500 font-normal">* for receipt only</span>
                     </label>
                     <input
-                      id="street"
-                      value={street}
-                      onChange={(e) => setStreet(e.target.value)}
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
-                      placeholder="123 Main St"
-                      className="mt-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label
-                      htmlFor="city"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      City
-                    </label>
-                    <input
-                      id="city"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      required
-                      placeholder="Goodyear"
-                      className="mt-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label
-                      htmlFor="state"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      State
-                    </label>
-                    <select
-                      id="state"
-                      value={stateVal}
-                      onChange={(e) => setStateVal(e.target.value)}
-                      required
-                      className="mt-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
-                    >
-                      <option value="">Select</option>
-                      <option value="AL">Alabama</option>
-                      <option value="AK">Alaska</option>
-                      <option value="AZ">Arizona</option>
-                      <option value="AR">Arkansas</option>
-                      <option value="CA">California</option>
-                      <option value="CO">Colorado</option>
-                      <option value="CT">Connecticut</option>
-                      <option value="DE">Delaware</option>
-                      <option value="FL">Florida</option>
-                      <option value="GA">Georgia</option>
-                      <option value="HI">Hawaii</option>
-                      <option value="ID">Idaho</option>
-                      <option value="IL">Illinois</option>
-                      <option value="IN">Indiana</option>
-                      <option value="IA">Iowa</option>
-                      <option value="KS">Kansas</option>
-                      <option value="KY">Kentucky</option>
-                      <option value="LA">Louisiana</option>
-                      <option value="ME">Maine</option>
-                      <option value="MD">Maryland</option>
-                      <option value="MA">Massachusetts</option>
-                      <option value="MI">Michigan</option>
-                      <option value="MN">Minnesota</option>
-                      <option value="MS">Mississippi</option>
-                      <option value="MO">Missouri</option>
-                      <option value="MT">Montana</option>
-                      <option value="NE">Nebraska</option>
-                      <option value="NV">Nevada</option>
-                      <option value="NH">New Hampshire</option>
-                      <option value="NJ">New Jersey</option>
-                      <option value="NM">New Mexico</option>
-                      <option value="NY">New York</option>
-                      <option value="NC">North Carolina</option>
-                      <option value="ND">North Dakota</option>
-                      <option value="OH">Ohio</option>
-                      <option value="OK">Oklahoma</option>
-                      <option value="OR">Oregon</option>
-                      <option value="PA">Pennsylvania</option>
-                      <option value="RI">Rhode Island</option>
-                      <option value="SC">South Carolina</option>
-                      <option value="SD">South Dakota</option>
-                      <option value="TN">Tennessee</option>
-                      <option value="TX">Texas</option>
-                      <option value="UT">Utah</option>
-                      <option value="VT">Vermont</option>
-                      <option value="VA">Virginia</option>
-                      <option value="WA">Washington</option>
-                      <option value="WV">West Virginia</option>
-                      <option value="WI">Wisconsin</option>
-                      <option value="WY">Wyoming</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col">
-                    <label
-                      htmlFor="zip"
-                      className="text-sm font-medium text-gray-700"
-                    >
-                      Zipcode
-                    </label>
-                    <input
-                      id="zip"
-                      value={zip}
-                      onChange={(e) => setZip(e.target.value)}
-                      required
-                      placeholder="12345"
-                      pattern="[0-9]{5}(-[0-9]{4})?"
-                      maxLength={10}
+                      placeholder="john@example.com"
                       className="mt-1 rounded-lg border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
                     />
                   </div>
@@ -662,7 +618,7 @@ const Checkout = () => {
                       htmlFor="phone"
                       className="text-sm font-medium text-gray-700"
                     >
-                      Phone
+                      Phone Number
                     </label>
                     <input
                       id="phone"
@@ -678,8 +634,9 @@ const Checkout = () => {
                   </div>
                 </div>
                 <p className="mt-6 text-xs text-gray-500 leading-relaxed">
-                  Your information is used only to process your order. By
-                  placing the order you agree to our terms & pickup policies.
+                  Your information is used only to process your order and send
+                  email confirmation/receipt. By placing the order you agree to
+                  our terms & pickup policies.
                 </p>
               </div>
             </aside>
@@ -755,7 +712,7 @@ const Checkout = () => {
                         }}
                         className="text-sm font-medium text-blue-600 hover:text-blue-800"
                       >
-                        Change
+                        Change Payment Method
                       </button>
                     </div>
                     {/* Instrument selector */}
@@ -817,14 +774,7 @@ const Checkout = () => {
                         </button>
                       </div>
                     )}
-                    <SquarePayment
-                      orderTotal={calculateTotal()}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentError={handlePaymentError}
-                      onPaymentReady={handlePaymentReady}
-                      onWalletSupport={setWalletSupport}
-                      paymentInstrument={paymentInstrument}
-                    />
+                    {/* Square Payment component is shared - see below */}
                   </div>
                 )}
 

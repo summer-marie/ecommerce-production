@@ -8,7 +8,7 @@ import orderGetOpen from "./orderGetOpen.js";
 import orderUpdateStatus from "./orderUpdateStatus.js";
 import { orderRateLimit } from "../middleware/advancedSecurity.js";
 import orderMarkPaymentFailed from "./orderMarkPaymentFailed.js";
-import { orderCleanupArchived, orderGetCleanupPreview } from "./orderCleanup.js";
+import { orderGetCleanupPreview, orderCleanupArchived } from "./orderCleanup.js";
 
 const orderIndex = express.Router();
 

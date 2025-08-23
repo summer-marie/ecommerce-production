@@ -32,18 +32,22 @@ const orderSchema = new Schema({
     street: {
       type: String,
       default: "",
+      required: false,
     },
     city: {
       type: String,
       default: "",
+      required: false,
     },
     state: {
       type: String,
       default: "",
+      required: false,
     },
     zip: {
       type: String,
       default: "",
+      required: false,
     },
   },
   phone: {
@@ -54,6 +58,10 @@ const orderSchema = new Schema({
   },
   lastName: {
     type: String,
+  },
+  email: {
+    type: String,
+    required: false, // Optional for backward compatibility
   },
   orderTotal: {
     type: Number,

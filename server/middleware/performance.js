@@ -107,12 +107,16 @@ export const performanceMiddleware = (req, res, next) => {
   res.end = function (...args) {
     const duration = Date.now() - startTime;
 
-    // Alert on slow requests (>1 second)
-    if (duration > 1000) {
+    // Alert on slow requests with different thresholds for different endpoints
+    const isPaymentEndpoint = req.originalUrl?.includes('/payments/') || req.originalUrl?.includes('/square/');
+    const slowThreshold = isPaymentEndpoint ? 2000 : 1000; // 2s for payments, 1s for others
+    
+    if (duration > slowThreshold) {
       logWarn("Slow API request detected", {
         method: req.method,
         url: req.originalUrl,
         duration: `${duration}ms`,
+        threshold: `${slowThreshold}ms`,
         userAgent: req.get("user-agent"),
       });
     }

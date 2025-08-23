@@ -201,6 +201,7 @@ const SquarePayment = ({
               firstName: orderData?.firstName,
               lastName: orderData?.lastName,
               phone: orderData?.phone,
+              email: orderData?.email,
             },
             wallet: useGooglePay ? "googlePay" : "card",
           };
