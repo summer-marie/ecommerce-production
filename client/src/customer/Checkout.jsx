@@ -287,7 +287,7 @@ const Checkout = () => {
               aria-labelledby="order-summary"
               className="order-1 lg:order-1 lg:col-span-2 space-y-6"
             >
-              <div className="bg-white/80 backdrop-blur rounded-2xl shadow ring-1 ring-gray-200 p-6">
+              <div className="bg-white/80 backdrop-blur rounded-2xl border border-gray-200 shadow-xl shadow-red-700 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2
                     id="order-summary"
@@ -534,7 +534,7 @@ const Checkout = () => {
 
             {/* User Info Form */}
             <aside className="order-2 lg:order-2 lg:col-span-1">
-              <div className="bg-white/80 backdrop-blur rounded-2xl shadow ring-1 ring-gray-200 p-6 sticky top-6">
+              <div className="bg-white/80 backdrop-blur rounded-2xl border border-gray-200 shadow-xl shadow-red-700 p-6 sticky top-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
                   Your Details
                 </h2>
@@ -643,7 +643,7 @@ const Checkout = () => {
 
             {/* Payment Section (mobile below details via order classes) */}
             <div className="order-3 lg:hidden lg:order-2 lg:col-span-2 space-y-6">
-              <div className="bg-white/80 backdrop-blur rounded-2xl shadow ring-1 ring-gray-200 p-6 space-y-6">
+              <div className="bg-white/80 backdrop-blur rounded-2xl border border-gray-200 shadow-2xl shadow-red-700 p-6 space-y-6">
                 {paymentError && (
                   <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
                     {paymentError}
