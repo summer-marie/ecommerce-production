@@ -5,27 +5,27 @@ import { fetchAbout } from "../redux/aboutSlice";
 
 const topImagePlaceholder = (
   <img
-  className="object-cover object-center w-full rounded-lg h-full"
+    className="object-cover object-center w-full rounded-lg h-full"
     src={new URL("../assets/gardenTomato.jpg", import.meta.url).href}
     alt=""
-  loading="lazy"
+    loading="lazy"
   />
 );
 const centerImagePlaceholder = (
   <img
-  className="object-cover object-center w-full rounded-lg h-full"
+    className="object-cover object-center w-full rounded-lg h-full"
     src={new URL("../assets/dough.jpg", import.meta.url).href}
     alt=""
-  loading="lazy"
+    loading="lazy"
   />
 );
 
 const bottomImagePlaceholder = (
   <img
-  className="object-cover object-center w-full rounded-lg h-full"
+    className="object-cover object-center w-full rounded-lg h-full"
     src={new URL("../assets/herbs.jpg", import.meta.url).href}
     alt=""
-  loading="lazy"
+    loading="lazy"
   />
 );
 
@@ -47,13 +47,13 @@ const Home = () => {
         <Jumbotron headline={"OverTheWall"} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 px-2 sm:px-4 py-4 mb-15 sm:ms-5">
-    <div className="w-full bg-red-900 rounded-xl shadow-2xl shadow-black overflow-hidden h-[35vh] sm:h-64 lg:h-80">
+        <div className="w-full bg-red-900 rounded-xl shadow-2xl shadow-black overflow-hidden h-[35vh] sm:h-64 lg:h-80">
           {data?.topImage?.data ? (
             <img
-      className="object-cover object-center w-full rounded-lg h-full"
+              className="object-cover object-center w-full rounded-lg h-full"
               src={data.topImage.data}
               alt="About top section"
-      loading="lazy"
+              loading="lazy"
             />
           ) : (
             topImagePlaceholder
@@ -77,7 +77,7 @@ const Home = () => {
           ) : null}
         </div>
 
-  <div className="w-full bg-white shadow-black rounded-xl sm:col-span-1 lg:col-span-2 shadow-2xl order-4 sm:order-3">
+        <div className="w-full bg-white shadow-black rounded-xl sm:col-span-1 lg:col-span-2 shadow-2xl order-4 sm:order-3">
           {data?.centerHeading || data?.centerDescription ? (
             <div className="cursiveFont font-medium text-black text-center p-2 sm:p-3">
               {data.centerHeading && (
@@ -94,26 +94,26 @@ const Home = () => {
             </div>
           ) : null}
         </div>
-    <div className="w-full bg-red-900 rounded-xl shadow-2xl shadow-black overflow-hidden h-[35vh] sm:h-64 lg:h-80 order-3 sm:order-4">
+        <div className="w-full bg-red-900 rounded-xl shadow-2xl shadow-black overflow-hidden h-[35vh] sm:h-64 lg:h-80 order-3 sm:order-4">
           {data?.centerImage?.data ? (
             <img
-      className="object-cover object-center w-full rounded-lg h-full"
+              className="object-cover object-center w-full rounded-lg h-full"
               src={data.centerImage.data}
               alt="About center section"
-      loading="lazy"
+              loading="lazy"
             />
           ) : (
             centerImagePlaceholder
           )}
         </div>
 
-    <div className="w-full bg-red-900 rounded-xl shadow-2xl shadow-black overflow-hidden h-[35vh] sm:h-64 lg:h-80 order-5">
+        <div className="w-full bg-red-900 rounded-xl shadow-2xl shadow-black overflow-hidden h-[35vh] sm:h-64 lg:h-80 order-5">
           {data?.bottomImage?.data ? (
             <img
-      className="object-cover object-center w-full rounded-lg h-full"
+              className="object-cover object-center w-full rounded-lg h-full"
               src={data.bottomImage.data}
               alt="About bottom section"
-      loading="lazy"
+              loading="lazy"
             />
           ) : (
             bottomImagePlaceholder

@@ -16,6 +16,35 @@
 
   /* Dynamic sidebar width for admin layout */
   --sidebar-width: 256px;
+
+  /* Italian flag colors */
+  --it-green: #0c6f47;
+  --it-white: #f5f7f9;
+  --it-red: #991b1f;
+  /* Metallic highlight overlay (reused in scrollbar) */
+  --metal-highlight: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.38) 0%,
+    rgba(255, 255, 255, 0.08) 42%,
+    rgba(255, 255, 255, 0) 60%
+  );
+
+  /* Universal scrollbar palette (light, blue-gray) */
+  --scroll-track: #f2f6ff; /* very light blue-gray track */
+  --scroll-thumb: #c7d4e8; /* light blue-gray thumb */
+  --scroll-thumb-hover: #b5c6e0; /* slightly darker on hover */
+  --scroll-border: rgba(0, 0, 0, 0.22);
+}
+
+/* Dark mode tuning */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark mode blue-gray so the thumb stands out */
+    --scroll-track: #1b2433; /* deep blue-gray track */
+    --scroll-thumb: #5b7da6; /* blue-gray thumb */
+    --scroll-thumb-hover: #6b8fb8; /* brighter on hover */
+    --scroll-border: rgba(255, 255, 255, 0.18);
+  }
 }
 
 /* Google Fonts */
@@ -40,24 +69,67 @@
   font-family: "Charm";
 }
 
+/* WebKit-based browsers (Chrome, Edge, Safari) */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 
+/* Track: neutral metallic with subtle sheen (Chromium/Edge/Safari) */
 ::-webkit-scrollbar-track {
-  background: #f3f4f7;
-  /* background: none; */
-  border-radius: 4px;
+  border-radius: 8px;
+  background-color: var(--scroll-track);
+  background-image: var(--metal-highlight);
+  background-blend-mode: overlay;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), inset 0 -1px 1px rgba(0, 0, 0, 0.08);
 }
 
+/* Track for horizontal scrollbars */
+::-webkit-scrollbar:horizontal {
+  height: 10px;
+}
+::-webkit-scrollbar-track:horizontal {
+  background-color: var(--scroll-track);
+  background-image: var(--metal-highlight);
+}
+
+/* Thumb: neutral metallic with gloss and slight bevel */
 ::-webkit-scrollbar-thumb {
-  background: #04a341;
-  box-shadow: 2px 0px 5px 0px rgb(18, 78, 6) inset;
-  border-radius: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--scroll-border);
+  background-image:
+    var(--metal-highlight),
+  linear-gradient(180deg, #f9fbff 0%, var(--scroll-thumb) 55%, #aebbd4 100%);
+  background-blend-mode: overlay, normal;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.28),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.18);
+  background-clip: padding-box;
+}
+
+/* Horizontal thumb */
+::-webkit-scrollbar-thumb:horizontal {
+  background-image:
+    var(--metal-highlight),
+  linear-gradient(90deg, #f9fbff 0%, var(--scroll-thumb) 55%, #aebbd4 100%);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #bbf0bb;
+  background-image:
+    linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(255, 255, 255, 0.16) 42%,
+      rgba(255, 255, 255, 0) 60%
+    ),
+  linear-gradient(180deg, #f5f9ff 0%, var(--scroll-thumb-hover) 55%, #9fb2cf 100%);
+}
+
+/* Firefox (unified neutral colors) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track); /* thumb | track */
 }
 
 /* 404 page */
