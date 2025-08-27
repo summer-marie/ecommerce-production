@@ -446,3 +446,15 @@ button:disabled {
   width: calc(100vw - var(--sidebar-width));
   transition: all 300ms ease;
 }
+
+/* Toast progress bar animation */
+@keyframes shrink {
+  from {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+}

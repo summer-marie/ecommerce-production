@@ -13,6 +13,7 @@ const AdminInbox = () => {
   const [selected, setSelected] = useState(null);
   const [reply, setReply] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [toast, setToast] = useState(null); // { show: boolean, title: string, message: string }
 
   useEffect(() => {
     dispatch(getMessages());
@@ -26,7 +27,14 @@ const AdminInbox = () => {
   };
 
   const handleReply = () => {
-    alert(`Reply sent to ${selected.email}:\n\n${reply}`);
+    const email = selected?.email;
+    // Simulate send, then show toast
+    setToast({ show: true, title: "Reply sent", message: `Sent to ${email}` });
+
+    // Auto-hide toast
+    setTimeout(() => setToast((t) => (t ? { ...t, show: false } : t)), 2400);
+    setTimeout(() => setToast(null), 3000);
+
     setReply("");
     // clear selection after reply
     setSelected(null);
@@ -74,6 +82,44 @@ const AdminInbox = () => {
 
   return (
     <>
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed top-4 right-4 z-[60] w-[22rem] max-w-sm transform transition-all duration-300 ${
+            toast.show ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          <div className="relative overflow-hidden rounded-xl bg-slate-900/90 text-slate-50 shadow-xl ring-1 ring-sky-400/30 backdrop-blur-md">
+            <div className="flex items-start gap-3 p-3">
+              <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/30">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm-1.293 12.293-2.5-2.5 1.414-1.414L10.707 11.5l4.672-4.672 1.414 1.414-6.086 6.05Z" />
+                </svg>
+              </span>
+              <div className="flex-1">
+                <div className="text-sm font-semibold">{toast.title}</div>
+                <div className="text-xs text-slate-300">{toast.message}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setToast(null)}
+                className="-m-1 rounded-md p-1 text-slate-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-sky-400/50"
+                aria-label="Dismiss notification"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M6.225 4.811 4.811 6.225 10.586 12l-5.775 5.775 1.414 1.414L12 13.414l5.775 5.775 1.414-1.414L13.414 12l5.775-5.775-1.414-1.414L12 10.586 6.225 4.811Z" />
+                </svg>
+              </button>
+            </div>
+            <div className="h-1 w-full bg-slate-700/60">
+              <div className="h-1 w-full bg-sky-400/80 animate-[shrink_3s_linear_forwards]"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="px-4">
         {/* Message Policy Header */}
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 mt-4">

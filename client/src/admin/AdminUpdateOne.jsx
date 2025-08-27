@@ -23,16 +23,12 @@ const ToppingDropdown = ({ label, value, onChange, options, type }) => (
           : 'border-green-800 bg-emerald-500 focus:bg-emerald-800 focus:ring-emerald-100 focus:border-emerald-200'
       }`}
     >
-      <option value={value || ""} disabled>
-        {value || "- - None - -"}
-      </option>
-      {options
-        .filter((option) => option.name !== value)
-        .map((option) => (
-          <option key={option.name} value={option.name}>
-            {option.name}
-          </option>
-        ))}
+      <option value="">- None -</option>
+      {options.map((option) => (
+        <option key={option.name} value={option.name}>
+          {option.name}
+        </option>
+      ))}
     </select>
   </div>
 );
@@ -373,18 +369,13 @@ const AdminUpdateOne = () => {
                         focus:bg-gray-300 
                         focus:ring-white
                         focus:border-sky-500"
-                        required
                       >
-                        <option value={pizzaForm.sauce || ""} disabled>
-                          {pizzaForm.sauce || "- - None - -"}
-                        </option>
-                        {sauceOptions
-                          .filter((option) => option.name !== pizzaForm.sauce)
-                          .map((option) => (
-                            <option key={option.name} value={option.name}>
-                              {option.name}
-                            </option>
-                          ))}
+                        <option value="">- None -</option>
+                        {sauceOptions.map((option) => (
+                          <option key={option.name} value={option.name}>
+                            {option.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
