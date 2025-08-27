@@ -76,11 +76,11 @@ const AdminSidenav = () => {
         }`}
         aria-label="Sidebar"
       >
-        <div className="h-full px-3 py-4 overflow-y-auto bg-emerald-950 relative">
+        <div className="h-full px-3 py-4 overflow-y-auto bg-gradient-to-b from-slate-950 via-slate-900/80 to-blue-950 ring-1 ring-blue-800/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] relative">
           {/* Toggle Button */}
           <button
             onClick={toggleSidebar}
-            className={`absolute top-4 bg-emerald-800 hover:bg-emerald-700 text-white p-2 rounded-full transition-all duration-300 z-50 ${
+            className={`absolute top-4 bg-sky-700/90 hover:bg-sky-600 text-white p-2 rounded-full transition-all duration-300 z-50 ring-1 ring-sky-300/30 shadow-[0_2px_10px_rgba(56,189,248,0.25)] focus:outline-none focus:ring-2 focus:ring-sky-400/40 ${
               isCollapsed ? "right-2" : "right-4"
             }`}
           >
@@ -121,7 +121,7 @@ const AdminSidenav = () => {
             }`}
           >
             {!isCollapsed && (
-              <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
+              <h2 className="mt-5 text-md font-bold text-slate-300 py-2">
                 Orders
               </h2>
             )}
@@ -129,22 +129,21 @@ const AdminSidenav = () => {
             <li>
               <Link
                 to="/open-orders"
-                className={`flex items-center p-2 rounded-lg group 
+                className={`flex items-center p-2 rounded-lg group transition-colors duration-150 ring-1 
                  ${
                    location.pathname === "/open-orders"
-                     ? "bg-lime-300/70"
-                     : "hover:bg-gray-700 text-stone-200"
+                     ? "bg-sky-400/15 ring-sky-400/30 text-sky-50"
+                     : "hover:bg-white/5 hover:ring-sky-400/20 text-slate-200 ring-transparent"
                  }
                 `}
                 title={isCollapsed ? "Open Orders" : ""}
               >
                 <svg
-                  className={`w-6 h-6 transition duration-75 group-hover:text-white ${
+                  className={`w-6 h-6 transition duration-75 group-hover:text-sky-200 ${
                     location.pathname === "/open-orders"
-                      ? "text-gray-700"
-                      : "text-gray-400 "
-                  }
-                      `}
+                      ? "text-sky-300"
+                      : "text-slate-400 "
+                  }`}
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -165,22 +164,21 @@ const AdminSidenav = () => {
             <li>
               <Link
                 to="/archived-orders"
-                className={`flex items-center p-2 rounded-lg group 
+                className={`flex items-center p-2 rounded-lg group transition-colors duration-150 ring-1 
                   ${
                     location.pathname === "/archived-orders"
-                      ? "bg-lime-300/70"
-                      : "hover:bg-gray-700 text-stone-200"
+                      ? "bg-sky-400/15 ring-sky-400/30 text-sky-50"
+                      : "hover:bg-white/5 hover:ring-sky-400/20 text-slate-200 ring-transparent"
                   }
                  `}
                 title={isCollapsed ? "Archived Orders" : ""}
               >
                 <svg
-                  className={`w-6 h-6 transition duration-75 group-hover:text-white ${
+                  className={`w-6 h-6 transition duration-75 group-hover:text-sky-200 ${
                     location.pathname === "/archived-orders"
-                      ? "text-gray-700"
-                      : "text-gray-400 "
-                  }
-                 `}
+                      ? "text-sky-300"
+                      : "text-slate-400 "
+                  }`}
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -199,7 +197,7 @@ const AdminSidenav = () => {
               </Link>
             </li>
             {!isCollapsed && (
-              <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
+              <h2 className="mt-5 text-md font-bold text-slate-300 py-2">
                 Menu
               </h2>
             )}
@@ -207,22 +205,21 @@ const AdminSidenav = () => {
             <li>
               <Link
                 to="/pizza-builder"
-                className={`flex items-center p-2 rounded-lg group 
+                className={`flex items-center p-2 rounded-lg group transition-colors duration-150 ring-1 
                   ${
                     location.pathname === "/pizza-builder"
-                      ? "bg-lime-300/70"
-                      : "hover:bg-gray-700 text-stone-200"
+                      ? "bg-sky-400/15 ring-sky-400/30 text-sky-50"
+                      : "hover:bg-white/5 hover:ring-sky-400/20 text-slate-200 ring-transparent"
                   }
                  `}
                 title={isCollapsed ? "Add New Pizza" : ""}
               >
                 <svg
-                  className={`w-6 h-6 transition duration-75 group-hover:text-white ${
+                  className={`w-6 h-6 transition duration-75 group-hover:text-sky-200 ${
                     location.pathname === "/pizza-builder"
-                      ? "text-gray-700"
-                      : "text-gray-400 "
-                  }
-             `}
+                      ? "text-sky-300"
+                      : "text-slate-400 "
+                  }`}
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -248,22 +245,21 @@ const AdminSidenav = () => {
             <li>
               <Link
                 to="/admin-menu"
-                className={`flex items-center p-2 rounded-lg group 
+                className={`flex items-center p-2 rounded-lg group transition-colors duration-150 ring-1 
                   ${
                     location.pathname === "/admin-menu"
-                      ? "bg-lime-300/70"
-                      : "hover:bg-gray-700 text-stone-200"
+                      ? "bg-sky-400/15 ring-sky-400/30 text-sky-50"
+                      : "hover:bg-white/5 hover:ring-sky-400/20 text-slate-200 ring-transparent"
                   }
                  `}
                 title={isCollapsed ? "Current Menu" : ""}
               >
                 <svg
-                  className={`w-6 h-6 transition duration-75 group-hover:text-white ${
+                  className={`w-6 h-6 transition duration-75 group-hover:text-sky-200 ${
                     location.pathname === "/admin-menu"
-                      ? "text-gray-700"
-                      : "text-gray-400 "
-                  }
-             `}
+                      ? "text-sky-300"
+                      : "text-slate-400 "
+                  }`}
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -295,19 +291,19 @@ const AdminSidenav = () => {
             <li>
               <Link
                 to="/ingredient-table"
-                className={`flex items-center p-2 rounded-lg group 
+                className={`flex items-center p-2 rounded-lg group transition-colors duration-150 ring-1 
                   ${
                     location.pathname === "/ingredient-table"
-                      ? "bg-lime-300/70"
-                      : "hover:bg-gray-700 text-stone-200"
+                      ? "bg-sky-400/15 ring-sky-400/30 text-sky-50"
+                      : "hover:bg-white/5 hover:ring-sky-400/20 text-slate-200 ring-transparent"
                   }`}
                 title={isCollapsed ? "Ingredients Table" : ""}
               >
                 <svg
-                  className={`w-6 h-6 transition duration-75 group-hover:text-white ${
+                  className={`w-6 h-6 transition duration-75 group-hover:text-sky-200 ${
                     location.pathname === "/ingredient-table"
-                      ? "text-gray-700"
-                      : "text-gray-400 "
+                      ? "text-sky-300"
+                      : "text-slate-400 "
                   }`}
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
@@ -334,7 +330,7 @@ const AdminSidenav = () => {
             </li>
 
             {!isCollapsed && (
-              <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
+              <h2 className="mt-5 text-md font-bold text-slate-300 py-2">
                 Customer Feedback
               </h2>
             )}
@@ -342,22 +338,21 @@ const AdminSidenav = () => {
             <li>
               <Link
                 to="/admin-inbox"
-                className={`flex items-center p-2 rounded-lg group 
+                className={`flex items-center p-2 rounded-lg group transition-colors duration-150 ring-1 
                   ${
                     location.pathname === "/admin-inbox"
-                      ? "bg-lime-300/70"
-                      : "hover:bg-gray-700 text-stone-200"
+                      ? "bg-sky-400/15 ring-sky-400/30 text-sky-50"
+                      : "hover:bg-white/5 hover:ring-sky-400/20 text-slate-200 ring-transparent"
                   }
                  `}
                 title={isCollapsed ? "Inbox" : ""}
               >
                 <svg
-                  className={`w-6 h-6 transition duration-75 group-hover:text-white ${
+                  className={`w-6 h-6 transition duration-75 group-hover:text-sky-200 ${
                     location.pathname === "/admin-inbox"
-                      ? "text-gray-700"
-                      : "text-gray-400 "
-                  }
-                  `}
+                      ? "text-sky-300"
+                      : "text-slate-400 "
+                  }`}
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="currentColor"
@@ -371,7 +366,7 @@ const AdminSidenav = () => {
                 )}
 
                 <span
-                  className={`inline-flex items-center justify-center w-4 h-4 p-3.5 text-sm font-bold rounded-full text-white bg-blue-800 border-2 border-green-300 shadow-md animate-pulse ${
+                  className={`inline-flex items-center justify-center w-4 h-4 p-3.5 text-sm font-bold rounded-full text-white bg-sky-700 border-2 border-sky-300 shadow-md animate-pulse ${
                     isCollapsed ? "ml-0" : "ms-3"
                   }`}
                 >
@@ -380,7 +375,7 @@ const AdminSidenav = () => {
               </Link>
             </li>
             {!isCollapsed && (
-              <h2 className="mt-5 text-md font-bold text-stone-200 py-2">
+              <h2 className="mt-5 text-md font-bold text-slate-300 py-2">
                 Your Account
               </h2>
             )}
@@ -389,11 +384,11 @@ const AdminSidenav = () => {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex items-center p-2 rounded-lg group hover:bg-red-800 text-stone-200 w-full cursor-pointer"
+                className="flex items-center p-2 rounded-lg group transition-colors duration-150 hover:bg-white/5 hover:ring-1 hover:ring-red-400/20 text-slate-200 w-full cursor-pointer"
                 title={isCollapsed ? "Sign Out" : ""}
               >
                 <svg
-                  className="w-6 h-6 transition duration-75 group-hover:text-white text-gray-400"
+                  className="w-6 h-6 transition duration-75 group-hover:text-red-300 text-slate-400"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="currentColor"
@@ -413,22 +408,21 @@ const AdminSidenav = () => {
             <li>
               <Link
                 to="/settings"
-                className={`flex items-center p-2 rounded-lg group 
+                className={`flex items-center p-2 rounded-lg group transition-colors duration-150 ring-1 
                         ${
                           location.pathname === "/settings"
-                            ? "bg-lime-300/70"
-                            : "hover:bg-gray-700 text-stone-200"
+                            ? "bg-sky-400/15 ring-sky-400/30 text-sky-50"
+                            : "hover:bg-white/5 hover:ring-sky-400/20 text-slate-200 ring-transparent"
                         }
                        `}
                 title={isCollapsed ? "Settings" : ""}
               >
                 <svg
-                  className={`w-6 h-6 transition duration-75 group-hover:text-white ${
+                  className={`w-6 h-6 transition duration-75 group-hover:text-sky-200 ${
                     location.pathname === "/settings"
-                      ? "text-gray-700"
-                      : "text-gray-400 "
-                  }
-                   `}
+                      ? "text-sky-300"
+                      : "text-slate-400 "
+                  }`}
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
