@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { builderGetMany } from "../redux/builderSlice";
 import { addToCart } from "../redux/cartSlice";
 import { LazyImage } from "../utils/performance.jsx";
@@ -7,6 +7,7 @@ import { LazyImage } from "../utils/performance.jsx";
 const Order = () => {
   const dispatch = useDispatch();
   const { builders } = useSelector((state) => state.builder);
+  const [quantities, setQuantities] = useState({}); // per-card quantity map
 
   useEffect(() => {
     dispatch(builderGetMany());
@@ -14,16 +15,25 @@ const Order = () => {
 
   // Memoized callback for adding to cart
   const handleAddToCart = useCallback(
-    (builder) => {
-      dispatch(
-        addToCart({
-          ...builder,
-          cartItemId: Date.now() + Math.random(),
-        })
-      );
+    (builder, qty = 1) => {
+      const count = Math.max(0, Math.min(99, Number(qty) || 0));
+      for (let i = 0; i < count; i++) {
+        dispatch(
+          addToCart({
+            ...builder,
+            cartItemId: Date.now() + Math.random(),
+          })
+        );
+      }
     },
     [dispatch]
   );
+
+  const getQty = (key) => quantities[key] || 0;
+  const inc = (key) =>
+    setQuantities((q) => ({ ...q, [key]: Math.min(99, (q[key] || 0) + 1) }));
+  const dec = (key) =>
+    setQuantities((q) => ({ ...q, [key]: Math.max(0, (q[key] || 0) - 1) }));
 
   const fallbackImage = new URL("../assets/basePizza.jpg", import.meta.url)
     .href;
@@ -58,6 +68,7 @@ const Order = () => {
                 builder?.image && typeof builder.image.data === "string"
                   ? builder.image.data
                   : fallbackImage;
+              const cardId = builder.id ?? builder._id ?? index;
               const baseNames = Array.isArray(builder?.base)
                 ? builder.base
                     .map((b) =>
@@ -98,11 +109,10 @@ const Order = () => {
                     .filter(Boolean)
                 : [];
               const allToppings = [...meatNames, ...veggieNames].join(", ");
-              const longText = (allToppings && allToppings.length > 45) || (builder.pizzaName && builder.pizzaName.length > 24);
               return (
                 <div
                   key={builder.id || index}
-                  className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col overflow-hidden"
+                  className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col overflow-hidden h-[26rem] sm:h-[28rem] lg:h-[30rem]"
                 >
                   <div className="relative w-full h-40 sm:h-44 lg:h-48">
                     <LazyImage
@@ -113,14 +123,16 @@ const Order = () => {
                     />
                   </div>
                   <div className="flex flex-col flex-1 px-4 sm:px-5 pt-4 pb-5">
-                    <h5 className={`font-semibold tracking-tight text-gray-900 mb-3 ${longText ? 'text-xl sm:text-xl' : 'text-2xl sm:text-2xl'}`}>
+                    <h5
+                      className={`font-semibold tracking-tight text-gray-900 mb-3 text-xl sm:text-2xl`}
+                    >
                       {builder.pizzaName}
                     </h5>
-                    <div className="space-y-2 mb-4 flex-1 min-h-0">
-                      <div className={`${longText ? 'text-sm sm:text-sm' : 'text-base sm:text-lg'} leading-snug`}> 
+                    <div className="space-y-2 mb-4 flex-1 min-h-[6rem] sm:min-h-[7rem]">
+                      <div className={`text-sm sm:text-base leading-snug`}>
                         <div className="mb-2 break-words">
                           <strong>Pizza Base:</strong> {baseNames || "-"}
-                          {baseNames && sauceName ? ", " : ''}
+                          {baseNames && sauceName ? ", " : ""}
                           {sauceName || ""}
                         </div>
                         <div className="break-words">
@@ -132,13 +144,43 @@ const Order = () => {
                       <span className="text-xl sm:text-2xl font-bold text-gray-900 shrink-0">
                         $ {Number(builder.pizzaPrice).toFixed(2)}
                       </span>
-                      <button
-                        onClick={() => handleAddToCart(builder)}
-                        type="button"
-                        className="font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 text-center shadow-lg hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer shadow-green-800/80 hover:text-black text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800 transition-all duration-200 max-w-[60%]"
-                      >
-                        Add to Cart
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <div className="inline-flex items-center bg-white/80 rounded-lg ring-1 ring-sky-300/30 shadow-sm">
+                          <button
+                            type="button"
+                            onClick={() => dec(cardId)}
+                            aria-label="Decrease quantity"
+                            className="px-2 py-1 text-slate-700 hover:text-slate-900"
+                          >
+                            −
+                          </button>
+                          <span className="w-8 text-center font-semibold text-slate-800 select-none">
+                            {getQty(cardId)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => inc(cardId)}
+                            aria-label="Increase quantity"
+                            className="px-2 py-1 text-slate-700 hover:text-slate-900"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const qty = getQty(cardId);
+                            if (qty > 0) {
+                              handleAddToCart(builder, qty);
+                              setQuantities((q) => ({ ...q, [cardId]: 0 }));
+                            }
+                          }}
+                          type="button"
+                          disabled={getQty(cardId) === 0}
+                          className="font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 text-center shadow-lg hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-green-800/80 hover:text-black text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800 transition-all duration-200"
+                        >
+                          Add
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

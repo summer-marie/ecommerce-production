@@ -1,22 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
 import { clearCart, removeFromCart } from "../redux/cartSlice";
 import { createOrder, markOrderPaymentFailed } from "../redux/orderSlice";
-import AlertSuccess from "../components/AlertSuccess";
 import AlertBlack from "../components/AlertBlack";
 import SquarePayment from "../components/SquarePayment";
 import squarePaymentService from "../redux/squarePaymentService";
 
-const successMsg = "Item deleted successfully";
-const successDescription = "";
 
 const alertMsg = "Are you sure you want to delete this order?";
 const alertDescription = "Click to confirm and redirect back to menu";
 
 const Checkout = () => {
   const cartItems = useSelector((state) => state.cart.items);
-  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  // Removed success alert pop-up for deletions and payments
   const [showAlert, setShowAlert] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -39,11 +36,36 @@ const Checkout = () => {
     googlePaySupported: false,
   });
 
-  // Calculate total function - defined early since it's used in many places
-  const calculateTotal = useCallback(() =>
-    cartItems
-      .reduce((sum, item) => sum + Number(item.pizzaPrice), 0)
-      .toFixed(2), [cartItems]);
+  // Group identical items (same name and price) with collected cartItemIds
+  const groupedItems = useMemo(() => {
+    const map = new Map();
+    for (const item of cartItems) {
+      const key = `${item.pizzaName}|${Number(item.pizzaPrice).toFixed(2)}`;
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          pizzaName: item.pizzaName,
+          pizzaPrice: Number(item.pizzaPrice),
+          ids: [item.cartItemId],
+          quantity: 1,
+        });
+      } else {
+        const g = map.get(key);
+        g.quantity += 1;
+        g.ids.push(item.cartItemId);
+      }
+    }
+    return Array.from(map.values());
+  }, [cartItems]);
+
+  // Calculate total from grouped items for consistency
+  const calculateTotal = useCallback(
+    () =>
+      groupedItems
+        .reduce((sum, item) => sum + Number(item.pizzaPrice) * item.quantity, 0)
+        .toFixed(2),
+    [groupedItems]
+  );
 
   // Detect Google Pay support early so we can show/hide button group appropriately
   useEffect(() => {
@@ -77,12 +99,7 @@ const Checkout = () => {
     e.preventDefault();
     setPaymentError("");
 
-    if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !phone
-    ) {
+    if (!firstName || !lastName || !email || !phone) {
       setPaymentError("Please fill in all required fields");
       return;
     }
@@ -96,10 +113,10 @@ const Checkout = () => {
       lastName,
       email,
       phone,
-      orderDetails: cartItems.map((item) => ({
+      orderDetails: groupedItems.map((item) => ({
         pizzaName: item.pizzaName,
         pizzaPrice: Number(item.pizzaPrice),
-        quantity: item.quantity || 1,
+        quantity: item.quantity,
       })),
       orderTotal: calculateTotal(),
       status: "processing",
@@ -157,7 +174,7 @@ const Checkout = () => {
         },
       };
       const result = await dispatch(createOrder(cashOrderData)).unwrap();
-      
+
       // Prepare success data for cash orders
       const successData = {
         orderNumber: result?.order?.orderNumber || "N/A",
@@ -169,13 +186,9 @@ const Checkout = () => {
         orderTotal: calculateTotal(),
         paymentMethod: "Cash on Pickup",
       };
-
-      setShowSuccessAlert(true);
-      setTimeout(() => {
-        setShowSuccessAlert(false);
-        dispatch(clearCart());
-        navigate("/order-success", { state: { orderData: successData } });
-      }, 1500);
+  // Navigate immediately without showing a transient success alert
+  dispatch(clearCart());
+  navigate("/order-success", { state: { orderData: successData } });
     } catch (error) {
       console.error("Cash order creation failed", error);
       setPaymentError("Failed to create order. Please try again.");
@@ -201,52 +214,65 @@ const Checkout = () => {
     setShowCardForm(false);
     setPaymentError("");
   };
-  const handlePaymentSuccess = useCallback(async (paymentResult) => {
-    try {
-      setShowSuccessAlert(true);
-      
-      // Prepare order data for success page
-      const successData = {
-        orderNumber: paymentResult.orderRef || "N/A",
-        firstName,
-        lastName,
-        email,
-        phone,
-        orderDetails: cartItems,
-        orderTotal: calculateTotal(),
-        paymentMethod: paymentInstrument === "googlePay" ? "Google Pay" : "Credit/Debit Card",
-        receiptNumber: paymentResult.receiptNumber,
-        paymentId: paymentResult.paymentId,
-        status: paymentResult.status
-      };
-
-      setTimeout(() => {
-        setShowSuccessAlert(false);
-        dispatch(clearCart());
-        navigate("/order-success", { state: { orderData: successData } });
-      }, 1000);
-    } catch {
-      setPaymentError(
-        "Payment completed but there was an app error. Please contact support."
-      );
-    } finally {
-      setIsPaymentProcessing(false);
-    }
-  }, [firstName, lastName, email, phone, cartItems, calculateTotal, paymentInstrument, dispatch, navigate]);
+  const handlePaymentSuccess = useCallback(
+    async (paymentResult) => {
+      try {
+        // Prepare order data for success page
+        const successData = {
+          orderNumber: paymentResult.orderRef || "N/A",
+          firstName,
+          lastName,
+          email,
+          phone,
+          orderDetails: groupedItems.map((item) => ({
+            pizzaName: item.pizzaName,
+            pizzaPrice: Number(item.pizzaPrice),
+            quantity: item.quantity,
+          })),
+          orderTotal: calculateTotal(),
+          paymentMethod:
+            paymentInstrument === "googlePay"
+              ? "Google Pay"
+              : "Credit/Debit Card",
+          receiptNumber: paymentResult.receiptNumber,
+          paymentId: paymentResult.paymentId,
+          status: paymentResult.status,
+        };
+  // Navigate immediately without showing a transient success alert
+  dispatch(clearCart());
+  navigate("/order-success", { state: { orderData: successData } });
+      } catch {
+        setPaymentError(
+          "Payment completed but there was an app error. Please contact support."
+        );
+      } finally {
+        setIsPaymentProcessing(false);
+      }
+    },
+    [
+      firstName,
+      lastName,
+      email,
+      phone,
+      groupedItems,
+      calculateTotal,
+      paymentInstrument,
+      dispatch,
+      navigate,
+    ]
+  );
 
   const handlePaymentError = useCallback((error) => {
     setPaymentError(error);
     setIsPaymentProcessing(false);
   }, []);
-  
+
   const handlePaymentReady = useCallback((handler) => {
     setPaymentHandler(() => handler);
   }, []);
-  
-  const handleItemDelete = (cartItemId) => {
-    setShowSuccessAlert(true);
-    dispatch(removeFromCart(cartItemId));
-    setTimeout(() => setShowSuccessAlert(false), 1500);
+
+  const handleRemoveGroup = (ids = []) => {
+    for (const id of ids) dispatch(removeFromCart(id));
   };
   const handleCancel = () => {
     setShowAlert(false);
@@ -258,7 +284,7 @@ const Checkout = () => {
       navigate("/order-menu");
     }, 2000);
   };
-  
+
   const formatPhoneNumber = (value) => {
     const cleaned = value.replace(/\D/g, "");
     const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
@@ -306,28 +332,33 @@ const Checkout = () => {
                     </button>
                   )}
                 </div>
-                {cartItems.length === 0 ? (
+                {groupedItems.length === 0 ? (
                   <p className="text-gray-500 italic text-sm">
                     Your cart is empty.
                   </p>
                 ) : (
                   <ul className="divide-y divide-gray-200">
-                    {cartItems.map((item, idx) => (
+                    {groupedItems.map((item, idx) => (
                       <li
-                        key={item.cartItemId || idx}
+                        key={item.key || idx}
                         className="py-4 flex gap-4 items-start"
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-base font-medium text-gray-900 capitalize leading-snug">
                             {item.pizzaName}
+                            {item.quantity > 1 && (
+                              <span className="ml-2 inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 align-middle">
+                                Qty: {item.quantity}
+                              </span>
+                            )}
                           </p>
                           <p className="text-sm text-gray-500">
-                            ${item.pizzaPrice}
+                            ${Number(item.pizzaPrice).toFixed(2)} each
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           <button
-                            onClick={() => handleItemDelete(item.cartItemId)}
+                            onClick={() => handleRemoveGroup(item.ids)}
                             type="button"
                             className="text-xs font-medium text-red-600 hover:text-white border border-red-500 hover:bg-red-600 px-3 py-1 rounded-full transition"
                           >
@@ -357,8 +388,16 @@ const Checkout = () => {
                     )}
                     {!paymentMethod && (
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-3">Payment Method</h3>
-                        <div className={`grid gap-4 w-full ${walletSupport.googlePaySupported ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                          Payment Method
+                        </h3>
+                        <div
+                          className={`grid gap-4 w-full ${
+                            walletSupport.googlePaySupported
+                              ? "grid-cols-2"
+                              : "grid-cols-1"
+                          }`}
+                        >
                           <button
                             type="button"
                             onClick={handlePayWithCash}
@@ -380,11 +419,29 @@ const Checkout = () => {
                               className="rounded-xl px-5 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 border transition shadow-[0_2px_4px_rgba(0,0,0,0.4)] w-full bg-black text-white hover:brightness-110 border-gray-700 col-span-2"
                               title="Pay quickly with Google Pay"
                             >
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z" fill="#4285F4"/>
-                                <path d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z" fill="#34A853"/>
-                                <path d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z" fill="#FBBC05"/>
-                                <path d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z" fill="#EA4335"/>
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z"
+                                  fill="#4285F4"
+                                />
+                                <path
+                                  d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z"
+                                  fill="#34A853"
+                                />
+                                <path
+                                  d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z"
+                                  fill="#FBBC05"
+                                />
+                                <path
+                                  d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z"
+                                  fill="#EA4335"
+                                />
                               </svg>
                               Google Pay
                             </button>
@@ -392,7 +449,11 @@ const Checkout = () => {
                           <button
                             type="button"
                             onClick={() => setShowAlert(true)}
-                            className={`btn-metal btn-metal-red w-full ${walletSupport.googlePaySupported ? 'col-span-2' : ''}`}
+                            className={`btn-metal btn-metal-red w-full ${
+                              walletSupport.googlePaySupported
+                                ? "col-span-2"
+                                : ""
+                            }`}
                           >
                             Cancel Order
                           </button>
@@ -425,31 +486,81 @@ const Checkout = () => {
                         <div className="flex gap-3 flex-wrap">
                           <button
                             type="button"
-                            onClick={() => { setPaymentInstrument("card"); setPaymentHandler(null); }}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition btn-metal btn-metal-blue flex items-center gap-2 ${paymentInstrument === "card" ? "ring-2 ring-blue-300" : ""}`}
+                            onClick={() => {
+                              setPaymentInstrument("card");
+                              setPaymentHandler(null);
+                            }}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition btn-metal btn-metal-blue flex items-center gap-2 ${
+                              paymentInstrument === "card"
+                                ? "ring-2 ring-blue-300"
+                                : ""
+                            }`}
                           >
                             Card
                           </button>
                           <button
                             type="button"
-                            onClick={() => { if(!walletSupport.googlePaySupported) { setPaymentError('Google Pay not supported on this browser'); return;} setPaymentInstrument("googlePay"); setPaymentHandler(null); }}
+                            onClick={() => {
+                              if (!walletSupport.googlePaySupported) {
+                                setPaymentError(
+                                  "Google Pay not supported on this browser"
+                                );
+                                return;
+                              }
+                              setPaymentInstrument("googlePay");
+                              setPaymentHandler(null);
+                            }}
                             disabled={!walletSupport.googlePaySupported}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 border ${paymentInstrument === "googlePay" ? "ring-2 ring-blue-300" : ""} ${walletSupport.googlePaySupported ? 'bg-black text-white shadow-inner border-gray-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300'}`}
-                            title={walletSupport.googlePaySupported ? 'Google Pay' : 'Google Pay not available'}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 border ${
+                              paymentInstrument === "googlePay"
+                                ? "ring-2 ring-blue-300"
+                                : ""
+                            } ${
+                              walletSupport.googlePaySupported
+                                ? "bg-black text-white shadow-inner border-gray-700"
+                                : "bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300"
+                            }`}
+                            title={
+                              walletSupport.googlePaySupported
+                                ? "Google Pay"
+                                : "Google Pay not available"
+                            }
                           >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z" fill="#4285F4"/>
-                              <path d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z" fill="#34A853"/>
-                              <path d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z" fill="#FBBC05"/>
-                              <path d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z" fill="#EA4335"/>
+                            <svg
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z"
+                                fill="#4285F4"
+                              />
+                              <path
+                                d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z"
+                                fill="#34A853"
+                              />
+                              <path
+                                d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z"
+                                fill="#FBBC05"
+                              />
+                              <path
+                                d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z"
+                                fill="#EA4335"
+                              />
                             </svg>
-                            <span className="font-semibold tracking-wide">Google Pay</span>
+                            <span className="font-semibold tracking-wide">
+                              Google Pay
+                            </span>
                           </button>
                           {!walletSupport.googlePaySupported && (
-                            <span className="text-xs text-gray-500 basis-full">Google Pay unavailable on this browser</span>
+                            <span className="text-xs text-gray-500 basis-full">
+                              Google Pay unavailable on this browser
+                            </span>
                           )}
                         </div>
-                        
+
                         {/* Square Payment Component */}
                         <SquarePayment
                           orderTotal={calculateTotal()}
@@ -538,14 +649,29 @@ const Checkout = () => {
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
                   Your Details
                 </h2>
-                
+
                 {/* Pickup Location Notice */}
                 <div className="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
-                      <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <svg
+                        className="w-5 h-5 text-blue-600 mt-0.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
                       </svg>
                     </div>
                     <div>
@@ -553,7 +679,8 @@ const Checkout = () => {
                         Pickup Location
                       </h3>
                       <p className="text-blue-700 text-sm leading-relaxed">
-                        2682 S. 156th Dr.<br />
+                        2682 S. 156th Dr.
+                        <br />
                         Goodyear, AZ 85338
                       </p>
                       <p className="text-blue-600 text-xs mt-1">
@@ -601,7 +728,9 @@ const Checkout = () => {
                       className="text-sm font-medium text-gray-700 flex items-center gap-2"
                     >
                       Email Address
-                      <span className="text-xs text-gray-500 font-normal">* for receipt only</span>
+                      <span className="text-xs text-gray-500 font-normal">
+                        * for receipt only
+                      </span>
                     </label>
                     <input
                       id="email"
@@ -651,7 +780,9 @@ const Checkout = () => {
                 )}
                 {!paymentMethod && (
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Payment Method</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                      Payment Method
+                    </h3>
                     <div className="flex flex-col sm:flex-row gap-4">
                       <button
                         type="button"
@@ -674,11 +805,29 @@ const Checkout = () => {
                           className="rounded-xl px-5 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 border transition bg-black text-white shadow-[0_2px_4px_rgba(0,0,0,0.4)] border-gray-700 hover:brightness-110"
                           title="Pay with Google Pay"
                         >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z" fill="#4285F4"/>
-                            <path d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z" fill="#34A853"/>
-                            <path d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z" fill="#FBBC05"/>
-                            <path d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z" fill="#EA4335"/>
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z"
+                              fill="#4285F4"
+                            />
+                            <path
+                              d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z"
+                              fill="#34A853"
+                            />
+                            <path
+                              d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z"
+                              fill="#FBBC05"
+                            />
+                            <path
+                              d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z"
+                              fill="#EA4335"
+                            />
                           </svg>
                           Google Pay
                         </button>
@@ -846,16 +995,6 @@ const Checkout = () => {
           </div>
         </div>
       </form>
-
-      {/* Success alert */}
-      {showSuccessAlert && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40">
-          <AlertSuccess
-            successMsg={successMsg}
-            successDescription={successDescription}
-          />
-        </div>
-      )}
 
       {/* Delete confirmation alert */}
       {showAlert && (
