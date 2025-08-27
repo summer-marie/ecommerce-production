@@ -114,6 +114,7 @@ import monitoringRouter from "./monitoring/index.js";
 import paymentRoutes from "./payments/squareRoutes.js";
 import scheduleMessageCleanup from "./utils/messageScheduler.js";
 import { initializeScheduledTasks } from "./scheduledTasks.js";
+import aboutRouter from "./about/aboutIndex.js";
 
 // Replace console.log with proper logging
 logInfo("Environment check", {
@@ -307,6 +308,7 @@ try {
     app.use("/messages", msgIndex);
     app.use("/payments", paymentRoutes);
     app.use("/monitoring", adminRateLimit, monitoringRouter);
+  app.use("/about", aboutRouter);
 
     // Administrative API key management (requires admin authentication)
     createApiKeyRoutes(app);
@@ -328,6 +330,7 @@ try {
           builders: "/builders/* - Pizza templates",
           messages: "/messages/* - Contact messages",
           monitoring: "/monitoring/* - Health & performance",
+          about: "/about - Public About content (GET) and admin updates (PUT)",
           apiKeys: "/api/admin/keys/* - API key management (admin only)",
         },
         rateLimits: {

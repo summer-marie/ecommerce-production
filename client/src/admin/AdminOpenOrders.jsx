@@ -397,7 +397,7 @@ const AdminOpenOrders = () => {
               )}
 
               {/* Separator HR */}
-              {(ordersByStatus.completed.length > 0 || ordersByStatus.cancelled.length > 0 || ordersByStatus.delivered.length > 0) && (
+              {(ordersByStatus.completed.length > 0 || ordersByStatus.cancelled.length > 0) && (
                 <hr className="my-8 border-gray-300" />
               )}
 

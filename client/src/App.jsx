@@ -31,6 +31,7 @@ const AdminUpdateOne = lazy(() => import("./admin/AdminUpdateOne"));
 const AdminInbox = lazy(() => import("./admin/AdminInbox"));
 const IngredientsTable = lazy(() => import("./admin/IngredientsTable"));
 const AdminBuilderCreate = lazy(() => import("./admin/AdminBuilderCreate"));
+const AdminAboutSettings = lazy(() => import("./admin/AdminAboutSettings"));
 
 // Error boundary and fallback components
 const NoMatch = lazy(() => import("./components/NoMatch"));
@@ -195,6 +196,14 @@ function App() {
               element={
                 <Suspense fallback={<LoadingFallback />}>
                   <AdminInbox />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminAboutSettings />
                 </Suspense>
               }
             />
