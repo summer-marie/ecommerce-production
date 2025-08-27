@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useCallback, useState } from "react";
 import { builderGetMany } from "../redux/builderSlice";
 import { addToCart } from "../redux/cartSlice";
-import { LazyImage } from "../utils/performance.jsx";
+import { LazyImage } from "../utils/perfComponents.jsx";
 
 const Order = () => {
   const dispatch = useDispatch();

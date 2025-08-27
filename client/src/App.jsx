@@ -9,8 +9,8 @@ import "./App.css";
 // Immediately needed components (above the fold)
 import CustomerLayout from "./customer/CustomerLayout";
 import AdminLayout from "./admin/AdminLayout";
-import PerformanceMonitor from "./components/PerformanceMonitor";
 import TestingALert from "./TestingALert";
+import InstallConsentModal from "./components/InstallConsentModal";
 
 // Lazy load components for better code splitting
 const About = lazy(() => import("./customer/About"));
@@ -228,8 +228,8 @@ function App() {
         />
       </Routes>
 
-      {/* Performance monitoring in development */}
-      {/* <PerformanceMonitor /> */}
+  {/* Performance monitoring in development */}
+  <InstallConsentModal />
     </Suspense>
   );
 }

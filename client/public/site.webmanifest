@@ -1,6 +1,10 @@
 {
+  "id": "/",
   "name": "Over The Wall Pizza",
   "short_name": "OTW Pizza",
+  "start_url": "/",
+  "scope": "/",
+  "description": "Order fresh pizzas for pickup at OTW Pizza.",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -11,6 +15,20 @@
       "src": "/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml;utf8,<?xml version='1.0' encoding='UTF-8'?>\n<svg xmlns='http://www.w3.org/2000/svg' width='1280' height='720' viewBox='0 0 1280 720'>\n  <defs>\n    <linearGradient id='g' x1='0' x2='1' y1='0' y2='1'>\n      <stop offset='0%' stop-color='%23064e3b'/>\n      <stop offset='100%' stop-color='%23059'/>\n    </linearGradient>\n  </defs>\n  <rect width='1280' height='720' fill='url(%23g)'/>\n  <text x='50%' y='45%' font-size='64' fill='white' text-anchor='middle' font-family='Arial, Helvetica, sans-serif'>OTW Pizza</text>\n  <text x='50%' y='58%' font-size='28' fill='white' text-anchor='middle' font-family='Arial, Helvetica, sans-serif'>Checkout • Fast • Secure • Pickup Only</text>\n</svg>",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Checkout"
     }
   ],
   "theme_color": "#ffffff",

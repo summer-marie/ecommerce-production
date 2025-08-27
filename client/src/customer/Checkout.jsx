@@ -479,7 +479,7 @@ const Checkout = () => {
                             }}
                             className="text-sm font-medium text-blue-600 hover:text-blue-800"
                           >
-                            Change
+                            Change Payment Method
                           </button>
                         </div>
                         {/* Instrument selector (always show Google Pay, disabled if unsupported) */}
@@ -587,7 +587,7 @@ const Checkout = () => {
                             }}
                             className="text-green-600 hover:text-green-800 text-xs font-medium"
                           >
-                            Change
+                            Change Payment Method
                           </button>
                         </div>
                         <p>
@@ -638,6 +638,12 @@ const Checkout = () => {
                         </button>
                       )}
                     </div>
+                    <p className="mt-2 text-xs text-gray-600">
+                      By placing your order, you agree to our {""}
+                      <a href="/terms" className="text-green-700 underline hover:text-green-800">Terms</a>
+                      {" "}and{" "}
+                      <a href="/privacy-policy" className="text-green-700 underline hover:text-green-800">Privacy Policy</a>.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -859,7 +865,7 @@ const Checkout = () => {
                           setPaymentError("");
                           setPaymentInstrument("card");
                         }}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                        className="text-sm font-medium text-blue-600 hover:text-blue-800 w-full"
                       >
                         Change Payment Method
                       </button>
@@ -941,7 +947,7 @@ const Checkout = () => {
                         }}
                         className="text-green-600 hover:text-green-800 text-xs font-medium"
                       >
-                        Change
+                        Change Payment Method
                       </button>
                     </div>
                     <p>
@@ -990,6 +996,12 @@ const Checkout = () => {
                     </button>
                   )}
                 </div>
+                <p className="mt-2 text-xs text-gray-600">
+                  By placing your order, you agree to our {""}
+                  <a href="/terms" className="text-green-700 underline hover:text-green-800">Terms</a>
+                  {" "}and{" "}
+                  <a href="/privacy-policy" className="text-green-700 underline hover:text-green-800">Privacy Policy</a>.
+                </p>
               </div>
             </div>
           </div>
