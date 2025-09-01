@@ -161,10 +161,12 @@ const AdminBuilderCreate = () => {
       const pizzaData = {
         pizzaName: newPizza.pizzaName,
         pizzaPrice: newPizza.pizzaPrice,
-        base: [
-          baseOptions[0] || { name: "No crust found" },
-          baseOptions[1] || { name: "No cheese found" },
-        ],
+        base: {
+          crust: baseOptions[0] || { name: "No crust found" },
+          cheeses: baseOptions[1]
+            ? [{ ...baseOptions[1], amount: 1 }]
+            : [],
+        },
         sauce: sauceObj,
         meatTopping: meatToppingObjs,
         veggieTopping: veggieToppingObjs,
@@ -304,11 +306,11 @@ const AdminBuilderCreate = () => {
                         Crust and Cheese
                       </label>
 
-                      <BaseIngredientDisplay 
-                        value={baseOptions[0] ? baseOptions[0].name : "No crust found"} 
+                      <BaseIngredientDisplay
+                        value={baseOptions[0] ? baseOptions[0].name : "No crust found"}
                       />
-                      <BaseIngredientDisplay 
-                        value={baseOptions[1] ? baseOptions[1].name : "No cheese found"} 
+                      <BaseIngredientDisplay
+                        value={baseOptions[1] ? baseOptions[1].name : "No cheese found"}
                       />
                     </div>
 

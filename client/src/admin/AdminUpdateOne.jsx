@@ -180,19 +180,15 @@ const AdminUpdateOne = () => {
   if (!pizzaForm) return <div>Loading...</div>;
 
   // Defensive helpers for rendering to avoid raw objects
-  const safeArrayNames = (arr) =>
-    Array.isArray(arr)
-      ? arr
-          .map((item) =>
-            typeof item === "string"
-              ? item
-              : item && typeof item === "object"
-              ? item.name
-              : null
-          )
-          .filter(Boolean)
+  const safeBaseNames = (() => {
+    const base = pizzaForm?.base;
+    if (!base || typeof base !== "object") return [];
+    const crustName = base?.crust?.name;
+    const cheeseNames = Array.isArray(base?.cheeses)
+      ? base.cheeses.map((c) => c?.name).filter(Boolean)
       : [];
-  const safeBaseNames = safeArrayNames(pizzaForm.base);
+    return [crustName, ...cheeseNames].filter(Boolean);
+  })();
   // (Optional) Additional safe arrays can be derived similarly if needed
 
   return (

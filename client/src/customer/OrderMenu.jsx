@@ -69,15 +69,13 @@ const Order = () => {
                   ? builder.image.data
                   : fallbackImage;
               const cardId = builder.id ?? builder._id ?? index;
-              const baseNames = Array.isArray(builder?.base)
-                ? builder.base
-                    .map((b) =>
-                      typeof b === "string"
-                        ? b
-                        : b && typeof b === "object"
-                        ? b.name
-                        : null
-                    )
+              const baseNames = builder?.base && typeof builder.base === "object"
+                ? [
+                    builder.base?.crust?.name,
+                    ...(Array.isArray(builder.base?.cheeses)
+                      ? builder.base.cheeses.map((c) => c?.name).filter(Boolean)
+                      : []),
+                  ]
                     .filter(Boolean)
                     .join(", ")
                 : "";

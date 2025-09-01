@@ -6,7 +6,7 @@ const initialState = {
   builder: {
     pizzaName: "",
     pizzaPrice: 0,
-    base: [],
+    base: { crust: null, cheeses: [] },
     sauce: {},
     meatTopping: [],
     veggieTopping: [],

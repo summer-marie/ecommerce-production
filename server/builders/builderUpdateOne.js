@@ -44,7 +44,7 @@ const pizzaUpdateOne = async (req, res) => {
     const updatedPizza = await builderModel.findOneAndUpdate(
       { _id: id },
       { $set: updateFields },
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!updatedPizza) {

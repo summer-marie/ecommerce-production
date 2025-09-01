@@ -82,9 +82,13 @@ const AdminMenu = () => {
               (Array.isArray(builders) ? builders : []).map(
                 (builder, index) => {
                   // Defensive normalizations to avoid rendering raw objects
-                  const safeBase = Array.isArray(builder?.base)
-                    ? builder.base
-                        .map((b) => (typeof b === "string" ? b : b?.name))
+                  const safeBase = builder?.base && typeof builder.base === "object"
+                    ? [
+                        builder.base?.crust?.name,
+                        ...(Array.isArray(builder.base?.cheeses)
+                          ? builder.base.cheeses.map((c) => c?.name).filter(Boolean)
+                          : []),
+                      ]
                         .filter(Boolean)
                         .join(", ")
                     : "";

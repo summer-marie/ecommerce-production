@@ -28,18 +28,33 @@ const veggieOptions = [
   "Spinach",
 ];
 
-const baseOptions = [
-  {
-    name: "Mozzarella",
-    description: "Classic creamy mozzarella cheese",
-    itemType: "Cheese",
-    price: 2.0,
-  },
+const crustOptions = [
   {
     name: "Brick Oven Crust",
     description: "Traditional hand-tossed crust",
-    itemType: "Crust",
+    itemType: "Base",
     price: 3.0,
+  },
+  {
+    name: "Thin Crust",
+    description: "Crispy thin crust",
+    itemType: "Base",
+    price: 2.5,
+  },
+];
+
+const cheeseOptions = [
+  {
+    name: "Mozzarella",
+    description: "Classic creamy mozzarella cheese",
+    itemType: "Base",
+    price: 2.0,
+  },
+  {
+    name: "Cheddar",
+    description: "Sharp cheddar",
+    itemType: "Base",
+    price: 1.8,
   },
 ];
 
@@ -93,7 +108,9 @@ const fakeBuilder = () => {
   }
 
   // Calculate total price based on components
-  const basePrice = baseOptions.reduce((sum, item) => sum + item.price, 0);
+  const selectedCrust = faker.helpers.arrayElement(crustOptions);
+  const selectedCheeses = faker.helpers.arrayElements(cheeseOptions, { min: 1, max: 2 });
+  const basePrice = selectedCrust.price + selectedCheeses.reduce((sum, item) => sum + item.price, 0);
   const saucePrice = faker.helpers.arrayElement(sauceOptions).price;
   const toppingsPrice = [...meatToppings, ...veggieToppings].reduce(
     (sum, item) => sum + item.price * item.amount,
@@ -110,8 +127,11 @@ const fakeBuilder = () => {
   return {
     pizzaName: faker.helpers.arrayElement(pizzaNames),
     pizzaPrice: totalPrice,
-    // Both crust and cheese in base array
-    base: baseOptions,
+    // Base as object with crust and cheeses
+    base: {
+      crust: selectedCrust,
+      cheeses: selectedCheeses.map((c) => ({ ...c, amount: 1 })),
+    },
     sauce: selectedSauce,
     meatTopping: meatToppings,
     veggieTopping: veggieToppings,

@@ -166,7 +166,32 @@ export const validatePizzaBuilder = [
     .trim()
     .isLength({ min: 1, max: 100 })
     .withMessage("Pizza name must be 1-100 characters"),
-  body("base").optional().isArray().withMessage("Base must be an array"),
+  // Base is an object: { crust: {..}, cheeses: [{..}] }
+  body("base").optional().isObject().withMessage("Base must be an object"),
+  body("base.crust")
+    .optional()
+    .isObject()
+    .withMessage("Base crust must be an object"),
+  body("base.crust.name")
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage("Crust name is required when crust is provided"),
+  body("base.cheeses")
+    .optional()
+    .isArray()
+    .withMessage("Cheeses must be an array when provided"),
+  body("base.cheeses.*.name")
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage("Each cheese must have a name"),
+  body("base.cheeses.*.amount")
+    .optional()
+    .custom((v) => [0.5, 1, 2].includes(Number(v)))
+    .withMessage("Cheese amount must be one of 0.5, 1, or 2"),
   body("sauce").optional().isObject().withMessage("Sauce must be an object"),
   body("meatTopping")
     .optional()
