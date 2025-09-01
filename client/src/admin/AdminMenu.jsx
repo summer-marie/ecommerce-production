@@ -82,16 +82,19 @@ const AdminMenu = () => {
               (Array.isArray(builders) ? builders : []).map(
                 (builder, index) => {
                   // Defensive normalizations to avoid rendering raw objects
-                  const safeBase = builder?.base && typeof builder.base === "object"
-                    ? [
-                        builder.base?.crust?.name,
-                        ...(Array.isArray(builder.base?.cheeses)
-                          ? builder.base.cheeses.map((c) => c?.name).filter(Boolean)
-                          : []),
-                      ]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "";
+                  const safeBase =
+                    builder?.base && typeof builder.base === "object"
+                      ? [
+                          builder.base?.crust?.name,
+                          ...(Array.isArray(builder.base?.cheeses)
+                            ? builder.base.cheeses
+                                .map((c) => c?.name)
+                                .filter(Boolean)
+                            : []),
+                        ]
+                          .filter(Boolean)
+                          .join(", ")
+                      : "";
                   const safeSauce = builder?.sauce
                     ? typeof builder.sauce === "string"
                       ? builder.sauce
@@ -118,7 +121,7 @@ const AdminMenu = () => {
                     // Card
                     <div
                       key={builder?.id || index}
-                      className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-zinc-300 border border-gray-200 shadow-green-600 relative"
+                      className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-zinc-300 border border-gray-200 shadow-green-600 relative flex flex-col"
                     >
                       <div className="relative">
                         <div className="relative w-full aspect-[4/3]">
@@ -137,31 +140,31 @@ const AdminMenu = () => {
                         <button
                           onClick={() => builder?.id && handleClick(builder.id)}
                           type="button"
-                          className="absolute mt-2 top-0 right-0 font-medium rounded-lg shadow-lg  text-sm px-5 py-2.5 text-center me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t  focus:ring-4 focus:outline-none cursor-pointer
-                shadow-green-800/80 
-                text-white 
-                from-green-950
-                via-green-500 
-                to-green-600
-                focus:ring-green-800"
+                          className="absolute top-1 right-1 sm:top-2 sm:right-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-top-right transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                          shadow-green-800/80 
+                          text-white 
+                          from-green-950
+                          via-green-500 
+                          to-green-600
+                          focus:ring-green-800"
                         >
                           Update Pizza
                         </button>
                         <button
                           onClick={() => handleDeleteClick(builder)}
                           type="button"
-                          className="absolute z-10 mt-2 top-0 left-2 font-medium rounded-lg shadow-lg  text-sm px-5 py-2.5 text-center me-2 mb-2 hover:bg-gradient-to-br bg-gradient-to-t  focus:ring-4 focus:outline-none cursor-pointer
-                shadow-red-800/80 
-                text-white 
-                from-black
-                via-red-500 
-                to-red-600
-                focus:ring-red-800"
+                          className="absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-top-left transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                            shadow-red-800/80 
+                            text-white 
+                            from-black
+                            via-red-500 
+                            to-red-600
+                            focus:ring-red-800"
                         >
                           Delete Pizza
                         </button>
                       </div>
-                      <div className="p-3">
+                      <div className="p-3 flex-1 flex flex-col">
                         <p className="text-gray-900">
                           <strong>
                             Name: {builder?.pizzaName || "Unnamed"}
@@ -187,7 +190,7 @@ const AdminMenu = () => {
                           </div>
                         </div>
 
-                        <h2 className="font-bold text-lg text-gray-900 mt-2">
+                        <h2 className="font-bold text-lg text-gray-900 mt-auto pt-2">
                           Price ${" "}
                           {builder?.pizzaPrice
                             ? Number(builder.pizzaPrice).toFixed(2)

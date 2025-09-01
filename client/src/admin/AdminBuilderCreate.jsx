@@ -49,6 +49,62 @@ const BaseIngredientDisplay = ({ value }) => (
   </div>
 );
 
+// Neutral styled dropdown (matches sauce select styles)
+const BaseDropdown = ({ id, label, value, onChange, options, placeholder }) => (
+  <div className="mb-5">
+    <label htmlFor={id} className="block mb-2 text-sm font-medium text-gray-900">
+      {label}
+    </label>
+    <select
+      id={id}
+      value={value}
+      onChange={onChange}
+      className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
+        text-black 
+        placeholder-gray-500 
+        border-slate-500
+        bg-gray-200 
+        focus:bg-gray-300 
+        focus:ring-white
+        focus:border-sky-500"
+    >
+      <option value="">{placeholder || "- - Select - -"}</option>
+      {options.map((opt) => (
+        <option key={opt.id || opt._id || opt.name} value={opt.name}>
+          {opt.name}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+// Cheese amount selector: Light(0.5), Regular(1), Extra(2)
+const CheeseAmountDropdown = ({ id, label = "Cheese Amount", value, onChange, disabled = false }) => (
+  <div className="mb-2">
+    <label htmlFor={id} className="block mb-2 text-sm font-medium text-gray-900">
+      {label}
+    </label>
+    <select
+      id={id}
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
+        text-black 
+        placeholder-gray-500 
+        border-slate-500
+        bg-gray-200 
+        focus:bg-gray-300 
+        focus:ring-white
+        focus:border-sky-500"
+    >
+      <option value="0.5">Light</option>
+      <option value="1">Regular</option>
+      <option value="2">Extra</option>
+    </select>
+  </div>
+);
+
 const AdminBuilderCreate = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -56,10 +112,14 @@ const AdminBuilderCreate = () => {
   const [newPizza, setNewPizza] = useState({
     pizzaName: "",
     pizzaPrice: "", // manual entry by admin
+    crust: "",
+    cheeses: ["", "", ""], // up to 3 cheeses
+    cheeseAmounts: ["1", "1", "1"], // default Regular amounts
     sauce: "Signature Red Sauce",
     meatTopping: ["", "", "", "", "", ""], // 6 meat slots
     veggieTopping: ["", "", "", "", "", ""], // 6 veggie slots
-    image: null, // Added image field
+  image: null, // Base64 preview payload (data without header)
+  imageFile: null, // Raw File for compression/conversion
   });
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
@@ -69,6 +129,9 @@ const AdminBuilderCreate = () => {
   );
   const sauceOptions = ingredients.filter((i) => i.itemType === "Sauce");
   const baseOptions = ingredients.filter((i) => i.itemType === "Base");
+  // Split base into crust vs cheese options using a simple heuristic
+  const crustOptions = baseOptions.filter((i) => /crust/i.test(i?.name || ""));
+  const cheeseOptionsOnly = baseOptions.filter((i) => !/crust/i.test(i?.name || ""));
 
   useEffect(() => {
     dispatch(ingredientGetAll());
@@ -86,6 +149,7 @@ const AdminBuilderCreate = () => {
             name: file.name,
             type: file.type,
           },
+          imageFile: file,
         });
       };
       reader.readAsDataURL(file);
@@ -107,42 +171,37 @@ const AdminBuilderCreate = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       setShowSuccessAlert(true);
-
-      // Find the selected sauce object
       const sauceObj = sauceOptions.find((s) => s.name === newPizza.sauce);
       if (!sauceObj) {
         alert("Please select a valid sauce.");
         return;
       }
-
-      // Build meatTopping array of objects, filter out empty selections
+      // Build toppings
       const meatToppingObjs = newPizza.meatTopping
-        .filter((m) => m)
+        .filter(Boolean)
         .map((meat) => {
           const found = meatOptions.find((opt) => opt.name === meat);
           return found ? { ...found, amount: 1 } : null;
         })
         .filter(Boolean);
 
-      // Build veggieTopping array of objects, filter out empty selections
       const veggieToppingObjs = newPizza.veggieTopping
-        .filter((v) => v)
-        .map((veggie) => {
-          const found = veggieOptions.find((opt) => opt.name === veggie);
+        .filter(Boolean)
+        .map((veg) => {
+          const found = veggieOptions.find((opt) => opt.name === veg);
           return found ? { ...found, amount: 1 } : null;
         })
         .filter(Boolean);
 
       // Convert image to Base64 if selected
-      let imageData = null;
-      if (newPizza.image) {
+    let imageData = null;
+    if (newPizza.imageFile) {
         console.log("Converting image to Base64...");
         try {
           // Optionally compress the image first
-          const compressedFile = await compressImage(newPizza.image, 0.8, 800);
+      const compressedFile = await compressImage(newPizza.imageFile, 0.8, 800);
           imageData = await convertImageToBase64(compressedFile);
           console.log("Image converted to Base64:", {
             filename: imageData.filename,
@@ -157,15 +216,28 @@ const AdminBuilderCreate = () => {
         }
       }
 
-      // Create pizza data object
+      // Validate crust
+      const crustObj = crustOptions.find((c) => c.name === newPizza.crust);
+      if (!crustObj) {
+        alert("Please select a valid crust.");
+        setShowSuccessAlert(false);
+        return;
+      }
+
       const pizzaData = {
         pizzaName: newPizza.pizzaName,
         pizzaPrice: newPizza.pizzaPrice,
         base: {
-          crust: baseOptions[0] || { name: "No crust found" },
-          cheeses: baseOptions[1]
-            ? [{ ...baseOptions[1], amount: 1 }]
-            : [],
+          crust: crustObj,
+          cheeses: newPizza.cheeses
+            .map((ch, i) => {
+              if (!ch) return null;
+              const baseCheese = cheeseOptionsOnly.find((o) => o.name === ch);
+              if (!baseCheese) return null;
+              const amt = parseFloat(newPizza.cheeseAmounts[i] || "1");
+              return { ...baseCheese, amount: Number.isFinite(amt) ? amt : 1 };
+            })
+            .filter(Boolean),
         },
         sauce: sauceObj,
         meatTopping: meatToppingObjs,
@@ -299,19 +371,47 @@ const AdminBuilderCreate = () => {
                     </h1>
                     <hr className="mb-5" />
                     <div className="mb-5">
-                      <label
-                        htmlFor="pizza-base"
-                        className="block mb-2 text-sm font-medium text-gray-900 "
-                      >
-                        Crust and Cheese
-                      </label>
+                      {/* Crust Selection */}
+                      <BaseDropdown
+                        id="crust"
+                        label="Select Crust"
+                        value={newPizza.crust}
+                        onChange={(e) => setNewPizza({ ...newPizza, crust: e.target.value })}
+                        options={crustOptions}
+                        placeholder="- - Select Crust - -"
+                      />
 
-                      <BaseIngredientDisplay
-                        value={baseOptions[0] ? baseOptions[0].name : "No crust found"}
-                      />
-                      <BaseIngredientDisplay
-                        value={baseOptions[1] ? baseOptions[1].name : "No cheese found"}
-                      />
+                      {/* Cheese Selections */}
+                      <h3 className="block mb-2 text-sm font-medium text-gray-900">Select Cheese(s)</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+                        {[0, 1, 2].map((index) => (
+                          <div key={`cheese-slot-${index}`}>
+                            <BaseDropdown
+                              id={`cheese-${index}`}
+                              label={`Select Cheese #${index + 1}`}
+                              value={newPizza.cheeses[index]}
+                              onChange={(e) => {
+                                const cheeses = [...newPizza.cheeses];
+                                cheeses[index] = e.target.value;
+                                setNewPizza({ ...newPizza, cheeses });
+                              }}
+                              options={cheeseOptionsOnly}
+                              placeholder="- - None - -"
+                            />
+                            <CheeseAmountDropdown
+                              id={`cheese-amt-${index}`}
+                              label="Cheese Amount"
+                              value={newPizza.cheeseAmounts[index]}
+                              onChange={(e) => {
+                                const cheeseAmounts = [...newPizza.cheeseAmounts];
+                                cheeseAmounts[index] = e.target.value;
+                                setNewPizza({ ...newPizza, cheeseAmounts });
+                              }}
+                              disabled={!newPizza.cheeses[index]}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="mb-5">

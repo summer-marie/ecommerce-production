@@ -305,9 +305,11 @@ const AdminOpenOrders = () => {
                     Processing Orders ({ordersByStatus.processing.length})
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {ordersByStatus.processing.map((order) => (
+                    {ordersByStatus.processing.map((order, idx) => {
+                      const cardKey = order?.id ?? order?._id ?? order?.orderNumber ?? idx;
+                      return (
                       <div
-                        key={order._id}
+                        key={cardKey}
                         className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col"
                       >
                         {/* Header: Order Number and Date */}
@@ -391,7 +393,7 @@ const AdminOpenOrders = () => {
                           </button>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 </div>
               )}
@@ -416,9 +418,11 @@ const AdminOpenOrders = () => {
                     </button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {ordersByStatus.completed.map((order) => (
+                    {ordersByStatus.completed.map((order, idx) => {
+                      const cardKey = order?.id ?? order?._id ?? order?.orderNumber ?? idx;
+                      return (
                       <div
-                        key={order._id}
+                        key={cardKey}
                         className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col opacity-75"
                       >
                         {/* Same card structure as processing orders */}
@@ -482,7 +486,7 @@ const AdminOpenOrders = () => {
                           </button>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 </div>
               )}
@@ -502,9 +506,11 @@ const AdminOpenOrders = () => {
                     </button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {ordersByStatus.cancelled.map((order) => (
+                    {ordersByStatus.cancelled.map((order, idx) => {
+                      const cardKey = order?.id ?? order?._id ?? order?.orderNumber ?? idx;
+                      return (
                       <div
-                        key={order._id}
+                        key={cardKey}
                         className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col opacity-60"
                       >
                         {/* Same card structure but with cancelled styling */}
@@ -568,7 +574,7 @@ const AdminOpenOrders = () => {
                           </button>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 </div>
               )}

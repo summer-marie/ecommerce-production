@@ -48,6 +48,51 @@ const BaseIngredientDisplay = ({ value }) => (
   </div>
 );
 
+// Base helpers (styled like create page)
+const BaseDropdown = ({ id, label, value, onChange, options, placeholder }) => (
+  <div className="mb-5">
+    <label htmlFor={id} className="block mb-2 text-sm font-medium text-gray-900">
+      {label}
+    </label>
+    <select
+      id={id}
+      value={value || ""}
+      onChange={onChange}
+      className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
+        text-black placeholder-gray-500 border-slate-500 bg-gray-200
+        focus:bg-gray-300 focus:ring-white focus:border-sky-500"
+    >
+      <option value="">{placeholder || "- - Select - -"}</option>
+      {options.map((opt) => (
+        <option key={opt.id || opt._id || opt.name} value={opt.name}>
+          {opt.name}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+const CheeseAmountDropdown = ({ id, label = "Cheese Amount", value, onChange, disabled = false }) => (
+  <div className="mb-2">
+    <label htmlFor={id} className="block mb-2 text-sm font-medium text-gray-900">
+      {label}
+    </label>
+    <select
+      id={id}
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
+        text-black placeholder-gray-500 border-slate-500 bg-gray-200
+        focus:bg-gray-300 focus:ring-white focus:border-sky-500"
+    >
+      <option value="0.5">Light</option>
+      <option value="1">Regular</option>
+      <option value="2">Extra</option>
+    </select>
+  </div>
+);
+
 const AdminUpdateOne = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -64,7 +109,9 @@ const AdminUpdateOne = () => {
   const veggieOptions = ingredients.filter(
     (i) => i.itemType === "Veggie Topping"
   );
-  // const baseOptions = ingredients.filter((i) => i.itemType === "Base");
+  const baseOptions = ingredients.filter((i) => i.itemType === "Base");
+  const crustOptions = baseOptions.filter((i) => /crust/i.test(i?.name || ""));
+  const cheeseOptionsOnly = baseOptions.filter((i) => !/crust/i.test(i?.name || ""));
 
   // Initialize pizzaForm with builder data
   useEffect(() => {
@@ -92,7 +139,23 @@ const AdminUpdateOne = () => {
       let meatTopping = normalizeArray(builder.meatTopping, 6);
       let veggieTopping = normalizeArray(builder.veggieTopping, 6);
 
-      setPizzaForm({ ...builder, sauce, meatTopping, veggieTopping });
+      // Prefill base selections
+      const crust = builder?.base?.crust?.name || "";
+      const cheesesSrc = Array.isArray(builder?.base?.cheeses) ? builder.base.cheeses : [];
+      const cheeses = [0, 1, 2].map((i) => cheesesSrc[i]?.name || "");
+      const cheeseAmounts = [0, 1, 2].map((i) =>
+        String(typeof cheesesSrc[i]?.amount === "number" ? cheesesSrc[i].amount : 1)
+      );
+
+      setPizzaForm({
+        ...builder,
+        sauce,
+        meatTopping,
+        veggieTopping,
+        crust,
+        cheeses,
+        cheeseAmounts,
+      });
     }
   }, [builder]);
 
@@ -153,11 +216,28 @@ const AdminUpdateOne = () => {
       // Use the image from pizzaForm (already converted by handleFileChange)
       const imageData = pizzaForm.image;
 
+      // Build base from selections
+      const crustObj = crustOptions.find((c) => c.name === (pizzaForm.crust || ""));
+      if (!crustObj) {
+        alert("Please select a valid crust.");
+        return;
+      }
+      const cheeses = (pizzaForm.cheeses || [])
+        .map((ch, i) => {
+          if (!ch) return null;
+          const baseCheese = cheeseOptionsOnly.find((o) => o.name === ch);
+          if (!baseCheese) return null;
+          const amt = parseFloat((pizzaForm.cheeseAmounts || [])[i] || "1");
+          return { ...baseCheese, amount: Number.isFinite(amt) ? amt : 1 };
+        })
+        .filter(Boolean);
+
       // Construct payload with full objects
       const payload = {
-        ...pizzaForm,
         id,
-        // Use null instead of {} to avoid rendering empty object placeholder in UI
+        pizzaName: pizzaForm.pizzaName,
+        pizzaPrice: pizzaForm.pizzaPrice,
+        base: { crust: crustObj, cheeses },
         sauce: sauceObj || null,
         meatTopping,
         veggieTopping,
@@ -179,17 +259,7 @@ const AdminUpdateOne = () => {
 
   if (!pizzaForm) return <div>Loading...</div>;
 
-  // Defensive helpers for rendering to avoid raw objects
-  const safeBaseNames = (() => {
-    const base = pizzaForm?.base;
-    if (!base || typeof base !== "object") return [];
-    const crustName = base?.crust?.name;
-    const cheeseNames = Array.isArray(base?.cheeses)
-      ? base.cheeses.map((c) => c?.name).filter(Boolean)
-      : [];
-    return [crustName, ...cheeseNames].filter(Boolean);
-  })();
-  // (Optional) Additional safe arrays can be derived similarly if needed
+  // ...
 
   return (
     <>
@@ -330,18 +400,47 @@ const AdminUpdateOne = () => {
                     </h1>
                     <hr className="mb-5" />
                     <div className="mb-5">
-                      <label
-                        htmlFor=""
-                        className="block mb-2 text-sm font-medium text-gray-900 "
-                      >
-                        Crust and Cheese
-                      </label>
-                      <BaseIngredientDisplay 
-                        value={safeBaseNames[0] || "No crust info"} 
+                      {/* Crust Selection */}
+                      <BaseDropdown
+                        id="crust"
+                        label="Select Crust"
+                        value={pizzaForm.crust}
+                        onChange={(e) => setPizzaForm({ ...pizzaForm, crust: e.target.value })}
+                        options={crustOptions}
+                        placeholder="- - Select Crust - -"
                       />
-                      <BaseIngredientDisplay 
-                        value={safeBaseNames[1] || "No cheese info"} 
-                      />
+
+                      {/* Cheese Selections */}
+                      <h3 className="block mb-2 text-sm font-medium text-gray-900">Select Cheese(s)</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+                        {[0, 1, 2].map((index) => (
+                          <div key={`cheese-slot-${index}`}>
+                            <BaseDropdown
+                              id={`cheese-${index}`}
+                              label={`Select Cheese #${index + 1}`}
+                              value={pizzaForm.cheeses?.[index] || ""}
+                              onChange={(e) => {
+                                const cheeses = [...(pizzaForm.cheeses || ["", "", ""])];
+                                cheeses[index] = e.target.value;
+                                setPizzaForm({ ...pizzaForm, cheeses });
+                              }}
+                              options={cheeseOptionsOnly}
+                              placeholder="- - None - -"
+                            />
+                            <CheeseAmountDropdown
+                              id={`cheese-amt-${index}`}
+                              label="Cheese Amount"
+                              value={pizzaForm.cheeseAmounts?.[index] || "1"}
+                              onChange={(e) => {
+                                const cheeseAmounts = [...(pizzaForm.cheeseAmounts || ["1", "1", "1"])];
+                                cheeseAmounts[index] = e.target.value;
+                                setPizzaForm({ ...pizzaForm, cheeseAmounts });
+                              }}
+                              disabled={!pizzaForm.cheeses?.[index]}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="mb-5">
@@ -417,7 +516,6 @@ const AdminUpdateOne = () => {
                       ))}
                     </div>
                     <button
-                      // disabled={submitDisabled}
                       onClick={handleSubmit}
                       type="submit"
                       className="flex justify-center mx-auto cursor-pointer disabled:cursor-not-allowed font-medium rounded-lg text-sm px-5 py-2.5 text-center  focus:outline-none hover:bg-gradient-to-br bg-gradient-to-r  focus:ring-4 
