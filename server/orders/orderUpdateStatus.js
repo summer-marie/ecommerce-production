@@ -28,10 +28,15 @@ const orderUpdateStatus = async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    const getOrders = await orderModel.aggregate(
-      [{ $match: { status: { $ne: "archived" } } }],
-      { maxTimeMS: 5000, allowDiskUse: true }
-    );
+    // Return normalized open orders with `id` (no `_id`), to keep client consistent
+    const rawOrders = await orderModel
+      .find({ isArchived: { $ne: true }, status: { $ne: "archived" } })
+      .sort({ date: -1 })
+      .lean();
+    const getOrders = rawOrders.map(({ _id, __v, ...rest }) => ({
+      id: _id?.toString?.() ?? String(_id),
+      ...rest,
+    }));
     
     // Get counts after update
     const afterCounts = await orderModel.aggregate([
@@ -39,7 +44,7 @@ const orderUpdateStatus = async (req, res) => {
       { $group: { _id: "$status", count: { $sum: 1 } } }
     ]);
     console.log("SERVER: Counts AFTER update:", afterCounts);
-    console.log("SERVER: Returning", getOrders.length, "total orders");
+  console.log("SERVER: Returning", getOrders.length, "total orders");
     console.log("=== SERVER STATUS UPDATE END ===");
 
     res.status(200).json({ orders: getOrders });

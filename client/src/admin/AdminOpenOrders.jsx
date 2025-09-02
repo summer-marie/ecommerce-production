@@ -21,6 +21,9 @@ const AdminOpenOrders = () => {
   const [bulkArchiveData, setBulkArchiveData] = useState(null); // For bulk archiving
   const [updatingOrderId, setUpdatingOrderId] = useState(null); // Track which order is being updated
 
+  // Use normalized `id` only
+  const getOrderId = (order) => order?.id;
+
   const alertMsg = bulkArchiveData
     ? (
       <>
@@ -191,7 +194,7 @@ const AdminOpenOrders = () => {
         
         // Archive all orders in the bulk selection
         for (const order of bulkArchiveData.orders) {
-          const orderId = order.id;
+          const orderId = getOrderId(order);
           if (orderId) {
             await dispatch(orderArchiveOne(orderId)).unwrap();
           }
@@ -200,7 +203,7 @@ const AdminOpenOrders = () => {
         setBulkArchiveData(null);
       } else if (archiveOrder) {
         // Handle single order archiving
-        const orderId = archiveOrder.id;
+        const orderId = getOrderId(archiveOrder);
         
         if (!orderId) {
           console.error("No valid order ID found in archiveOrder object");
@@ -306,7 +309,7 @@ const AdminOpenOrders = () => {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {ordersByStatus.processing.map((order, idx) => {
-                      const cardKey = order?.id ?? order?._id ?? order?.orderNumber ?? idx;
+                      const cardKey = order?.id ?? order?.orderNumber ?? idx;
                       return (
                       <div
                         key={cardKey}
@@ -354,19 +357,19 @@ const AdminOpenOrders = () => {
                             {statusArray.map((status) => (
                               <button
                                 key={status}
-                                onClick={() => handleDirectStatusUpdate(order.id, status)}
-                                disabled={order.status === status || updatingOrderId === order.id}
+                onClick={() => handleDirectStatusUpdate(getOrderId(order), status)}
+                disabled={order.status === status || updatingOrderId === getOrderId(order)}
                                 className={`
                                   px-3 py-1 rounded-full text-xs font-semibold border transition-all
                                   ${order.status === status 
                                     ? 'bg-blue-600 text-white border-blue-600 cursor-default' 
-                                    : updatingOrderId === order.id
+                  : updatingOrderId === getOrderId(order)
                                     ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
                                     : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-500 hover:text-white hover:border-blue-500 cursor-pointer'
                                   }
                                 `}
                               >
-                                {order.status === status ? '✓ ' : updatingOrderId === order.id ? '⏳ ' : ''}
+                {order.status === status ? '✓ ' : updatingOrderId === getOrderId(order) ? '⏳ ' : ''}
                                 {status.charAt(0).toUpperCase() + status.slice(1)}
                               </button>
                             ))}
@@ -419,7 +422,7 @@ const AdminOpenOrders = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {ordersByStatus.completed.map((order, idx) => {
-                      const cardKey = order?.id ?? order?._id ?? order?.orderNumber ?? idx;
+                      const cardKey = order?.id ?? order?.orderNumber ?? idx;
                       return (
                       <div
                         key={cardKey}
@@ -507,7 +510,7 @@ const AdminOpenOrders = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {ordersByStatus.cancelled.map((order, idx) => {
-                      const cardKey = order?.id ?? order?._id ?? order?.orderNumber ?? idx;
+                      const cardKey = order?.id ?? order?.orderNumber ?? idx;
                       return (
                       <div
                         key={cardKey}

@@ -52,9 +52,10 @@ export const createOrder = createAsyncThunk("order/create", async (order) => {
 // Update order status
 export const orderUpdateStatus = createAsyncThunk(
   "order/update",
-  async (id) => {
-    console.log("redux orderUpdateStatus order", id);
-    const response = await orderService.orderUpdateStatus(id);
+  async (payload) => {
+    // payload expected: { id: string, status: { status: string } }
+    console.log("redux orderUpdateStatus", payload);
+    const response = await orderService.orderUpdateStatus(payload);
     console.log(response);
     return response.data;
   }
@@ -263,9 +264,9 @@ export const orderSlice = createSlice({
         console.log("orderSlice orderArchiveOne.fulfilled", action.payload);
 
         state.loading = false;
-        // Remove or update the archived order in state.orders
+        // Update the archived order in state.orders by id
         state.orders = state.orders.map((order) =>
-          order._id === action.payload.order._id ? action.payload.order : order
+          order.id === action.payload.order.id ? action.payload.order : order
         );
       })
       .addCase(orderArchiveOne.rejected, (state, action) => {
