@@ -28,6 +28,30 @@ export const logout = createAsyncThunk("auth/logout", async () => {
   return response.data;
 });
 
+// Change password thunk lives in auth domain (no new slice in store)
+export const changePassword = createAsyncThunk(
+  "auth/changePassword",
+  async ({ currentPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      const data = await authService.changePassword({ currentPassword, newPassword });
+      // If server wants re-login, clear local credentials here to keep a single source
+      if (data?.requireRelogin) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userOn");
+      }
+      return data; // pass to component for messaging
+    } catch (err) {
+      const message = err?.response?.data?.message || err?.message || "Request failed";
+      // Clear on auth errors
+      if (/expired|unauthorized|auth/i.test(message)) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userOn");
+      }
+      return rejectWithValue(message);
+    }
+  }
+);
+
 export const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -90,6 +114,16 @@ export const authSlice = createSlice({
       .addCase(logout.rejected, (state, action) => {
         console.log("LOGOUT rejected authSlice action.payload", action.payload);
         state.loading = false;
+      })
+      // change password doesn't alter auth state directly here
+  .addCase(changePassword.pending, () => {
+        // optional: could track a flag if needed later
+      })
+  .addCase(changePassword.fulfilled, () => {
+        // no direct state change; component handles UI feedback
+      })
+  .addCase(changePassword.rejected, () => {
+        // no direct state change
       });
   },
 });

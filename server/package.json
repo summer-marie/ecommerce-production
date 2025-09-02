@@ -8,7 +8,8 @@
     "start": "node index.js",
     "migrate": "node scripts/migrateToAtlas.js",
     "purge:tokens": "node scripts/purgeEmptyTokens.js",
-    "cleanup:orders": "node scripts/cleanupArchivedOrders.js"
+  "cleanup:orders": "node scripts/cleanupArchivedOrders.js",
+  "admin:reset-password": "node scripts/resetAdminPassword.js"
   },
   "type": "module",
   "keywords": [],

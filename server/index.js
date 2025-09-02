@@ -299,8 +299,10 @@ try {
     app.use(passport.session());
     console.log("✅ Passport initialized with session support");
 
-    // API route registration with appropriate security and caching middleware
-    app.use("/auth", authRateLimit, authRouter);
+  // API route registration with appropriate security and caching middleware
+  // Apply auth rate limit only to the login endpoint to avoid throttling other auth actions
+  app.use("/auth/login", authRateLimit);
+  app.use("/auth", authRouter);
     app.use("/admins", adminRateLimit, adminRouter);
     app.use("/orders", orderIndex);
     app.use("/ingredients", cacheMiddleware(600), ingredientsIndex);

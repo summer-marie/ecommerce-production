@@ -38,7 +38,8 @@ export const createRateLimiter = (options = {}) => {
 // Endpoint-specific rate limiters
 export const authRateLimit = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit auth attempts
+  max: 20, // More forgiving auth attempts
+  skipSuccessfulRequests: true, // Successful logins don’t count against limit
   message: "Too many authentication attempts, please try again later.",
 });
 

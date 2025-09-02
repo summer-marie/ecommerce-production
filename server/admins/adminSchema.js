@@ -12,22 +12,35 @@ const sessionSchema = new Schema({
 const adminSchema = new Schema({
   firstName: {
     type: String,
-    default: "",
+    trim: true,
+    required: true,
   },
   lastName: {
     type: String,
-    default: "",
+    trim: true,
+    required: true,
   },
   email: {
     type: String,
-    default: "",
+    trim: true,
+    lowercase: true,
+    unique: true,
+    required: true,
   },
   password: {
     type: String,
-    default: "",
+    required: true,
   },
-  status: String,
-  role: String,
+  status: {
+    type: String,
+    enum: ["active", "disabled"],
+    default: "active",
+  },
+  role: {
+    type: String,
+    enum: ["admin", "manager"],
+    default: "admin",
+  },
 
   authStrategy: {
     type: String,

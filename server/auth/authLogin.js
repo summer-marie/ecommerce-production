@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import adminModel from "../admins/adminModel.js";
 
-const jwtSecret = process.env.JWT_SECRET || "secret";
 const tokenExpiration = process.env.TOKEN_EXPIRATION || 60 * 60 * 24 * 30; // 30 days
 
 const cookieOptions = {
@@ -19,31 +18,32 @@ const cookieOptions = {
 
 // Backend Token
 const createToken = (user) => {
-  console.log("createToken user", user);
+  const jwtSecret = process.env.JWT_SECRET;
+  // Creating token for user
   return jwt.sign(user, jwtSecret, { expiresIn: tokenExpiration });
 };
 
 const authLogin = async (req, res, next) => {
   const { _id } = req.user;
-  console.log("authLogin _id", _id);
+  console.log("[Auth] Issuing token");
 
   try {
     const user = await adminModel.findOne({ _id });
-    console.log("authLogin/user", user);
-
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
+  // Minimal safe log (avoid printing password/token). User found and authenticated.
 
     const token = createToken({ _id });
-    console.log("authLogin/token", token);
+    // Do not log raw tokens in production
 
     // Lets you be logged in from multiple places at once
-    if (user.token) {
+    if (Array.isArray(user.token)) {
       user.token.push({ token });
+      // Cap to last 5 sessions to avoid unbounded growth
+      if (user.token.length > 5) {
+        user.token = user.token.slice(-5);
+      }
     } else {
       user.token = [{ token }];
     }

@@ -12,21 +12,34 @@ const authService = {
     return response.data;
   },
 
-  status: async () => {
-    // Get and parse token from localStorage
-    const token = JSON.parse(localStorage.getItem("token"));
-    console.log("NEW authService status token", token);
-    const response = await axios.get(
-      `${API_BASE}/auth/status`,
-      {},
+  changePassword: async ({ currentPassword, newPassword }) => {
+    const token = localStorage.getItem("token");
+    console.log("NEW authService changePassword token", token?.slice(0, 12) + "...");
+    const response = await axios.post(
+      `${API_BASE}/auth/change-password`,
+      { currentPassword, newPassword },
       {
         withCredentials: true,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       }
     );
+    console.log("NEW changePassword response", response.data);
+    return response.data;
+  },
+
+  status: async () => {
+    const token = localStorage.getItem("token");
+    console.log("NEW authService status token", token);
+    const response = await axios.get(`${API_BASE}/auth/status`, {
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
     console.log("NEW response", response.data);
     return response.data;
   },
@@ -35,26 +48,31 @@ const authService = {
     try {
       const token = localStorage.getItem("token");
 
+      // If there's no token, skip network call and just clear local state
+      if (!token) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userOn");
+        return { message: "Logged out locally" };
+      }
+
       // Make logout request
-      const response = await axios.post(
-        `${API_BASE}/auth/logout/`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.post(`${API_BASE}/auth/logout`, {}, {
+        withCredentials: true,
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
       // Clear localStorage
       localStorage.removeItem("token");
       localStorage.removeItem("userOn");
 
       return response.data;
-    } catch (error) {
+  } catch {
       // Still clear localStorage even if request fails
       localStorage.removeItem("token");
       localStorage.removeItem("userOn");
-      throw error;
+      // Resolve gracefully so UI can proceed without refresh
+      return { message: "Logged out locally" };
     }
   },
 };

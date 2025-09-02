@@ -24,37 +24,33 @@ passport.deserializeUser(async (id, done) => {
 });
 
 export default passport.use(
-  // passing in my instance
   new Strategy({ usernameField: "email" }, async (username, password, done) => {
-    // search users in db
     try {
-      console.log("[Auth] Attempting login for email:", username);
+      const normalizedEmail = String(username || "").trim().toLowerCase();
+      console.log("[Auth] Attempting login for email:", normalizedEmail);
 
-      const user = await userModel.findOne({ email: username });
-
+      const user = await userModel.findOne({ email: normalizedEmail });
       if (!user) {
-        // no user found - err
-        console.log("[Auth] No user found for email:", username);
-        return done(new Error("Invalid credentials"), null);
+        console.log("[Auth] No user found for email:", normalizedEmail);
+        return done(null, false, { message: "Invalid credentials" });
       }
 
-      console.log("[Auth] User found, verifying password");
+      if (user.status && user.status !== "active") {
+        console.log("[Auth] User not active:", normalizedEmail);
+        return done(null, false, { message: "Account is not active" });
+      }
 
-      // Comparing hashed values of PWs
       const isPasswordCorrect = await argon2.verify(user.password, password);
-
       if (!isPasswordCorrect) {
-        // user found but password doesn't match - throw err
-        console.log("[Auth] Password incorrect for user:", username);
-        return done(new Error("Invalid credentials"), null);
+        console.log("[Auth] Password incorrect for user:", normalizedEmail);
+        return done(null, false, { message: "Invalid credentials" });
       }
 
-      console.log("[Auth] Login successful for user:", username);
-      // if both cases are false - call done function
-      done(null, user);
+      console.log("[Auth] Login successful for user:", normalizedEmail);
+      return done(null, user);
     } catch (err) {
       console.error("[Auth] Login error:", err);
-      done(err, null);
+      return done(err, null);
     }
   })
 );

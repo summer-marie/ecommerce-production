@@ -39,13 +39,21 @@ const AdminLogin = () => {
     email: "",
     password: "",
   });
+  const [showPwd, setShowPwd] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (loginForm.email === "" || loginForm.password === "") {
+    const normalizedEmail = String(loginForm.email || "").trim().toLowerCase();
+    if (normalizedEmail === "" || loginForm.password === "") {
       console.log("Login form error");
     } else {
-      dispatch(login(loginForm))
+      // Basic guard against obvious typos like consecutive dots
+      if (/\.\./.test(normalizedEmail)) {
+        alert("Please check your email address (no consecutive dots).");
+        return;
+      }
+
+      dispatch(login({ ...loginForm, email: normalizedEmail }))
         .unwrap()
         .then(() => {
           navigate("/open-orders");
@@ -99,7 +107,7 @@ const AdminLogin = () => {
                   onChange={(e) =>
                     setLoginForm({ ...loginForm, email: e.target.value })
                   }
-                  type="admin-email"
+                  type="email"
                   name="admin-email"
                   id="admin-email"
                   className="pl-12 mb-2 focus:border-transparent sm:text-sm rounded-lg ring-3 ring-transparent focus:ring-1 focus:outline-hidden  block w-full p-2.5 rounded-l-lg py-3 px-4
@@ -145,7 +153,7 @@ const AdminLogin = () => {
                   onChange={(e) =>
                     setLoginForm({ ...loginForm, password: e.target.value })
                   }
-                  type="password"
+                  type={showPwd ? "text" : "password"}
                   id="admin-password"
                   placeholder="••••••••••"
                   className="pl-12 mb-2 border focus:border-transparent sm:text-sm rounded-lg ring-3 ring-transparent focus:ring-1 focus:outline-hidden block w-full p-2.5 rounded-l-lg py-3 px-4
@@ -156,6 +164,26 @@ const AdminLogin = () => {
                   required
                   autoComplete="off"
                 />
+                <button
+                  type="button"
+                  aria-label={showPwd ? "Hide password" : "Show password"}
+                  onClick={() => setShowPwd((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  title={showPwd ? "Hide" : "Show"}
+                >
+                  {showPwd ? (
+                    // Eye off icon
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3-11-8 1.02-2.81 2.87-5.11 5.2-6.52M9.9 4.24A10.94 10.94 0 0 1 12 4c5 0 9.27 3 11 8-.56 1.55-1.44 2.95-2.54 4.09M14.12 14.12A3 3 0 0 1 9.88 9.88M1 1l22 22" />
+                    </svg>
+                  ) : (
+                    // Eye icon
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
               </div>
             </div>
             <button

@@ -32,6 +32,8 @@ const AdminInbox = lazy(() => import("./admin/AdminInbox"));
 const IngredientsTable = lazy(() => import("./admin/IngredientsTable"));
 const AdminBuilderCreate = lazy(() => import("./admin/AdminBuilderCreate"));
 const AdminAboutSettings = lazy(() => import("./admin/AdminAboutSettings"));
+const AdminChangePassword = lazy(() => import("./admin/AdminChangePassword"));
+const AdminAddAdmin = lazy(() => import("./admin/AdminAddAdmin"));
 
 // Error boundary and fallback components
 const NoMatch = lazy(() => import("./components/NoMatch"));
@@ -207,6 +209,22 @@ function App() {
                 </Suspense>
               }
             />
+            <Route
+              path="/settings/password"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminChangePassword />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/admin/add-admin"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminAddAdmin />
+                </Suspense>
+              }
+            />
           </Route>
         </Route>
 
@@ -218,6 +236,7 @@ function App() {
             </Suspense>
           }
         />
+  {/** Bootstrap route removed after initial admin creation for security */}
         <Route
           path="*"
           element={
