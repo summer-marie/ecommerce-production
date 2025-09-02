@@ -299,238 +299,186 @@ const AdminUpdateOne = () => {
           </svg>
           Back
         </button>
-        <div className="h-screen">
-          <div className="flex flex-wrap flex-row-reverse justify-center mb-20">
-            <form onSubmit={handleSubmit} className="w-5/8 mb-10 min-h-screen">
-              <div className="border-4 border-green-700 mb-15">
-                <div className="border-4 border-white">
-                  <div className="border-4 border-red-700 p-5">
-                    <div className="flex gap-4 mb-5">
-                      {/* Pizza Name Input */}
-                      <div className="w-1/2">
-                        <label
-                          htmlFor="pizza-name"
-                          className="block mb-2 text-sm font-medium text-gray-900"
-                        >
-                          Pizza Name
-                        </label>
-                        <input
-                          value={pizzaForm.pizzaName}
-                          onChange={handleChange}
-                          type="text"
-                          id="pizza-name"
-                          name="pizzaName"
-                          className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light
-                          text-black 
-                          placeholder-gray-500 
-                          border-slate-500
-                          bg-gray-200 
-                          focus:bg-gray-100 focus:border-sky-700"
-                          placeholder="Meat Lovers"
-                          required
-                        />
-                      </div>
-                      {/* Pizza Price Input */}
-                      <div className="w-1/2">
-                        <label
-                          htmlFor="pizzaPrice"
-                          className="block mb-2 text-sm font-medium text-gray-900"
-                        >
-                          Update Pizza Price $
-                        </label>
-                        <input
-                          value={pizzaForm.pizzaPrice}
-                          type="text"
-                          inputMode="decimal"
-                          pattern="[0-9]*(\.[0-9]{0,2})?"
-                          placeholder="00.00"
-                          onChange={handlePriceChange}
-                          id="pizzaPrice"
-                          className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light
-                          text-black 
-                          placeholder-gray-500 
-                          border-slate-500
-                          bg-gray-200 
-                          focus:bg-gray-100 
-                          focus:border-sky-700"
-                          required
-                        />
-                      </div>
-                    </div>
-                    {/* Upload new Photo */}
-                    <div id="imgUploader" className="max-w-lg mx-auto mb-5">
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <label
-                            className="block mb-2 text-sm font-medium pl-2 text-gray-900 capitalize"
-                            htmlFor="pizza_photo"
-                          >
-                            Upload New photo
-                          </label>
-                          <input
-                            className="block w-full text-lg focus:outline-none p-2 text-gray-800 border border-gray-300 rounded-lg cursor-pointer bg-gray-50"
-                            aria-describedby="pizza_photo_help"
-                            id="pizza_photo"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                          />
-                          <div
-                            className="mt-1 text-sm text-gray-500"
-                            id="pizza_photo_help"
-                          >
-                            Add picture of desired pizza
-                          </div>
-                        </div>
-                        {pizzaForm?.image?.data &&
-                          typeof pizzaForm.image.data === "string" && (
-                            <div className="flex-shrink-0 w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
-                              <img
-                                src={pizzaForm.image.data}
-                                alt="Current Pizza"
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          )}
-                      </div>
-                    </div>
-
-                    <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
-                      Pizza Base
-                    </h1>
-                    <hr className="mb-5" />
-                    <div className="mb-5">
-                      {/* Crust Selection */}
-                      <BaseDropdown
-                        id="crust"
-                        label="Select Crust"
-                        value={pizzaForm.crust}
-                        onChange={(e) => setPizzaForm({ ...pizzaForm, crust: e.target.value })}
-                        options={crustOptions}
-                        placeholder="- - Select Crust - -"
-                      />
-
-                      {/* Cheese Selections */}
-                      <h3 className="block mb-2 text-sm font-medium text-gray-900">Select Cheese(s)</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
-                        {[0, 1, 2].map((index) => (
-                          <div key={`cheese-slot-${index}`}>
-                            <BaseDropdown
-                              id={`cheese-${index}`}
-                              label={`Select Cheese #${index + 1}`}
-                              value={pizzaForm.cheeses?.[index] || ""}
-                              onChange={(e) => {
-                                const cheeses = [...(pizzaForm.cheeses || ["", "", ""])];
-                                cheeses[index] = e.target.value;
-                                setPizzaForm({ ...pizzaForm, cheeses });
-                              }}
-                              options={cheeseOptionsOnly}
-                              placeholder="- - None - -"
-                            />
-                            <CheeseAmountDropdown
-                              id={`cheese-amt-${index}`}
-                              label="Cheese Amount"
-                              value={pizzaForm.cheeseAmounts?.[index] || "1"}
-                              onChange={(e) => {
-                                const cheeseAmounts = [...(pizzaForm.cheeseAmounts || ["1", "1", "1"])];
-                                cheeseAmounts[index] = e.target.value;
-                                setPizzaForm({ ...pizzaForm, cheeseAmounts });
-                              }}
-                              disabled={!pizzaForm.cheeses?.[index]}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="mb-5">
-                      <label
-                        htmlFor="sauce"
-                        className="block mb-2 text-sm font-medium text-gray-900"
-                      >
-                        Update Sauce Type
-                      </label>
-                      <select
-                        value={pizzaForm.sauce || ""}
-                        onChange={(e) =>
-                          setPizzaForm({ ...pizzaForm, sauce: e.target.value })
-                        }
-                        id="sauce"
-                        className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                      text-black 
-                        placeholder-gray-500 
-                        border-slate-500
-                        bg-gray-200 
-                        focus:bg-gray-300 
-                        focus:ring-white
-                        focus:border-sky-500"
-                      >
-                        <option value="">- None -</option>
-                        {sauceOptions.map((option) => (
-                          <option key={option.name} value={option.name}>
-                            {option.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
-                      Meat Options
-                    </h1>
-                    <hr className="mb-5" />
-                    <div className="grid grid-cols-3 gap-4 mb-5">
-                      {[0, 1, 2, 3, 4, 5].map((index) => (
-                        <ToppingDropdown
-                          key={`meat-${index}`}
-                          label={`Update Meat #${index + 1}`}
-                          value={pizzaForm.meatTopping[index]}
-                          onChange={(e) => {
-                            const updatedMeatTopping = [...pizzaForm.meatTopping];
-                            updatedMeatTopping[index] = e.target.value;
-                            setPizzaForm({ ...pizzaForm, meatTopping: updatedMeatTopping });
-                          }}
-                          options={meatOptions}
-                          type="meat"
-                        />
-                      ))}
-                    </div>
-
-                    <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
-                      Veggie Options
-                    </h1>
-                    <hr className="mb-5" />
-                    <div className="grid grid-cols-3 gap-4 mb-5">
-                      {[0, 1, 2, 3, 4, 5].map((index) => (
-                        <ToppingDropdown
-                          key={`veggie-${index}`}
-                          label={`Update Veggie #${index + 1}`}
-                          value={pizzaForm.veggieTopping[index]}
-                          onChange={(e) => {
-                            const updatedVeggieTopping = [...pizzaForm.veggieTopping];
-                            updatedVeggieTopping[index] = e.target.value;
-                            setPizzaForm({ ...pizzaForm, veggieTopping: updatedVeggieTopping });
-                          }}
-                          options={veggieOptions}
-                          type="veggie"
-                        />
-                      ))}
-                    </div>
-                    <button
-                      onClick={handleSubmit}
-                      type="submit"
-                      className="flex justify-center mx-auto cursor-pointer disabled:cursor-not-allowed font-medium rounded-lg text-sm px-5 py-2.5 text-center  focus:outline-none hover:bg-gradient-to-br bg-gradient-to-r  focus:ring-4 
-                        shadow-green-800/80 
-                        hover:text-black
-                        text-white 
-                        from-cyan-400 
-                        via-blue-700 
-                        to-cyan-600
-                        focus:ring-blue-800"
-                    >
-                      Submit Changes
-                    </button>
-                  </div>
+        <div className="max-w-5xl mx-auto px-2 sm:px-4">
+          <div className="rounded-2xl bg-white/90 shadow-xl ring-1 ring-slate-200 overflow-hidden mb-10">
+            <div className="px-6 py-5 bg-gradient-to-r from-rose-700 via-red-600 to-rose-500 text-white">
+              <h3 className="text-xl md:text-2xl font-semibold">Update Pizza</h3>
+              <p className="text-white/90 text-sm mt-1">Modify base, sauces, and toppings for this pizza.</p>
+            </div>
+            <form onSubmit={handleSubmit} className="p-5 sm:p-6 md:p-8">
+              <div className="flex flex-col sm:flex-row gap-4 mb-5">
+                {/* Pizza Name Input */}
+                <div className="w-full sm:w-1/2">
+                  <label htmlFor="pizza-name" className="block mb-2 text-sm font-medium text-gray-900">
+                    Pizza Name
+                  </label>
+                  <input
+                    value={pizzaForm.pizzaName}
+                    onChange={handleChange}
+                    type="text"
+                    id="pizza-name"
+                    name="pizzaName"
+                    className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light text-black placeholder-gray-500 border-slate-500 bg-gray-200 focus:bg-gray-100 focus:border-sky-700"
+                    placeholder="Meat Lovers"
+                    required
+                  />
                 </div>
+                {/* Pizza Price Input */}
+                <div className="w-full sm:w-1/2">
+                  <label htmlFor="pizzaPrice" className="block mb-2 text-sm font-medium text-gray-900">
+                    Update Pizza Price $
+                  </label>
+                  <input
+                    value={pizzaForm.pizzaPrice}
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*(\\.[0-9]{0,2})?"
+                    placeholder="00.00"
+                    onChange={handlePriceChange}
+                    id="pizzaPrice"
+                    className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light text-black placeholder-gray-500 border-slate-500 bg-gray-200 focus:bg-gray-100 focus:border-sky-700"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Upload new Photo */}
+              <div id="imgUploader" className="max-w-xl mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <label className="block mb-2 text-sm font-medium pl-2 text-gray-900 capitalize" htmlFor="pizza_photo">
+                      Upload New photo
+                    </label>
+                    <input
+                      className="block w-full text-lg focus:outline-none p-2 text-gray-800 border border-gray-300 rounded-lg cursor-pointer bg-gray-50"
+                      aria-describedby="pizza_photo_help"
+                      id="pizza_photo"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                    <div className="mt-1 text-sm text-gray-500" id="pizza_photo_help">
+                      Add picture of desired pizza
+                    </div>
+                  </div>
+                  {pizzaForm?.image?.data && typeof pizzaForm.image.data === "string" && (
+                    <div className="flex-shrink-0 w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
+                      <img src={pizzaForm.image.data} alt="Current Pizza" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">Pizza Base</h1>
+              <hr className="mb-5" />
+              <div className="mb-5">
+                {/* Crust Selection */}
+                <BaseDropdown
+                  id="crust"
+                  label="Select Crust"
+                  value={pizzaForm.crust}
+                  onChange={(e) => setPizzaForm({ ...pizzaForm, crust: e.target.value })}
+                  options={crustOptions}
+                  placeholder="- - Select Crust - -"
+                />
+
+                {/* Cheese Selections */}
+                <h3 className="block mb-2 text-sm font-medium text-gray-900">Select Cheese(s)</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+                  {[0, 1, 2].map((index) => (
+                    <div key={`cheese-slot-${index}`}>
+                      <BaseDropdown
+                        id={`cheese-${index}`}
+                        label={`Select Cheese #${index + 1}`}
+                        value={pizzaForm.cheeses?.[index] || ""}
+                        onChange={(e) => {
+                          const cheeses = [...(pizzaForm.cheeses || ["", "", ""])];
+                          cheeses[index] = e.target.value;
+                          setPizzaForm({ ...pizzaForm, cheeses });
+                        }}
+                        options={cheeseOptionsOnly}
+                        placeholder="- - None - -"
+                      />
+                      <CheeseAmountDropdown
+                        id={`cheese-amt-${index}`}
+                        label="Cheese Amount"
+                        value={pizzaForm.cheeseAmounts?.[index] || "1"}
+                        onChange={(e) => {
+                          const cheeseAmounts = [...(pizzaForm.cheeseAmounts || ["1", "1", "1"])];
+                          cheeseAmounts[index] = e.target.value;
+                          setPizzaForm({ ...pizzaForm, cheeseAmounts });
+                        }}
+                        disabled={!pizzaForm.cheeses?.[index]}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-5">
+                <label htmlFor="sauce" className="block mb-2 text-sm font-medium text-gray-900">
+                  Update Sauce Type
+                </label>
+                <select
+                  value={pizzaForm.sauce || ""}
+                  onChange={(e) => setPizzaForm({ ...pizzaForm, sauce: e.target.value })}
+                  id="sauce"
+                  className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2 text-black placeholder-gray-500 border-slate-500 bg-gray-200 focus:bg-gray-300 focus:ring-white focus:border-sky-500"
+                >
+                  <option value="">- None -</option>
+                  {sauceOptions.map((option) => (
+                    <option key={option.name} value={option.name}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">Meat Options</h1>
+              <hr className="mb-5" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                {[0, 1, 2, 3, 4, 5].map((index) => (
+                  <ToppingDropdown
+                    key={`meat-${index}`}
+                    label={`Update Meat #${index + 1}`}
+                    value={pizzaForm.meatTopping[index]}
+                    onChange={(e) => {
+                      const updatedMeatTopping = [...pizzaForm.meatTopping];
+                      updatedMeatTopping[index] = e.target.value;
+                      setPizzaForm({ ...pizzaForm, meatTopping: updatedMeatTopping });
+                    }}
+                    options={meatOptions}
+                    type="meat"
+                  />
+                ))}
+              </div>
+
+              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">Veggie Options</h1>
+              <hr className="mb-5" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                {[0, 1, 2, 3, 4, 5].map((index) => (
+                  <ToppingDropdown
+                    key={`veggie-${index}`}
+                    label={`Update Veggie #${index + 1}`}
+                    value={pizzaForm.veggieTopping[index]}
+                    onChange={(e) => {
+                      const updatedVeggieTopping = [...pizzaForm.veggieTopping];
+                      updatedVeggieTopping[index] = e.target.value;
+                      setPizzaForm({ ...pizzaForm, veggieTopping: updatedVeggieTopping });
+                    }}
+                    options={veggieOptions}
+                    type="veggie"
+                  />
+                ))}
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto sm:min-w-[220px] flex justify-center mx-auto cursor-pointer disabled:cursor-not-allowed font-medium rounded-lg text-sm px-5 py-2.5 text-center focus:outline-none bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow hover:from-emerald-700 hover:to-green-700 focus:ring-2 focus:ring-emerald-400"
+                >
+                  Submit Changes
+                </button>
               </div>
             </form>
           </div>
