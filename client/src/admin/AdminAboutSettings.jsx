@@ -7,12 +7,18 @@ import { compressImage, convertImageToBase64 } from "../utils/imageUtils";
 
 function titleCase(text = "") {
   // Preserve spaces; capitalize first letter of every word, lowercase the rest
-  return text.replace(/\b([A-Za-z])([A-Za-z]*)/g, (_, first, rest) => first.toUpperCase() + rest.toLowerCase());
+  return text.replace(
+    /\b([A-Za-z])([A-Za-z]*)/g,
+    (_, first, rest) => first.toUpperCase() + rest.toLowerCase()
+  );
 }
 
 function capitalizeSentenceStarts(text = "") {
   // Capitalize first letter after start or after . ! ? followed by space(s)
-  return text.replace(/(^|[.!?]\s+)([a-z])/g, (_, p1, p2) => p1 + p2.toUpperCase());
+  return text.replace(
+    /(^|[.!?]\s+)([a-z])/g,
+    (_, p1, p2) => p1 + p2.toUpperCase()
+  );
 }
 
 const Field = ({ label, value, onChange, textarea, format }) => (
@@ -39,9 +45,7 @@ const Field = ({ label, value, onChange, textarea, format }) => (
         value={value}
         onChange={(e) =>
           onChange(
-            format === "heading"
-              ? titleCase(e.target.value)
-              : e.target.value
+            format === "heading" ? titleCase(e.target.value) : e.target.value
           )
         }
       />
@@ -52,6 +56,11 @@ const Field = ({ label, value, onChange, textarea, format }) => (
 const ImageInput = ({ label, image, onChange }) => {
   const [error, setError] = useState("");
   const [preview, setPreview] = useState(image?.data || "");
+
+  // Keep preview in sync when the parent loads or updates About data
+  useEffect(() => {
+    setPreview(image?.data || "");
+  }, [image]);
 
   const onFile = async (file) => {
     try {
@@ -134,17 +143,21 @@ export default function AdminAboutSettings() {
     // Normalize headings/descriptions per rules
     const normalized = {
       ...payload,
-  topHeading: titleCase(payload.topHeading || ""),
-  centerHeading: titleCase(payload.centerHeading || ""),
-  bottomHeading: titleCase(payload.bottomHeading || ""),
+      topHeading: titleCase(payload.topHeading || ""),
+      centerHeading: titleCase(payload.centerHeading || ""),
+      bottomHeading: titleCase(payload.bottomHeading || ""),
       topDescription: capitalizeSentenceStarts(payload.topDescription || ""),
-      centerDescription: capitalizeSentenceStarts(payload.centerDescription || ""),
-      bottomDescription: capitalizeSentenceStarts(payload.bottomDescription || ""),
+      centerDescription: capitalizeSentenceStarts(
+        payload.centerDescription || ""
+      ),
+      bottomDescription: capitalizeSentenceStarts(
+        payload.bottomDescription || ""
+      ),
     };
     try {
       await dispatch(updateAbout(normalized)).unwrap();
       // Optionally show a success message or toast here
-  dispatch(fetchAbout());
+      dispatch(fetchAbout());
     } catch (e) {
       // Swallow to avoid "Uncaught (in promise)"; error is shown via slice state
       console.error("Update about failed:", e);
@@ -166,8 +179,7 @@ export default function AdminAboutSettings() {
       {error && <div className="mb-3 text-red-400">{error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <div className="lg:col-span-2 bg-emerald-950/60 border border-emerald-800 rounded-xl p-4 shadow-xl">
-
+        <div className="lg:col-span-2 bg-emerald-950/60 border border-emerald-800 rounded-xl p-4 shadow-xl">
           <div className="mt-2">
             <Field
               label="Top Heading"

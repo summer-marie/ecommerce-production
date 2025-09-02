@@ -7,11 +7,8 @@ import {
   orderArchiveOne,
 } from "../redux/orderSlice";
 
-
-
 // TODO: implement order search and filtering
-// TODO: add pagination for order list 
-
+// TODO: add pagination for order list
 
 const AdminOpenOrders = () => {
   const { orders } = useSelector((state) => state.order);
@@ -24,23 +21,25 @@ const AdminOpenOrders = () => {
   // Use normalized `id` only
   const getOrderId = (order) => order?.id;
 
-  const alertMsg = bulkArchiveData
-    ? (
-      <>
-        Are you sure you want to archive{" "}
-        <span className="text-red-800 font-bold">{bulkArchiveData.count}</span>{" "}
-        <span className="text-red-800 font-bold">{bulkArchiveData.status}</span> orders?
-      </>
-    )
-    : archiveOrder
-    ? (
-      <>
-        Are you sure you want to archive order{" "}
-        <span className="text-red-800 font-bold">#{archiveOrder.orderNumber}</span>?
-      </>
-    )
-    : "Are you sure you want to archive this order?";
-  const alertDescription = bulkArchiveData 
+  const alertMsg = bulkArchiveData ? (
+    <>
+      Are you sure you want to archive{" "}
+      <span className="text-red-800 font-bold">{bulkArchiveData.count}</span>{" "}
+      <span className="text-red-800 font-bold">{bulkArchiveData.status}</span>{" "}
+      orders?
+    </>
+  ) : archiveOrder ? (
+    <>
+      Are you sure you want to archive order{" "}
+      <span className="text-red-800 font-bold">
+        #{archiveOrder.orderNumber}
+      </span>
+      ?
+    </>
+  ) : (
+    "Are you sure you want to archive this order?"
+  );
+  const alertDescription = bulkArchiveData
     ? `This will archive ${bulkArchiveData.count} orders and move them to the archived orders database. This action cannot be undone.`
     : "This will move the order to the archived orders database. This action cannot be undone.";
 
@@ -67,7 +66,7 @@ const AdminOpenOrders = () => {
     );
   };
   const getSortedOrders = () => {
-    // Sort by newest 
+    // Sort by newest
     return [...orders].sort((a, b) => {
       return new Date(b.date) - new Date(a.date);
     });
@@ -78,11 +77,13 @@ const AdminOpenOrders = () => {
     const sortedOrders = getSortedOrders();
     const result = {
       // Processing orders should be oldest first (first-come, first-served)
-      processing: sortedOrders.filter(order => order.status === 'processing').sort((a, b) => {
-        return new Date(a.date) - new Date(b.date);
-      }),
-      completed: sortedOrders.filter(order => order.status === 'completed'),
-      cancelled: sortedOrders.filter(order => order.status === 'cancelled')
+      processing: sortedOrders
+        .filter((order) => order.status === "processing")
+        .sort((a, b) => {
+          return new Date(a.date) - new Date(b.date);
+        }),
+      completed: sortedOrders.filter((order) => order.status === "completed"),
+      cancelled: sortedOrders.filter((order) => order.status === "cancelled"),
     };
     return result;
   };
@@ -93,20 +94,20 @@ const AdminOpenOrders = () => {
     if (order.payment && order.payment.status === "completed") {
       return {
         text: "PAID",
-        className: "text-green-600 font-semibold"
+        className: "text-green-600 font-semibold",
       };
     }
     // Check if payment method is cash
     if (order.payment && order.payment.method === "cash") {
       return {
         text: "CASH PAYMENT DUE",
-        className: "text-blue-800 font-semibold"
+        className: "text-blue-800 font-semibold",
       };
     }
     // If no payment info, show cash payment due as default
     return {
-      text: "CASH PAYMENT DUE", 
-      className: "text-blue-800 font-semibold"
+      text: "CASH PAYMENT DUE",
+      className: "text-blue-800 font-semibold",
     };
   };
 
@@ -114,15 +115,15 @@ const AdminOpenOrders = () => {
   const handleDirectStatusUpdate = async (id, newStatus) => {
     console.log("=== STATUS UPDATE START ===");
     console.log("Updating order:", { id, newStatus });
-    
+
     // Prevent double-clicks
     if (updatingOrderId === id) {
       console.log("Update already in progress for order:", id);
       return;
     }
-    
+
     setUpdatingOrderId(id);
-    
+
     // Log current counts before update
     const beforeCounts = getStatusCounts();
     console.log("Counts BEFORE update:", beforeCounts);
@@ -134,16 +135,15 @@ const AdminOpenOrders = () => {
           status: { status: newStatus },
         })
       ).unwrap();
-      
+
       console.log("Server returned orders count:", result.orders?.length);
-      
+
       // Log counts after update
       setTimeout(() => {
         const afterCounts = getStatusCounts();
         console.log("Counts AFTER update:", afterCounts);
         console.log("=== STATUS UPDATE END ===");
       }, 100);
-      
     } catch (error) {
       console.error("Status update failed:", {
         id,
@@ -168,7 +168,7 @@ const AdminOpenOrders = () => {
     setBulkArchiveData({
       status,
       count: orders.length,
-      orders
+      orders,
     });
     setArchiveOrder(null); // Clear single order data
     setShowAlert(true);
@@ -187,11 +187,13 @@ const AdminOpenOrders = () => {
     try {
       // Store current scroll position before archiving
       const currentScrollY = window.scrollY;
-      
+
       if (bulkArchiveData) {
         // Handle bulk archiving
-        console.log(`Bulk archiving ${bulkArchiveData.count} ${bulkArchiveData.status} orders`);
-        
+        console.log(
+          `Bulk archiving ${bulkArchiveData.count} ${bulkArchiveData.status} orders`
+        );
+
         // Archive all orders in the bulk selection
         for (const order of bulkArchiveData.orders) {
           const orderId = getOrderId(order);
@@ -199,17 +201,17 @@ const AdminOpenOrders = () => {
             await dispatch(orderArchiveOne(orderId)).unwrap();
           }
         }
-        
+
         setBulkArchiveData(null);
       } else if (archiveOrder) {
         // Handle single order archiving
         const orderId = getOrderId(archiveOrder);
-        
+
         if (!orderId) {
           console.error("No valid order ID found in archiveOrder object");
           return;
         }
-        
+
         // Archive the order
         await dispatch(orderArchiveOne(orderId)).unwrap();
         setArchiveOrder(null);
@@ -217,16 +219,15 @@ const AdminOpenOrders = () => {
 
       // Refresh the open orders to remove archived order(s) from list
       await dispatch(orderGetOpen()).unwrap();
-      
+
       // Restore scroll position after state updates
       setTimeout(() => {
         window.scrollTo(0, currentScrollY);
       }, 100);
-      
     } catch (error) {
       console.error("Error archiving order(s):", error);
     }
-    
+
     setShowAlert(false);
   };
 
@@ -264,7 +265,7 @@ const AdminOpenOrders = () => {
           <h2 className="berkshireSwashFont text-2xl font-bold text-slate-800">
             Open Orders
           </h2>
-          
+
           {/* Badge counts on the right */}
           <div className="flex gap-4">
             {Object.entries(getStatusCounts()).map(([status, count]) => (
@@ -311,98 +312,142 @@ const AdminOpenOrders = () => {
                     {ordersByStatus.processing.map((order, idx) => {
                       const cardKey = order?.id ?? order?.orderNumber ?? idx;
                       return (
-                      <div
-                        key={cardKey}
-                        className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col"
-                      >
-                        {/* Header: Order Number and Date */}
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900">
-                              #{order.orderNumber}
-                            </h3>
-                            <p className="text-sm text-gray-500 mt-1">
-                              {formatDate(order.date)}
+                        <div
+                          key={cardKey}
+                          className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col"
+                        >
+                          {/* Header: Order Number and Date */}
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h3 className="text-xl font-bold text-gray-900">
+                                #{order.orderNumber}
+                              </h3>
+                              <p className="text-sm text-gray-500 mt-1">
+                                {formatDate(order.date)}
+                              </p>
+                            </div>
+                            <div
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeStyle(
+                                order.status
+                              )}`}
+                            >
+                              {order.status.charAt(0).toUpperCase() +
+                                order.status.slice(1)}
+                            </div>
+                          </div>
+
+                          {/* Customer Info */}
+                          <div className="mb-4">
+                            <p className="font-semibold text-gray-800">
+                              {order.firstName} {order.lastName}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {order.email || "(Email Unavailable)"}
+                            </p>
+                            <p className="text-lg font-bold text-green-600">
+                              ${order.orderTotal}
                             </p>
                           </div>
-                          <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeStyle(order.status)}`}>
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+
+                          {/* Order Details */}
+                          <div className="mb-4">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                              Order Items:
+                            </h4>
+                            <div className="space-y-1">
+                              {order.orderDetails.map((item, index) => (
+                                <div
+                                  key={index}
+                                  className="flex justify-between text-sm"
+                                >
+                                  <span className="text-gray-600">
+                                    {item.pizzaName}
+                                  </span>
+                                  <span className="font-medium">
+                                    x{item.quantity}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Customer Info */}
-                        <div className="mb-4">
-                          <p className="font-semibold text-gray-800">{order.firstName} {order.lastName}</p>
-                          <p className="text-sm text-gray-600">{order.email || "(Email Unavailable)"}</p>
-                          <p className="text-lg font-bold text-green-600">${order.orderTotal}</p>
-                        </div>
-
-                        {/* Order Details */}
-                        <div className="mb-4">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Order Items:</h4>
-                          <div className="space-y-1">
-                            {order.orderDetails.map((item, index) => (
-                              <div key={index} className="flex justify-between text-sm">
-                                <span className="text-gray-600">{item.pizzaName}</span>
-                                <span className="font-medium">x{item.quantity}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Status Update Buttons */}
-                        <div className="mb-4 flex-grow">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Update Status:</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {statusArray.map((status) => (
-                              <button
-                                key={status}
-                onClick={() => handleDirectStatusUpdate(getOrderId(order), status)}
-                disabled={order.status === status || updatingOrderId === getOrderId(order)}
-                                className={`
-                                  px-3 py-1 rounded-full text-xs font-semibold border transition-all
-                                  ${order.status === status 
-                                    ? 'bg-blue-600 text-white border-blue-600 cursor-default' 
-                  : updatingOrderId === getOrderId(order)
-                                    ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
-                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-500 hover:text-white hover:border-blue-500 cursor-pointer'
+                          {/* Status Update Buttons */}
+                          <div className="mb-4 flex-grow">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                              Update Status:
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {statusArray.map((status) => (
+                                <button
+                                  key={status}
+                                  onClick={() =>
+                                    handleDirectStatusUpdate(
+                                      getOrderId(order),
+                                      status
+                                    )
                                   }
-                                `}
-                              >
-                {order.status === status ? '✓ ' : updatingOrderId === getOrderId(order) ? '⏳ ' : ''}
-                                {status.charAt(0).toUpperCase() + status.slice(1)}
-                              </button>
-                            ))}
+                                  disabled={
+                                    order.status === status ||
+                                    updatingOrderId === getOrderId(order)
+                                  }
+                                  className={`
+                                    px-3 py-1 rounded-full text-xs font-semibold border transition-all
+                                    ${
+                                      order.status === status
+                                        ? "bg-blue-600 text-white border-blue-600 cursor-default"
+                                        : updatingOrderId === getOrderId(order)
+                                        ? "bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed"
+                                        : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-blue-500 hover:text-white hover:border-blue-500 cursor-pointer"
+                                    }
+                                  `}
+                                >
+                                  {order.status === status
+                                    ? "✓ "
+                                    : updatingOrderId === getOrderId(order)
+                                    ? "⏳ "
+                                    : ""}
+                                  {status.charAt(0).toUpperCase() +
+                                    status.slice(1)}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Payment Status and Archive - Fixed at bottom */}
-                        <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
-                          <div>
-                            {(() => {
-                              const paymentStatus = getPaymentStatusDisplay(order);
-                              return (
-                                <span className={`text-sm font-semibold ${paymentStatus.className}`}>
-                                  {paymentStatus.text}
-                                </span>
-                              );
-                            })()}
+                          {/* Payment Status and Archive - Fixed at bottom */}
+                          <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
+                            <div>
+                              {(() => {
+                                const paymentStatus =
+                                  getPaymentStatusDisplay(order);
+                                return (
+                                  <span
+                                    className={`text-sm font-semibold ${paymentStatus.className}`}
+                                  >
+                                    {paymentStatus.text}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                            {/* Remove Archive button for processing orders */}
+                            {order.status !== "processing" && (
+                              <button
+                                onClick={() => handleArchiveClick(order)}
+                                className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1 rounded-full border border-red-200 hover:border-red-300 transition-colors"
+                              >
+                                Archive
+                              </button>
+                            )}
                           </div>
-                          <button
-                            onClick={() => handleArchiveClick(order)}
-                            className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1 rounded-full border border-red-200 hover:border-red-300 transition-colors"
-                          >
-                            Archive
-                          </button>
                         </div>
-                      </div>
-                    )})}
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
               {/* Separator HR */}
-              {(ordersByStatus.completed.length > 0 || ordersByStatus.cancelled.length > 0) && (
+              {(ordersByStatus.completed.length > 0 ||
+                ordersByStatus.cancelled.length > 0) && (
                 <hr className="my-8 border-gray-300" />
               )}
 
@@ -414,7 +459,12 @@ const AdminOpenOrders = () => {
                       Completed Orders ({ordersByStatus.completed.length})
                     </h3>
                     <button
-                      onClick={() => handleBulkArchiveClick('completed', ordersByStatus.completed)}
+                      onClick={() =>
+                        handleBulkArchiveClick(
+                          "completed",
+                          ordersByStatus.completed
+                        )
+                      }
                       className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-md border border-blue-300 hover:border-blue-400 transition-colors ml-16"
                     >
                       Archive All ({ordersByStatus.completed.length})
@@ -424,72 +474,98 @@ const AdminOpenOrders = () => {
                     {ordersByStatus.completed.map((order, idx) => {
                       const cardKey = order?.id ?? order?.orderNumber ?? idx;
                       return (
-                      <div
-                        key={cardKey}
-                        className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col opacity-75"
-                      >
-                        {/* Same card structure as processing orders */}
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900">
-                              #{order.orderNumber}
-                            </h3>
-                            <p className="text-sm text-gray-500 mt-1">
-                              {formatDate(order.date)}
+                        <div
+                          key={cardKey}
+                          className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col opacity-75"
+                        >
+                          {/* Same card structure as processing orders */}
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h3 className="text-xl font-bold text-gray-900">
+                                #{order.orderNumber}
+                              </h3>
+                              <p className="text-sm text-gray-500 mt-1">
+                                {formatDate(order.date)}
+                              </p>
+                            </div>
+                            <div
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeStyle(
+                                order.status
+                              )}`}
+                            >
+                              {order.status.charAt(0).toUpperCase() +
+                                order.status.slice(1)}
+                            </div>
+                          </div>
+
+                          <div className="mb-4">
+                            <p className="font-semibold text-gray-800">
+                              {order.firstName} {order.lastName}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {order.email || "(Email Unavailable)"}
+                            </p>
+                            <p className="text-lg font-bold text-green-600">
+                              ${order.orderTotal}
                             </p>
                           </div>
-                          <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeStyle(order.status)}`}>
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+
+                          <div className="mb-4">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                              Order Items:
+                            </h4>
+                            <div className="space-y-1">
+                              {order.orderDetails.map((item, index) => (
+                                <div
+                                  key={index}
+                                  className="flex justify-between text-sm"
+                                >
+                                  <span className="text-gray-600">
+                                    {item.pizzaName}
+                                  </span>
+                                  <span className="font-medium">
+                                    x{item.quantity}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="mb-4 flex-grow">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                              Status:
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-300">
+                                ✓ Completed
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
+                            <div>
+                              {(() => {
+                                const paymentStatus =
+                                  getPaymentStatusDisplay(order);
+                                return (
+                                  <span
+                                    className={`text-sm font-semibold ${paymentStatus.className}`}
+                                  >
+                                    {paymentStatus.text}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                            <button
+                              onClick={() => handleArchiveClick(order)}
+                              className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1 rounded-full border border-red-200 hover:border-red-300 transition-colors"
+                            >
+                              Archive
+                            </button>
                           </div>
                         </div>
-
-                        <div className="mb-4">
-                          <p className="font-semibold text-gray-800">{order.firstName} {order.lastName}</p>
-                          <p className="text-sm text-gray-600">{order.email || "(Email Unavailable)"}</p>
-                          <p className="text-lg font-bold text-green-600">${order.orderTotal}</p>
-                        </div>
-
-                        <div className="mb-4">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Order Items:</h4>
-                          <div className="space-y-1">
-                            {order.orderDetails.map((item, index) => (
-                              <div key={index} className="flex justify-between text-sm">
-                                <span className="text-gray-600">{item.pizzaName}</span>
-                                <span className="font-medium">x{item.quantity}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="mb-4 flex-grow">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Status:</h4>
-                          <div className="flex flex-wrap gap-2">
-                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-300">
-                              ✓ Completed
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
-                          <div>
-                            {(() => {
-                              const paymentStatus = getPaymentStatusDisplay(order);
-                              return (
-                                <span className={`text-sm font-semibold ${paymentStatus.className}`}>
-                                  {paymentStatus.text}
-                                </span>
-                              );
-                            })()}
-                          </div>
-                          <button
-                            onClick={() => handleArchiveClick(order)}
-                            className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1 rounded-full border border-red-200 hover:border-red-300 transition-colors"
-                          >
-                            Archive
-                          </button>
-                        </div>
-                      </div>
-                    )})}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -502,7 +578,12 @@ const AdminOpenOrders = () => {
                       Cancelled Orders ({ordersByStatus.cancelled.length})
                     </h3>
                     <button
-                      onClick={() => handleBulkArchiveClick('cancelled', ordersByStatus.cancelled)}
+                      onClick={() =>
+                        handleBulkArchiveClick(
+                          "cancelled",
+                          ordersByStatus.cancelled
+                        )
+                      }
                       className="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-md border border-red-300 hover:border-red-400 transition-colors ml-16"
                     >
                       Archive All ({ordersByStatus.cancelled.length})
@@ -512,72 +593,98 @@ const AdminOpenOrders = () => {
                     {ordersByStatus.cancelled.map((order, idx) => {
                       const cardKey = order?.id ?? order?.orderNumber ?? idx;
                       return (
-                      <div
-                        key={cardKey}
-                        className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col opacity-60"
-                      >
-                        {/* Same card structure but with cancelled styling */}
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900">
-                              #{order.orderNumber}
-                            </h3>
-                            <p className="text-sm text-gray-500 mt-1">
-                              {formatDate(order.date)}
+                        <div
+                          key={cardKey}
+                          className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-300 flex flex-col opacity-60"
+                        >
+                          {/* Same card structure but with cancelled styling */}
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h3 className="text-xl font-bold text-gray-900">
+                                #{order.orderNumber}
+                              </h3>
+                              <p className="text-sm text-gray-500 mt-1">
+                                {formatDate(order.date)}
+                              </p>
+                            </div>
+                            <div
+                              className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeStyle(
+                                order.status
+                              )}`}
+                            >
+                              {order.status.charAt(0).toUpperCase() +
+                                order.status.slice(1)}
+                            </div>
+                          </div>
+
+                          <div className="mb-4">
+                            <p className="font-semibold text-gray-800">
+                              {order.firstName} {order.lastName}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {order.email || "(Email Unavailable)"}
+                            </p>
+                            <p className="text-lg font-bold text-red-600">
+                              ${order.orderTotal}
                             </p>
                           </div>
-                          <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeStyle(order.status)}`}>
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+
+                          <div className="mb-4">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                              Order Items:
+                            </h4>
+                            <div className="space-y-1">
+                              {order.orderDetails.map((item, index) => (
+                                <div
+                                  key={index}
+                                  className="flex justify-between text-sm"
+                                >
+                                  <span className="text-gray-600">
+                                    {item.pizzaName}
+                                  </span>
+                                  <span className="font-medium">
+                                    x{item.quantity}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="mb-4 flex-grow">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                              Status:
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-300">
+                                ✗ Cancelled
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
+                            <div>
+                              {(() => {
+                                const paymentStatus =
+                                  getPaymentStatusDisplay(order);
+                                return (
+                                  <span
+                                    className={`text-sm font-semibold ${paymentStatus.className}`}
+                                  >
+                                    {paymentStatus.text}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                            <button
+                              onClick={() => handleArchiveClick(order)}
+                              className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1 rounded-full border border-red-200 hover:border-red-300 transition-colors"
+                            >
+                              Archive
+                            </button>
                           </div>
                         </div>
-
-                        <div className="mb-4">
-                          <p className="font-semibold text-gray-800">{order.firstName} {order.lastName}</p>
-                          <p className="text-sm text-gray-600">{order.email || "(Email Unavailable)"}</p>
-                          <p className="text-lg font-bold text-red-600">${order.orderTotal}</p>
-                        </div>
-
-                        <div className="mb-4">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Order Items:</h4>
-                          <div className="space-y-1">
-                            {order.orderDetails.map((item, index) => (
-                              <div key={index} className="flex justify-between text-sm">
-                                <span className="text-gray-600">{item.pizzaName}</span>
-                                <span className="font-medium">x{item.quantity}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="mb-4 flex-grow">
-                          <h4 className="text-sm font-semibold text-gray-700 mb-2">Status:</h4>
-                          <div className="flex flex-wrap gap-2">
-                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-300">
-                              ✗ Cancelled
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-auto">
-                          <div>
-                            {(() => {
-                              const paymentStatus = getPaymentStatusDisplay(order);
-                              return (
-                                <span className={`text-sm font-semibold ${paymentStatus.className}`}>
-                                  {paymentStatus.text}
-                                </span>
-                              );
-                            })()}
-                          </div>
-                          <button
-                            onClick={() => handleArchiveClick(order)}
-                            className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1 rounded-full border border-red-200 hover:border-red-300 transition-colors"
-                          >
-                            Archive
-                          </button>
-                        </div>
-                      </div>
-                    )})}
+                      );
+                    })}
                   </div>
                 </div>
               )}
