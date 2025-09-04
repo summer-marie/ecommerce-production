@@ -20,17 +20,6 @@ const svgPrint = (
   </svg>
 );
 
-// const svgLock = (
-//   <svg
-//     xmlns='http://www.w3.org/2000/svg'
-//     fill='currentColor'
-//     className='bi bi-lock-fill w-6 h-6'
-//     viewBox='0 0 16 16'
-//   >
-//     <path d='M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2' />
-//   </svg>
-// )
-
 const AdminLogin = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -40,27 +29,56 @@ const AdminLogin = () => {
     password: "",
   });
   const [showPwd, setShowPwd] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [emailError, setEmailError] = useState(false);
+  const [pwdError, setPwdError] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const normalizedEmail = String(loginForm.email || "").trim().toLowerCase();
+    setErrorMsg("");
+    setEmailError(false);
+    setPwdError(false);
+    const normalizedEmail = String(loginForm.email || "")
+      .trim()
+      .toLowerCase();
     if (normalizedEmail === "" || loginForm.password === "") {
-      console.log("Login form error");
+      setErrorMsg("Please enter your email and password.");
+      setEmailError(normalizedEmail === "");
+      setPwdError(loginForm.password === "");
     } else {
       // Basic guard against obvious typos like consecutive dots
       if (/\.\./.test(normalizedEmail)) {
         alert("Please check your email address (no consecutive dots).");
         return;
       }
-
+      setSubmitting(true);
       dispatch(login({ ...loginForm, email: normalizedEmail }))
         .unwrap()
         .then(() => {
           navigate("/open-orders");
         })
         .catch((err) => {
-          console.log("Login failed", err);
-        });
+          const status = err?.response?.status;
+          const message =
+            err?.response?.data?.message || err?.message || "Login failed";
+          // Infer likely cause for clearer guidance
+          if (status === 404 || /not found|no user/i.test(message)) {
+            setEmailError(true);
+            setErrorMsg("No admin account found for that email.");
+          } else if (
+            status === 401 ||
+            /password|invalid credentials|unauthorized/i.test(message)
+          ) {
+            setPwdError(true);
+            setErrorMsg("Incorrect password. Please try again.");
+          } else {
+            setErrorMsg(
+              "Login failed. Please check your email and password, then try again."
+            );
+          }
+        })
+        .finally(() => setSubmitting(false));
     }
   };
 
@@ -77,6 +95,14 @@ const AdminLogin = () => {
           </div>
 
           <form className="flex flex-col" onSubmit={handleSubmit}>
+            {errorMsg && (
+              <div
+                role="alert"
+                className="mb-4 rounded-lg border border-red-300 bg-red-50 text-red-800 px-4 py-3 text-sm"
+              >
+                {errorMsg}
+              </div>
+            )}
             <div className="pb-2">
               <label
                 htmlFor="admin-email"
@@ -110,11 +136,15 @@ const AdminLogin = () => {
                   type="email"
                   name="admin-email"
                   id="admin-email"
-                  className="pl-12 mb-2 focus:border-transparent sm:text-sm rounded-lg ring-3 ring-transparent focus:ring-1 focus:outline-hidden  block w-full p-2.5 rounded-l-lg py-3 px-4
+                  aria-invalid={emailError ? "true" : "false"}
+                  className={`pl-12 mb-2 focus:border-transparent sm:text-sm rounded-lg ring-3 ring-transparent focus:ring-1 focus:outline-hidden block w-full p-2.5 rounded-l-lg py-3 px-4
                   bg-gray-50 
                   text-gray-600 border 
-                  border-gray-300 
-                  focus:ring-gray-400"
+                  ${
+                    emailError
+                      ? "border-red-400 focus:ring-red-300"
+                      : "border-gray-300 focus:ring-gray-400"
+                  }`}
                   placeholder="name@something.com"
                   autoComplete="off"
                   required
@@ -156,11 +186,15 @@ const AdminLogin = () => {
                   type={showPwd ? "text" : "password"}
                   id="admin-password"
                   placeholder="••••••••••"
-                  className="pl-12 mb-2 border focus:border-transparent sm:text-sm rounded-lg ring-3 ring-transparent focus:ring-1 focus:outline-hidden block w-full p-2.5 rounded-l-lg py-3 px-4
+                  aria-invalid={pwdError ? "true" : "false"}
+                  className={`pl-12 mb-2 border focus:border-transparent sm:text-sm rounded-lg ring-3 ring-transparent focus:ring-1 focus:outline-hidden block w-full p-2.5 rounded-l-lg py-3 px-4
                 bg-gray-50 
                 text-gray-600 
-                border-gray-300 
-                focus:ring-gray-400"
+                ${
+                  pwdError
+                    ? "border-red-400 focus:ring-red-300"
+                    : "border-gray-300 focus:ring-gray-400"
+                }`}
                   required
                   autoComplete="off"
                 />
@@ -173,12 +207,30 @@ const AdminLogin = () => {
                 >
                   {showPwd ? (
                     // Eye off icon
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3-11-8 1.02-2.81 2.87-5.11 5.2-6.52M9.9 4.24A10.94 10.94 0 0 1 12 4c5 0 9.27 3 11 8-.56 1.55-1.44 2.95-2.54 4.09M14.12 14.12A3 3 0 0 1 9.88 9.88M1 1l22 22" />
                     </svg>
                   ) : (
                     // Eye icon
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
                       <circle cx="12" cy="12" r="3" />
                     </svg>
@@ -188,179 +240,18 @@ const AdminLogin = () => {
             </div>
             <button
               type="submit"
-              className="w-full focus:ring-4 focus:outline-hidden focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-6 text-[#FFFFFF] bg-[#ae0404] cursor-pointer"
+              disabled={submitting}
+              className={`w-full focus:ring-4 focus:outline-hidden font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-6 text-[#FFFFFF] ${
+                submitting
+                  ? "bg-[#ae0404]/70 cursor-not-allowed"
+                  : "bg-[#ae0404] cursor-pointer"
+              }`}
             >
-              Login
+              {submitting ? "Logging in…" : "Login"}
             </button>
           </form>
         </div>
       </div>
-
-      {/* <div className='borderShadow min-h-screen bg-gray-400 p-10'>
-        <div className='flex flex-col w-full md:w-1/2 xl:w-2/5 2xl:w-2/5 3xl:w-1/3 mx-auto p-8 md:p-10 2xl:p-12 3xl:p-14 bg-[#d9e4e5] rounded-2xl shadow-xl'>
-
-          <div className='flex flex-row gap-3 pb-4'>
-            <div>{svgPrint}</div>
-
-            <h1 className='text-3xl font-bold text-[#4B5563] my-auto'>
-              Create Admin Account
-            </h1>
-          </div>
-          <div className='text-sm font-light text-black pb-8 '>
-            Must have authentication code before creating an account
-          </div>
-
-          <form className='flex flex-col'>
-            <div className='pb-2'>
-              <label
-                htmlFor='admin-name'
-                className='block mb-2 text-sm font-medium text-[#111827]'
-              >
-                Name
-              </label>
-              <div className='relative text-gray-400'>
-                <span className='absolute inset-y-0 left-0 flex items-center p-1 pl-3'>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    width='24'
-                    height='24'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    className='lucide lucide-mail'
-                  >
-                    <rect width='20' height='16' x='2' y='4' rx='2'></rect>
-                    <path d='m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'></path>
-                  </svg>
-                </span>
-                <input
-                  type='text'
-                  name='name'
-                  id='name'
-                  className='pl-12 mb-2 bg-gray-50 text-gray-600 border focus:border-transparent border-gray-300 sm:text-sm rounded-lg ring-3 ring-transparent focus:ring-1 focus:outline-hidden focus:ring-gray-400 block w-full p-2.5 rounded-l-lg py-3 px-4'
-                  placeholder='Your Name'
-                  autoComplete='off'
-                />
-              </div>
-            </div>
-            <div className='pb-2'>
-              <label
-                htmlFor='admin-create-email'
-                className='block mb-2 text-sm font-medium text-[#111827]'
-              >
-                Email
-              </label>
-              <div className='relative text-gray-400'>
-                <span className='absolute inset-y-0 left-0 flex items-center p-1 pl-3'>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    width='24'
-                    height='24'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    className='lucide lucide-mail'
-                  >
-                    <rect width='20' height='16' x='2' y='4' rx='2'></rect>
-                    <path d='m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'></path>
-                  </svg>
-                </span>
-                <input
-                  type='admin-create-email'
-                  name='admin-create-email'
-                  id='admin-create-email'
-                  className='pl-12 mb-2 bg-gray-50 text-gray-600 border focus:border-transparent border-gray-300 sm:text-sm rounded-lg ring-3 ring-transparent focus:ring-1 focus:outline-hidden focus:ring-gray-400 block w-full p-2.5 rounded-l-lg py-3 px-4'
-                  placeholder='name@company.com'
-                  autoComplete='off'
-                  required
-                />
-              </div>
-            </div>
-            <div className='pb-6'>
-              <label
-                htmlFor='admin-create-password'
-                className='block mb-2 text-sm font-medium text-[#111827]'
-              >
-                Password
-              </label>
-              <div className='relative text-gray-400'>
-                <span className='absolute inset-y-0 left-0 flex items-center p-1 pl-3'>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    width='24'
-                    height='24'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    className='lucide lucide-square-asterisk'
-                  >
-                    <rect width='18' height='18' x='3' y='3' rx='2'></rect>
-                    <path d='M12 8v8'></path>
-                    <path d='m8.5 14 7-4'></path>
-                    <path d='m8.5 10 7 4'></path>
-                  </svg>
-                </span>
-                <input
-                  type='admin-create-password'
-                  name='admin-create-password'
-                  id='admin-create-password'
-                  placeholder='••••••••••'
-                  className='pl-12 mb-2 bg-gray-50 text-gray-600 border focus:border-transparent border-gray-300 sm:text-sm rounded-lg ring-3 ring-transparent focus:ring-1 focus:outline-hidden focus:ring-gray-400 block w-full p-2.5 rounded-l-lg py-3 px-4'
-                  autoComplete='off'
-                  required
-                />
-              </div>
-            </div>
-            <div className='pb-6'>
-              <label
-                htmlFor='admin-code'
-                className='block mb-2 text-sm font-medium text-[#111827]'
-              >
-                Admin Auth Code
-              </label>
-              <div className='relative text-gray-400'>
-                <span className='absolute inset-y-0 left-0 flex items-center p-1 pl-3'>
-                  {svgLock}
-                </span>
-
-                <input
-                  type='admin-code'
-                  name='admin-code'
-                  id='admin-code'
-                  placeholder='••••••••••'
-                  className='pl-12 mb-2 bg-gray-50 text-gray-600 border focus:border-transparent border-gray-300 sm:text-sm rounded-lg ring-3 ring-transparent focus:ring-1 focus:outline-hidden focus:ring-gray-400 block w-full p-2.5 rounded-l-lg py-3 px-4'
-                  autoComplete='off'
-                  required
-                />
-              </div>
-            </div>
-            <button
-              type='submit'
-              className='w-full text-[#FFFFFF] bg-[#4796e6] focus:ring-4 focus:outline-hidden focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mb-6'
-            >
-              Create Account
-            </button>
-            <div className='text-sm font-light text-[#6B7280] text-center'>
-              Already have an account?{" "}
-              <span
-                onClick={() => navigate("/admin-login")}
-                className='font-medium text-[#4796e6] hover:underline'
-              >
-                Login
-              </span>
-            </div>
-          </form>
-        </div>
-      </div> */}
     </>
   );
 };
