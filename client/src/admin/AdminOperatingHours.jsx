@@ -18,6 +18,7 @@ export default function AdminOperatingHours() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [showHelp, setShowHelp] = useState(false);
   const [cfg, setCfg] = useState({
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     forceClosed: false,
@@ -117,10 +118,54 @@ export default function AdminOperatingHours() {
 
   return (
     <div className="p-6 text-slate-200">
-      <h1 className="text-2xl font-bold mb-4">Operating Hours & Ordering</h1>
-      <p className="text-sm text-slate-400 mb-6">
-        Control when customers can place orders. Show a banner on the site and disable ordering UI when closed.
-      </p>
+      <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-zinc-500/40 via-zinc-300/20 to-zinc-600/40 shadow-[0_8px_30px_rgba(0,0,0,0.35)] mb-6">
+        <div className="relative z-10 rounded-2xl bg-gradient-to-b from-black/80 via-slate-900/80 to-slate-800/70 border border-white/10 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold mb-2 text-slate-100 tracking-wide">Operating Hours & Ordering</h1>
+              <p className="text-sm text-slate-300">
+                Control when customers can place orders. Show a banner on the site and disable ordering UI when closed.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowHelp((v) => !v)}
+              className="text-xs px-3 py-1.5 rounded border border-purple-500/60 bg-purple-800/80 hover:bg-purple-700/80 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_2px_6px_rgba(91,33,182,0.35)] self-start"
+            >
+              {showHelp ? "Hide help" : "How this page works"}
+            </button>
+          </div>
+        </div>
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-70" />
+        <div className="pointer-events-none absolute -top-8 -left-10 w-2/3 h-24 rotate-[-20deg] bg-white/10 blur-md opacity-15" />
+      </div>
+
+      <div className="mb-6">
+        {showHelp && (
+          <div className="mt-3 rounded-xl border border-slate-600 bg-slate-900/80 p-4 text-slate-100 text-sm">
+            <ul className="list-disc pl-5 space-y-1.5 leading-relaxed marker:text-purple-300">
+              <li>
+                Weekly Hours: Add one or more time windows per day (in your business timezone). Leave a day empty to be closed.
+              </li>
+              <li>
+                Special Open Windows: Date/time ranges for one-off openings (e.g., open once a month). These override weekly hours during the window.
+              </li>
+              <li>
+                Force Closed: Immediately stops ordering regardless of schedules (use for emergencies or breaks).
+              </li>
+              <li>
+                Timezone: Used to evaluate weekly hours and banners. Changing it affects future schedule calculations.
+              </li>
+              <li>
+                Banners: Customize messages shown to customers when open/closed.
+              </li>
+              <li>
+                Save Changes: Click Save to apply. Customers may need to refresh to see updated banners immediately.
+              </li>
+            </ul>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <section className="bg-slate-900/40 rounded-xl border border-slate-700 p-4 lg:col-span-2">
