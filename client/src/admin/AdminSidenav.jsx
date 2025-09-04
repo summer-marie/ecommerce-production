@@ -377,7 +377,7 @@ const AdminSidenav = () => {
             {/* Layout section under Customer Feedback */}
             {!isCollapsed && (
               <h2 className="mt-5 text-md font-bold text-slate-300 py-2">
-                Layout
+                Settings
               </h2>
             )}
             <hr className="border-gray-500 " />
@@ -416,6 +416,45 @@ const AdminSidenav = () => {
                 {!isCollapsed && (
                   <span className="flex-1 ms-3 whitespace-nowrap">
                     About page
+                  </span>
+                )}
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/settings/operating-hours"
+                className={`flex items-center p-2 rounded-lg group transition-colors duration-150 ring-1 
+                        ${
+                          location.pathname === "/settings/operating-hours"
+                            ? "bg-sky-400/15 ring-sky-400/30 text-sky-50"
+                            : "hover:bg-white/5 hover:ring-sky-400/20 text-slate-200 ring-transparent"
+                        }
+                       `}
+                title={isCollapsed ? "Operating Hours" : ""}
+              >
+                <svg
+                  className={`w-6 h-6 transition duration-75 group-hover:text-sky-200 ${
+                    location.pathname === "/settings/operating-hours"
+                      ? "text-sky-300"
+                      : "text-slate-400 "
+                  }`}
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 6v6l4 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
+                </svg>
+
+                {!isCollapsed && (
+                  <span className="flex-1 ms-3 whitespace-nowrap">
+                    Operating Hours
                   </span>
                 )}
               </Link>

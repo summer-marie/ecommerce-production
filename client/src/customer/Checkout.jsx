@@ -6,12 +6,14 @@ import { createOrder, markOrderPaymentFailed } from "../redux/orderSlice";
 import AlertBlack from "../components/AlertBlack";
 import SquarePayment from "../components/SquarePayment";
 import squarePaymentService from "../redux/squarePaymentService";
+import { useSelector as useReduxSelector } from "react-redux";
 
 
 const alertMsg = "Are you sure you want to delete this order?";
 const alertDescription = "Click to confirm and redirect back to menu";
 
 const Checkout = () => {
+  const isOpen = useReduxSelector((s) => s.operating.status?.isOpen);
   const cartItems = useSelector((state) => state.cart.items);
   // Removed success alert pop-up for deletions and payments
   const [showAlert, setShowAlert] = useState(false);
@@ -72,6 +74,11 @@ const Checkout = () => {
     let cancelled = false;
     const detectGooglePay = async () => {
       try {
+        // If store is closed, don't initialize wallet detection
+        if (isOpen === false) {
+          if (!cancelled) setWalletSupport({ googlePaySupported: false });
+          return;
+        }
         const payments = await squarePaymentService.initializeSquarePayments();
         const amountString = Number(calculateTotal()).toFixed(2);
         const request = payments.paymentRequest({
@@ -93,11 +100,16 @@ const Checkout = () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartItems.length]);
+  }, [cartItems.length, isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setPaymentError("");
+
+    if (isOpen === false) {
+      setPaymentError("We're closed right now and not accepting orders.");
+      return;
+    }
 
     if (!firstName || !lastName || !email || !phone) {
       setPaymentError("Please fill in all required fields");
@@ -198,18 +210,30 @@ const Checkout = () => {
   };
 
   const handlePayWithCard = () => {
+    if (isOpen === false) {
+      setPaymentError("We're closed right now and not accepting orders.");
+      return;
+    }
     setPaymentMethod("square");
     setShowCardForm(true);
     setPaymentInstrument("card");
     setPaymentError("");
   };
   const handlePayWithGooglePay = () => {
+    if (isOpen === false) {
+      setPaymentError("We're closed right now and not accepting orders.");
+      return;
+    }
     setPaymentMethod("square");
     setShowCardForm(true);
     setPaymentInstrument("googlePay");
     setPaymentError("");
   };
   const handlePayWithCash = () => {
+    if (isOpen === false) {
+      setPaymentError("We're closed right now and not accepting orders.");
+      return;
+    }
     setPaymentMethod("cash");
     setShowCardForm(false);
     setPaymentError("");
@@ -305,6 +329,11 @@ const Checkout = () => {
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 mb-8 text-center berkshireSwashFont">
             Checkout
           </h1>
+          {isOpen === false && (
+            <div className="mb-6 rounded-lg bg-amber-100 text-amber-800 border border-amber-300 px-4 py-3 text-sm text-center">
+              We’re closed right now and not accepting orders. Please check back later.
+            </div>
+          )}
 
           {/* GRID LAYOUT */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -401,14 +430,22 @@ const Checkout = () => {
                           <button
                             type="button"
                             onClick={handlePayWithCash}
-                            className="btn-metal btn-metal-green w-full"
+                            disabled={isOpen === false}
+                            aria-disabled={isOpen === false}
+                            className={`btn-metal btn-metal-green w-full ${
+                              isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
+                            }`}
                           >
                             Cash on Pickup
                           </button>
                           <button
                             type="button"
                             onClick={handlePayWithCard}
-                            className="btn-metal btn-metal-blue w-full"
+                            disabled={isOpen === false}
+                            aria-disabled={isOpen === false}
+                            className={`btn-metal btn-metal-blue w-full ${
+                              isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
+                            }`}
                           >
                             Card
                           </button>
@@ -416,7 +453,13 @@ const Checkout = () => {
                             <button
                               type="button"
                               onClick={handlePayWithGooglePay}
-                              className="rounded-xl px-5 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 border transition shadow-[0_2px_4px_rgba(0,0,0,0.4)] w-full bg-black text-white hover:brightness-110 border-gray-700 col-span-2"
+                              disabled={isOpen === false}
+                              aria-disabled={isOpen === false}
+                              className={`rounded-xl px-5 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 border transition shadow-[0_2px_4px_rgba(0,0,0,0.4)] w-full border-gray-700 col-span-2 ${
+                                isOpen === false
+                                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-black text-white hover:brightness-110"
+                              }`}
                               title="Pay quickly with Google Pay"
                             >
                               <svg
@@ -461,7 +504,7 @@ const Checkout = () => {
                       </div>
                     )}
 
-                    {showCardForm && paymentMethod === "square" && (
+                    {showCardForm && paymentMethod === "square" && isOpen !== false && (
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <h3 className="text-lg font-semibold text-gray-800">
@@ -490,11 +533,13 @@ const Checkout = () => {
                               setPaymentInstrument("card");
                               setPaymentHandler(null);
                             }}
+                            disabled={isOpen === false}
+                            aria-disabled={isOpen === false}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition btn-metal btn-metal-blue flex items-center gap-2 ${
                               paymentInstrument === "card"
                                 ? "ring-2 ring-blue-300"
                                 : ""
-                            }`}
+                            } ${isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""}`}
                           >
                             Card
                           </button>
@@ -510,13 +555,14 @@ const Checkout = () => {
                               setPaymentInstrument("googlePay");
                               setPaymentHandler(null);
                             }}
-                            disabled={!walletSupport.googlePaySupported}
+                            disabled={!walletSupport.googlePaySupported || isOpen === false}
+                            aria-disabled={!walletSupport.googlePaySupported || isOpen === false}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 border ${
                               paymentInstrument === "googlePay"
                                 ? "ring-2 ring-blue-300"
                                 : ""
                             } ${
-                              walletSupport.googlePaySupported
+                              walletSupport.googlePaySupported && isOpen !== false
                                 ? "bg-black text-white shadow-inner border-gray-700"
                                 : "bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300"
                             }`}
@@ -562,14 +608,16 @@ const Checkout = () => {
                         </div>
 
                         {/* Square Payment Component */}
-                        <SquarePayment
+                        {isOpen !== false && (
+                          <SquarePayment
                           orderTotal={calculateTotal()}
                           onPaymentSuccess={handlePaymentSuccess}
                           onPaymentError={handlePaymentError}
                           onPaymentReady={handlePaymentReady}
                           onWalletSupport={setWalletSupport}
                           paymentInstrument={paymentInstrument}
-                        />
+                          />
+                        )}
                       </div>
                     )}
 
@@ -610,12 +658,15 @@ const Checkout = () => {
                       {paymentMethod === "cash" && (
                         <button
                           type="submit"
-                          disabled={isPaymentProcessing}
+                          disabled={isPaymentProcessing || isOpen === false}
+                          aria-disabled={isPaymentProcessing || isOpen === false}
                           className={`btn-metal btn-metal-green flex-1 ${
-                            isPaymentProcessing ? "btn-metal-disabled" : ""
+                            isPaymentProcessing || isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
                           }`}
                         >
-                          {isPaymentProcessing
+                          {isOpen === false
+                            ? "Ordering Closed"
+                            : isPaymentProcessing
                             ? "Processing…"
                             : "Complete Order"}
                         </button>
@@ -623,14 +674,17 @@ const Checkout = () => {
                       {paymentMethod === "square" && showCardForm && (
                         <button
                           type="submit"
-                          disabled={isPaymentProcessing || !paymentHandler}
+                          disabled={isPaymentProcessing || !paymentHandler || isOpen === false}
+                          aria-disabled={isPaymentProcessing || !paymentHandler || isOpen === false}
                           className={`btn-metal btn-metal-blue flex-1 ${
-                            isPaymentProcessing || !paymentHandler
-                              ? "btn-metal-disabled"
+                            isPaymentProcessing || !paymentHandler || isOpen === false
+                              ? "btn-metal-disabled cursor-not-allowed"
                               : ""
                           }`}
                         >
-                          {isPaymentProcessing
+                          {isOpen === false
+                            ? "Ordering Closed"
+                            : isPaymentProcessing
                             ? "Processing…"
                             : paymentInstrument === "googlePay"
                             ? "Pay with Google Pay"
@@ -793,14 +847,22 @@ const Checkout = () => {
                       <button
                         type="button"
                         onClick={handlePayWithCash}
-                        className="btn-metal btn-metal-green"
+                        disabled={isOpen === false}
+                        aria-disabled={isOpen === false}
+                        className={`btn-metal btn-metal-green ${
+                          isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
+                        }`}
                       >
                         Cash On-Site
                       </button>
                       <button
                         type="button"
                         onClick={handlePayWithCard}
-                        className="btn-metal btn-metal-blue"
+                        disabled={isOpen === false}
+                        aria-disabled={isOpen === false}
+                        className={`btn-metal btn-metal-blue ${
+                          isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
+                        }`}
                       >
                         Card
                       </button>
@@ -808,7 +870,13 @@ const Checkout = () => {
                         <button
                           type="button"
                           onClick={handlePayWithGooglePay}
-                          className="rounded-xl px-5 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 border transition bg-black text-white shadow-[0_2px_4px_rgba(0,0,0,0.4)] border-gray-700 hover:brightness-110"
+                          disabled={isOpen === false}
+                          aria-disabled={isOpen === false}
+                          className={`rounded-xl px-5 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 border transition shadow-[0_2px_4px_rgba(0,0,0,0.4)] border-gray-700 ${
+                            isOpen === false
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-black text-white hover:brightness-110"
+                          }`}
                           title="Pay with Google Pay"
                         >
                           <svg
@@ -970,25 +1038,33 @@ const Checkout = () => {
                   {paymentMethod === "cash" && (
                     <button
                       type="submit"
-                      disabled={isPaymentProcessing}
+                      disabled={isPaymentProcessing || isOpen === false}
+                      aria-disabled={isPaymentProcessing || isOpen === false}
                       className={`btn-metal btn-metal-green w-full sm:w-auto flex-1 ${
-                        isPaymentProcessing ? "btn-metal-disabled" : ""
+                        isPaymentProcessing || isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
                       }`}
                     >
-                      {isPaymentProcessing ? "Processing…" : "Complete Order"}
+                      {isOpen === false
+                        ? "Ordering Closed"
+                        : isPaymentProcessing
+                        ? "Processing…"
+                        : "Complete Order"}
                     </button>
                   )}
                   {paymentMethod === "square" && showCardForm && (
                     <button
                       type="submit"
-                      disabled={isPaymentProcessing || !paymentHandler}
+                      disabled={isPaymentProcessing || !paymentHandler || isOpen === false}
+                      aria-disabled={isPaymentProcessing || !paymentHandler || isOpen === false}
                       className={`btn-metal btn-metal-blue w-full sm:w-auto flex-1 ${
-                        isPaymentProcessing || !paymentHandler
-                          ? "btn-metal-disabled"
+                        isPaymentProcessing || !paymentHandler || isOpen === false
+                          ? "btn-metal-disabled cursor-not-allowed"
                           : ""
                       }`}
                     >
-                      {isPaymentProcessing
+                      {isOpen === false
+                        ? "Ordering Closed"
+                        : isPaymentProcessing
                         ? "Processing…"
                         : paymentInstrument === "googlePay"
                         ? "Pay with Google Pay"

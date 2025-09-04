@@ -6,6 +6,7 @@ import {
   handleSquareWebhook,
   testSquareConnection,
 } from "./squareController.js";
+import { requireOpenForOrdering } from "../middleware/operatingHoursGuard.js";
 
 const paymentIndex = express.Router();
 
@@ -27,6 +28,7 @@ paymentIndex.get("/square/test", testSquareConnection);
 paymentIndex.post(
   "/square/create-payment",
   paymentRateLimit,
+  requireOpenForOrdering,
   createSquarePayment
 );
 

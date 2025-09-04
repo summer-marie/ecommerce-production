@@ -9,11 +9,12 @@ import orderUpdateStatus from "./orderUpdateStatus.js";
 import { orderRateLimit } from "../middleware/advancedSecurity.js";
 import orderMarkPaymentFailed from "./orderMarkPaymentFailed.js";
 import { orderGetCleanupPreview, orderCleanupArchived } from "./orderCleanup.js";
+import { requireOpenForOrdering } from "../middleware/operatingHoursGuard.js";
 
 const orderIndex = express.Router();
 
-// Create API - Rate limited (prevents spam orders)
-orderIndex.post("/", orderRateLimit, orderCreate);
+// Create API - Rate limited (prevents spam orders) and gated by operating hours
+orderIndex.post("/", orderRateLimit, requireOpenForOrdering, orderCreate);
 
 // Get all, no validation - No rate limit (admin viewing)
 orderIndex.get("/", orderGetAll);

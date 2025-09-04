@@ -3,14 +3,17 @@ import { useEffect, useCallback, useState } from "react";
 import { builderGetMany } from "../redux/builderSlice";
 import { addToCart } from "../redux/cartSlice";
 import { LazyImage } from "../utils/perfComponents.jsx";
+import { fetchOperatingStatus } from "../redux/operatingSlice";
 
 const Order = () => {
   const dispatch = useDispatch();
   const { builders } = useSelector((state) => state.builder);
+  const isOpen = useSelector((s) => s.operating.status?.isOpen);
   const [quantities, setQuantities] = useState({}); // per-card quantity map
 
   useEffect(() => {
     dispatch(builderGetMany());
+    dispatch(fetchOperatingStatus());
   }, [dispatch]);
 
   // Memoized callback for adding to cart
@@ -45,7 +48,7 @@ const Order = () => {
         Our Menu
       </h2>
       <h3 className="amitaFont mt-5 text-center text-2xl font-bold text-slate-800">
-        Flavor is just one click away
+        {isOpen ? "Flavor is just one click away" : "We are not accepting orders right now"}
       </h3>
       <hr className="my-6 sm:mx-auto lg:my-8 border-gray-700 w-[80%]" />
 
@@ -110,8 +113,15 @@ const Order = () => {
               return (
                 <div
                   key={builder.id || index}
-                  className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col overflow-hidden h-[26rem] sm:h-[28rem] lg:h-[30rem]"
+                  className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col overflow-hidden h-[26rem] sm:h-[28rem] lg:h-[30rem] relative"
                 >
+                  {!isOpen && (
+                    <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                      <span className="text-white text-sm sm:text-base font-semibold bg-black/40 px-3 py-1 rounded-md ring-1 ring-white/30">
+                        Ordering unavailable
+                      </span>
+                    </div>
+                  )}
                   <div className="relative w-full h-40 sm:h-44 lg:h-48">
                     <LazyImage
                       className="absolute inset-0 w-full h-full object-cover rounded-t-lg"
@@ -173,10 +183,10 @@ const Order = () => {
                             }
                           }}
                           type="button"
-                          disabled={getQty(cardId) === 0}
-                          className="font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 text-center shadow-lg hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-green-800/80 hover:text-black text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800 transition-all duration-200"
+                          disabled={getQty(cardId) === 0 || !isOpen}
+                          className="font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 text-center shadow-lg hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-green-800/80 hover:text-black text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800 transition-all duration-200"
                         >
-                          Add
+                          {isOpen ? "Add" : "Closed"}
                         </button>
                       </div>
                     </div>

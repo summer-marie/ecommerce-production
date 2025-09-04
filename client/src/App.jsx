@@ -34,6 +34,7 @@ const AdminBuilderCreate = lazy(() => import("./admin/AdminBuilderCreate"));
 const AdminAboutSettings = lazy(() => import("./admin/AdminAboutSettings"));
 const AdminChangePassword = lazy(() => import("./admin/AdminChangePassword"));
 const AdminAddAdmin = lazy(() => import("./admin/AdminAddAdmin"));
+const AdminOperatingHours = lazy(() => import("./admin/AdminOperatingHours"));
 
 // Error boundary and fallback components
 const NoMatch = lazy(() => import("./components/NoMatch"));
@@ -206,6 +207,14 @@ function App() {
               element={
                 <Suspense fallback={<LoadingFallback />}>
                   <AdminAboutSettings />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/settings/operating-hours"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminOperatingHours />
                 </Suspense>
               }
             />

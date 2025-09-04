@@ -112,6 +112,7 @@ import builderIndex from "./builders/builderIndex.js";
 import msgIndex from "./messages/msgIndex.js";
 import monitoringRouter from "./monitoring/index.js";
 import paymentRoutes from "./payments/squareRoutes.js";
+import operatingRoutes from "./operatingHours/operatingRoutes.js";
 import scheduleMessageCleanup from "./utils/messageScheduler.js";
 import { initializeScheduledTasks } from "./scheduledTasks.js";
 import aboutRouter from "./about/aboutIndex.js";
@@ -309,6 +310,7 @@ try {
     app.use("/builders", cacheMiddleware(300), builderIndex);
     app.use("/messages", msgIndex);
     app.use("/payments", paymentRoutes);
+  app.use("/operating-hours", operatingRoutes);
     app.use("/monitoring", adminRateLimit, monitoringRouter);
   app.use("/about", aboutRouter);
 

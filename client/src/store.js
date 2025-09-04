@@ -17,6 +17,7 @@ import authReducer from "./redux/authSlice";
 import cartReducer from "./redux/cartSlice";
 import messageReducer from "./redux/messageSlice";
 import paymentReducer from "./redux/paymentSlice";
+import operatingReducer from "./redux/operatingSlice";
 import aboutReducer from "./redux/aboutSlice";
 
 const persistConfig = {
@@ -35,6 +36,7 @@ export const store = configureStore({
     cart: persistedCartReducer,
     message: messageReducer,
     payment: paymentReducer,
+  operating: operatingReducer,
   about: aboutReducer,
   },
   middleware: (getDefaultMiddleware) =>
