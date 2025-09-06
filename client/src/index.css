@@ -398,6 +398,40 @@ select option:disabled {
     #0a5d40 100%
   );
 }
+
+/* ========== WaveText animation ========== */
+.wave-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.02em;
+  letter-spacing: 0.02em;
+}
+.wave-text .wave-char {
+  display: inline-block;
+  animation: wave-bounce var(--wave-duration, 1.6s) ease-in-out infinite both;
+  animation-delay: calc(var(--i) * var(--delay-step, 80ms));
+  transform-origin: 50% 80%;
+  will-change: transform;
+}
+
+@keyframes wave-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  20% {
+    transform: translateY(calc(-1 * var(--amplitude, 8px))) scale(1.05);
+  }
+  40% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .wave-text .wave-char {
+    animation: none !important;
+  }
+}
 .btn-metal-green:active {
   background: linear-gradient(160deg, #063a2a, #0b5c3e, #063a2a);
 }

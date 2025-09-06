@@ -4,6 +4,7 @@ import { builderGetMany } from "../redux/builderSlice";
 import { addToCart } from "../redux/cartSlice";
 import { LazyImage } from "../utils/perfComponents.jsx";
 import { fetchOperatingStatus } from "../redux/operatingSlice";
+import WaveText from "../components/WaveText.jsx";
 
 const Order = () => {
   const dispatch = useDispatch();
@@ -65,7 +66,8 @@ const Order = () => {
               </div>
             </div>
           ) : (
-            builders.map((builder, index) => {
+            <>
+            {builders.map((builder, index) => {
               // Defensive normalization to avoid rendering raw objects
               const imageSrc =
                 builder?.image && typeof builder.image.data === "string"
@@ -193,7 +195,15 @@ const Order = () => {
                   </div>
                 </div>
               );
-            })
+            })}
+            {/* Post-grid wave message */}
+            <div className="w-full flex justify-center items-center py-6">
+              <WaveText
+                text="More coming soon"
+                className="berkshireSwashFont text-red-700 font-extrabold text-3xl sm:text-5xl"
+              />
+            </div>
+            </>
           )}
         </div>
       </div>
