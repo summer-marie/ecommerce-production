@@ -33,7 +33,11 @@ const weeklyHoursSchema = new mongoose.Schema(
 const operatingSchema = new mongoose.Schema(
   {
     timezone: { type: String, default: "UTC" },
+  // Developer override: force site to accept orders regardless of hours
+  devForceOpen: { type: Boolean, default: false },
     forceClosed: { type: Boolean, default: false },
+  // Admin alert recipients (one or more emails)
+  adminAlertEmails: { type: [String], default: [] },
     bannerMessageClosed: {
       type: String,
       default: "We're closed right now. Please check back soon.",

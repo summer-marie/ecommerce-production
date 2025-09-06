@@ -37,6 +37,8 @@ router.get("/status", async (req, res) => {
         isOpen: status.isOpen,
         reason: status.reason,
         timezone: doc.timezone,
+  devForceOpen: !!doc.devForceOpen,
+  adminAlertEmails: doc.adminAlertEmails || [],
         bannerMessageClosed: doc.bannerMessageClosed,
         bannerMessageOpen: doc.bannerMessageOpen,
       },
@@ -62,7 +64,9 @@ router.put(
 
       const fields = [
         "timezone",
+        "devForceOpen",
         "forceClosed",
+        "adminAlertEmails",
         "bannerMessageClosed",
         "bannerMessageOpen",
         "weeklyHours",

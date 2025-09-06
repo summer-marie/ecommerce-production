@@ -1,5 +1,6 @@
 import orderModel from "./orderModel.js";
 import { sendOrderConfirmationEmail } from "../utils/receiptService.js";
+import { sendAdminNewOrderEmail } from "../utils/orderAlertService.js";
 
 const orderCreate = async (req, res) => {
   try {
@@ -101,6 +102,15 @@ const orderCreate = async (req, res) => {
     };
 
     console.log("newOrder", formattedOrder);
+
+    // Fire-and-forget admin alert (don't block response)
+    try {
+      sendAdminNewOrderEmail(newOrder).catch((e) =>
+        console.warn("Admin new-order alert failed:", e.message)
+      );
+    } catch (e) {
+      console.warn("Admin new-order alert scheduling failed:", e.message);
+    }
 
     // Send order confirmation email if email provided
     if (email) {

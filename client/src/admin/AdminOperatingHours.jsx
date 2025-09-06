@@ -21,7 +21,9 @@ export default function AdminOperatingHours() {
   const [showHelp, setShowHelp] = useState(false);
   const [cfg, setCfg] = useState({
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  devForceOpen: false,
     forceClosed: false,
+  adminAlertEmails: [],
     bannerMessageClosed: "We're closed right now. Please check back soon.",
     bannerMessageOpen: "We're open and accepting orders!",
     weeklyHours: {},
@@ -43,7 +45,9 @@ export default function AdminOperatingHours() {
         setCfg((c) => ({
           ...c,
           timezone: cfgData.timezone || c.timezone,
+          devForceOpen: !!cfgData.devForceOpen,
           forceClosed: !!cfgData.forceClosed,
+          adminAlertEmails: Array.isArray(cfgData.adminAlertEmails) ? cfgData.adminAlertEmails : [],
           bannerMessageClosed: cfgData.bannerMessageClosed || c.bannerMessageClosed,
           bannerMessageOpen: cfgData.bannerMessageOpen || c.bannerMessageOpen,
           weeklyHours: cfgData.weeklyHours || {},
@@ -96,7 +100,9 @@ export default function AdminOperatingHours() {
       setFormError("");
       const payload = {
         timezone: cfg.timezone,
+  devForceOpen: !!cfg.devForceOpen,
         forceClosed: !!cfg.forceClosed,
+  adminAlertEmails: (cfg.adminAlertEmails || []).filter(Boolean),
         bannerMessageClosed: cfg.bannerMessageClosed,
         bannerMessageOpen: cfg.bannerMessageOpen,
         weeklyHours: cfg.weeklyHours,
@@ -225,11 +231,60 @@ export default function AdminOperatingHours() {
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
+              checked={!!cfg.devForceOpen}
+              onChange={(e) => setCfg((c) => ({ ...c, devForceOpen: e.target.checked }))}
+            />
+            Developer: Force open (override schedules)
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
               checked={!!cfg.forceClosed}
               onChange={(e) => setCfg((c) => ({ ...c, forceClosed: e.target.checked }))}
             />
             Force closed now
           </label>
+          <div>
+            <label className="block text-sm font-semibold text-blue-800 mb-1">Admin alert recipients</label>
+            <div className="space-y-2">
+              {(cfg.adminAlertEmails || []).map((em, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    type="email"
+                    value={em}
+                    onChange={(e) =>
+                      setCfg((c) => {
+                        const list = [...(c.adminAlertEmails || [])];
+                        list[i] = e.target.value;
+                        return { ...c, adminAlertEmails: list };
+                      })
+                    }
+                    className="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCfg((c) => {
+                        const list = [...(c.adminAlertEmails || [])];
+                        list.splice(i, 1);
+                        return { ...c, adminAlertEmails: list };
+                      })
+                    }
+                    className="text-xs px-2 py-1 rounded bg-red-700 hover:bg-red-600"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setCfg((c) => ({ ...c, adminAlertEmails: [...(c.adminAlertEmails || []), ""] }))}
+                className="text-xs px-2 py-1 rounded bg-sky-700 hover:bg-sky-600"
+              >
+                Add recipient
+              </button>
+            </div>
+          </div>
           <div className="space-y-2">
             <div>
               <label className="block text-sm font-semibold text-blue-800 mb-1">Timezone</label>

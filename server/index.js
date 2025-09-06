@@ -61,6 +61,11 @@ process.on("SIGINT", () => {
 await import("./strategies/jwtStrategy.js");
 await import("./strategies/localStrategy.js");
 
+// Log admin alert email configuration on startup
+const emailAlertsEnabled = String(process.env.EMAIL_ADMIN_ON_NEW_ORDER || "true").toLowerCase() === "true";
+const transport = (process.env.EMAIL_TRANSPORT || (process.env.SENDGRID_API_KEY ? "sendgrid" : "none")).toLowerCase();
+console.log(`📧 Admin alerts: ${emailAlertsEnabled ? "ENABLED" : "DISABLED"} | transport: ${transport} | recipients: configured in DB`);
+
 // Express and Middleware
 import express from "express";
 import cors from "cors";

@@ -15,6 +15,9 @@ export function computeOpenStatus(doc, nowUTC = DateTime.utc()) {
   const tz = doc.timezone || "UTC";
   const now = nowUTC.setZone(tz);
 
+  // Developer override: force open regardless of schedule
+  if (doc.devForceOpen) return { isOpen: true, reason: "devForceOpen" };
+
   if (doc.forceClosed) return { isOpen: false, reason: "forceClosed" };
 
   // Special windows (absolute)
