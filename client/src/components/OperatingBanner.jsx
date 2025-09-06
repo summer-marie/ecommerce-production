@@ -15,15 +15,15 @@ const OperatingBanner = () => {
 
   if (!status) return null;
   const open = !!status.isOpen;
-  const message = open ? status.bannerMessageOpen : status.bannerMessageClosed;
+  // Show banner only when closed
+  if (open) return null;
+  const message = status.bannerMessageClosed;
 
   return (
     <div
       role="status"
       className={`w-full text-center text-sm sm:text-base px-4 py-3 ${
-        open
-          ? "bg-emerald-600/90 text-white border-b border-emerald-400"
-          : "bg-amber-600/90 text-white border-b border-amber-300"
+  "bg-amber-600/90 text-white border-b border-amber-300"
       }`}
     >
       {message}

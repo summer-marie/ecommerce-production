@@ -399,6 +399,25 @@ select option:disabled {
   );
 }
 
+/* Metallic glass banner (emerald) */
+.banner-metal-green {
+  /* Opaque metallic emerald gradient (similar vibe to admin sidebar) */
+  background-image:
+    var(--metal-highlight), /* diagonal highlight sweep for metallic sheen */
+    linear-gradient(150deg, #064a32 0%, #0c6f47 40%, #118558 60%, #064a32 100%);
+  background-blend-mode: overlay, normal;
+  /* Solid background base */
+  background-color: #064a32;
+  /* Border and bevel (ring + inset top highlight like the sidenav) */
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06), /* subtle top inner highlight */
+    0 2px 10px rgba(6, 95, 70, 0.25),       /* outer depth */
+    0 0 0 1px rgba(5, 150, 105, 0.18);      /* faint ring */
+  color: #eafff5; /* soft white-green for readability */
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
 /* ========== WaveText animation ========== */
 .wave-text {
   display: inline-flex;
