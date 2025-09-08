@@ -25,15 +25,37 @@ WHITELISTED_DOMAINS=http://localhost:5173,http://127.0.0.1:5173
 
 ```plaintext
 server/
-├── auth/         # Authentication routes and logic
-├── builders/     # Pizza builder endpoints
-├── config/       # Database configuration
-├── ingredients/  # Ingredient management
-├── messages/     # Customer message handling
-├── orders/       # Order processing
-├── strategies/   # Passport authentication strategies
-├── uploads/      # Image storage directory
-└── index.js      # Main server entry point
+├── 📁 Core Application Modules
+│   ├── auth/              # Authentication routes and JWT logic
+│   ├── builders/          # Pizza builder management endpoints
+│   ├── ingredients/       # Ingredient CRUD operations
+│   ├── messages/          # Customer service message handling
+│   ├── orders/            # Order processing and status management
+│   ├── admins/            # Admin user management
+│   ├── about/             # About page content management
+│   └── operatingHours/    # Business hours and scheduling system
+│
+├── 🔧 Infrastructure & Utilities
+│   ├── middleware/        # Security, validation, performance middleware (📄 See middleware/README.md)
+│   ├── utils/             # Email services, cleanup utilities, alerts (📄 See utils/README.md)
+│   ├── scripts/           # Maintenance and admin scripts (📄 See scripts/README.md)
+│   ├── payments/          # Square payment integration (📄 See payments/README.md)
+│   └── strategies/        # Passport authentication strategies
+│
+├── 📊 Monitoring & Logs
+│   ├── monitoring/        # System health and performance monitoring
+│   └── logs/              # Application logs (combined.log, error.log)
+│
+├── 📁 Configuration Files
+│   ├── index.js           # Main server entry point and routing
+│   ├── package.json       # Dependencies and scripts
+│   ├── scheduledTasks.js  # Automated background tasks
+│   └── .env               # Environment variables (create from template)
+│
+└── 🧪 Development Tools
+    ├── checkMongo.mjs     # Database connection testing
+    ├── createAdmin.js     # Admin user creation script  
+    └── test-*.js          # Various testing utilities
 ```
 
 ## Environment Variables
