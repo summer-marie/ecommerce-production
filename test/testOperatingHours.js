@@ -4,6 +4,9 @@ import axios from "axios";
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:8010";
 const API_BASE = `${SERVER_URL}/operating-hours`;
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
 // Test data for weekly hours
 const weeklyHoursTestData = {
   timezone: "America/New_York",
@@ -14,11 +17,12 @@ const weeklyHoursTestData = {
     thu: [{ start: "09:00", end: "17:00" }],
     fri: [{ start: "09:00", end: "17:00" }],
     sat: [{ start: "10:00", end: "16:00" }],
-    sun: [] // Closed on Sunday
+    sun: [], // Closed on Sunday
   },
   bannerMessageOpen: "We're open and ready to serve you!",
-  bannerMessageClosed: "We're currently closed. Please visit us during business hours.",
-  adminAlertEmails: ["admin@test.com"]
+  bannerMessageClosed:
+    "We're currently closed. Please visit us during business hours.",
+  adminAlertEmails: ["admin@test.com"],
 };
 
 // Test data for special windows (monthly/seasonal hours)
@@ -27,14 +31,14 @@ const specialWindowsTestData = {
     {
       start: new Date("2025-12-24T10:00:00.000Z").toISOString(),
       end: new Date("2025-12-24T14:00:00.000Z").toISOString(),
-      note: "Christmas Eve - Limited Hours"
+      note: "Christmas Eve - Limited Hours",
     },
     {
       start: new Date("2025-01-01T12:00:00.000Z").toISOString(),
       end: new Date("2025-01-01T18:00:00.000Z").toISOString(),
-      note: "New Year's Day - Special Hours"
-    }
-  ]
+      note: "New Year's Day - Special Hours",
+    },
+  ],
 };
 
 // Get admin JWT token (you'll need to implement this based on your auth system)
@@ -42,13 +46,15 @@ async function getAdminToken() {
   try {
     // Replace with your actual admin login endpoint and credentials
     const response = await axios.post(`${SERVER_URL}/auth/login`, {
-      email: "centikeenan@gmail.com", 
-      password: "Dukeharvey12!" 
+      email: ADMIN_EMAIL,
+      password: ADMIN_PASSWORD,
     });
     return response.data.token;
   } catch (error) {
     console.error("Failed to get admin token:", error.message);
-    console.log("Please ensure you have an admin user created and update the credentials in this test file.");
+    console.log(
+      "Please ensure you have an admin user created and update the credentials in this test file."
+    );
     return null;
   }
 }
@@ -61,7 +67,10 @@ async function testGetCurrentStatus() {
     console.log("✅ Current Status:", JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
-    console.error("❌ Error getting status:", error.response?.data || error.message);
+    console.error(
+      "❌ Error getting status:",
+      error.response?.data || error.message
+    );
     return null;
   }
 }
@@ -72,15 +81,18 @@ async function testGetAdminConfig(token) {
     console.log("⚠️ Skipping admin config test - no token");
     return null;
   }
-  
+
   try {
     const response = await axios.get(API_BASE, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
     console.log("✅ Admin Config:", JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
-    console.error("❌ Error getting admin config:", error.response?.data || error.message);
+    console.error(
+      "❌ Error getting admin config:",
+      error.response?.data || error.message
+    );
     return null;
   }
 }
@@ -94,16 +106,22 @@ async function testUpdateWeeklyHours(token) {
 
   try {
     const response = await axios.put(API_BASE, weeklyHoursTestData, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
-    console.log("✅ Weekly Hours Updated:", JSON.stringify(response.data, null, 2));
-    
+    console.log(
+      "✅ Weekly Hours Updated:",
+      JSON.stringify(response.data, null, 2)
+    );
+
     // Verify the update by getting current status
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Small delay
     const status = await testGetCurrentStatus();
     return response.data;
   } catch (error) {
-    console.error("❌ Error updating weekly hours:", error.response?.data || error.message);
+    console.error(
+      "❌ Error updating weekly hours:",
+      error.response?.data || error.message
+    );
     return null;
   }
 }
@@ -117,16 +135,22 @@ async function testUpdateSpecialWindows(token) {
 
   try {
     const response = await axios.put(API_BASE, specialWindowsTestData, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
-    console.log("✅ Special Windows Updated:", JSON.stringify(response.data, null, 2));
-    
+    console.log(
+      "✅ Special Windows Updated:",
+      JSON.stringify(response.data, null, 2)
+    );
+
     // Verify the update
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Small delay
     const status = await testGetCurrentStatus();
     return response.data;
   } catch (error) {
-    console.error("❌ Error updating special windows:", error.response?.data || error.message);
+    console.error(
+      "❌ Error updating special windows:",
+      error.response?.data || error.message
+    );
     return null;
   }
 }
@@ -142,21 +166,27 @@ async function testCombinedConfiguration(token) {
     ...weeklyHoursTestData,
     ...specialWindowsTestData,
     devForceOpen: false,
-    forceClosed: false
+    forceClosed: false,
   };
 
   try {
     const response = await axios.put(API_BASE, combinedData, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
-    console.log("✅ Combined Configuration Updated:", JSON.stringify(response.data, null, 2));
-    
+    console.log(
+      "✅ Combined Configuration Updated:",
+      JSON.stringify(response.data, null, 2)
+    );
+
     // Verify the update
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Small delay
     const status = await testGetCurrentStatus();
     return response.data;
   } catch (error) {
-    console.error("❌ Error updating combined configuration:", error.response?.data || error.message);
+    console.error(
+      "❌ Error updating combined configuration:",
+      error.response?.data || error.message
+    );
     return null;
   }
 }
@@ -171,46 +201,73 @@ async function testForceOverrides(token) {
   // Test force open
   console.log("\n  Testing Force Open...");
   try {
-    const forceOpenResponse = await axios.put(API_BASE, { devForceOpen: true }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const forceOpenResponse = await axios.put(
+      API_BASE,
+      { devForceOpen: true },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     console.log("✅ Force Open Set");
-    
+
     const statusAfterForceOpen = await testGetCurrentStatus();
-    console.log("  Status after force open:", statusAfterForceOpen?.status?.isOpen ? "OPEN ✅" : "CLOSED ❌");
+    console.log(
+      "  Status after force open:",
+      statusAfterForceOpen?.status?.isOpen ? "OPEN ✅" : "CLOSED ❌"
+    );
   } catch (error) {
-    console.error("❌ Error setting force open:", error.response?.data || error.message);
+    console.error(
+      "❌ Error setting force open:",
+      error.response?.data || error.message
+    );
   }
 
   // Test force closed
   console.log("\n  Testing Force Closed...");
   try {
-    const forceClosedResponse = await axios.put(API_BASE, { 
-      devForceOpen: false,
-      forceClosed: true 
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const forceClosedResponse = await axios.put(
+      API_BASE,
+      {
+        devForceOpen: false,
+        forceClosed: true,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     console.log("✅ Force Closed Set");
-    
+
     const statusAfterForceClosed = await testGetCurrentStatus();
-    console.log("  Status after force closed:", statusAfterForceClosed?.status?.isOpen ? "OPEN ❌" : "CLOSED ✅");
+    console.log(
+      "  Status after force closed:",
+      statusAfterForceClosed?.status?.isOpen ? "OPEN ❌" : "CLOSED ✅"
+    );
   } catch (error) {
-    console.error("❌ Error setting force closed:", error.response?.data || error.message);
+    console.error(
+      "❌ Error setting force closed:",
+      error.response?.data || error.message
+    );
   }
 
   // Reset overrides
   console.log("\n  Resetting overrides...");
   try {
-    await axios.put(API_BASE, { 
-      devForceOpen: false,
-      forceClosed: false 
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await axios.put(
+      API_BASE,
+      {
+        devForceOpen: false,
+        forceClosed: false,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     console.log("✅ Overrides Reset");
   } catch (error) {
-    console.error("❌ Error resetting overrides:", error.response?.data || error.message);
+    console.error(
+      "❌ Error resetting overrides:",
+      error.response?.data || error.message
+    );
   }
 }
 
@@ -224,20 +281,22 @@ async function runAllTests() {
 
   // Get admin token for authenticated tests
   const token = await getAdminToken();
-  
+
   if (token) {
     console.log("✅ Admin token obtained successfully");
-    
+
     // Run authenticated tests
     await testGetAdminConfig(token);
     await testUpdateWeeklyHours(token);
     await testUpdateSpecialWindows(token);
     await testCombinedConfiguration(token);
     await testForceOverrides(token);
-    
+
     console.log("\n🎉 All tests completed!");
   } else {
-    console.log("\n⚠️ Could not obtain admin token. Only public tests were run.");
+    console.log(
+      "\n⚠️ Could not obtain admin token. Only public tests were run."
+    );
     console.log("To run full tests, please:");
     console.log("1. Ensure you have an admin user created");
     console.log("2. Update the credentials in the getAdminToken() function");
@@ -268,17 +327,17 @@ async function runStatusTest() {
 }
 
 // Export functions for individual use
-export { 
-  runAllTests, 
-  runWeeklyTest, 
-  runSpecialWindowsTest, 
+export {
+  runAllTests,
+  runWeeklyTest,
+  runSpecialWindowsTest,
   runStatusTest,
   testGetCurrentStatus,
   testUpdateWeeklyHours,
-  testUpdateSpecialWindows 
+  testUpdateSpecialWindows,
 };
 
 // Run all tests if this file is executed directly
-if (process.argv[1] && process.argv[1].endsWith('testOperatingHours.js')) {
+if (process.argv[1] && process.argv[1].endsWith("testOperatingHours.js")) {
   runAllTests().catch(console.error);
 }
