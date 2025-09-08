@@ -8,7 +8,11 @@
     "admin": "node seedAdmin.js",
     "orders": "node seedOrders.js",
     "builders": "node seedBuilders.js",
-    "messages": "node seedMessages.js"
+    "messages": "node seedMessages.js",
+    "hours": "node testOperatingHours.js",
+    "hours:weekly": "node runHoursTests.js weekly",
+    "hours:special": "node runHoursTests.js special",
+    "hours:status": "node runHoursTests.js status"
   },
   "keywords": [],
   "author": "",
