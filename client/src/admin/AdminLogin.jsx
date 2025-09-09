@@ -3,6 +3,11 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 
+const heroPattern = {
+  backgroundColor: "#c8e5ce",
+  backgroundImage: `url("data:image/svg+xml,%3Csvg width='84' height='48' viewBox='0 0 84 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h12v6H0V0zm28 8h12v6H28V8zm14-8h12v6H42V0zm14 0h12v6H56V0zm0 8h12v6H56V8zM42 8h12v6H42V8zm0 16h12v6H42v-6zm14-8h12v6H56v-6zm14 0h12v6H70v-6zm0-16h12v6H70V0zM28 32h12v6H28v-6zM14 16h12v6H14v-6zM0 24h12v6H0v-6zm0 8h12v6H0v-6zm14 0h12v6H14v-6zm14 8h12v6H28v-6zm-14 0h12v6H14v-6zm28 0h12v6H42v-6zm14-8h12v6H56v-6zm0-8h12v6H56v-6zm14 8h12v6H70v-6zm0 8h12v6H70v-6zM14 24h12v6H14v-6zm14-8h12v6H28v-6zM14 8h12v6H14V8zM0 8h12v6H0V8z' fill='%2399ac92' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+};
+
 const svgPrint = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -84,8 +89,11 @@ const AdminLogin = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-400 flex items-center justify-center">
-        <div className="flex flex-col w-full md:w-1/2 xl:w-2/5 2xl:w-2/5 3xl:w-1/3 mx-auto p-8 md:p-10 2xl:p-12 3xl:p-14 rounded-2xl shadow-2xl bg-[#e4dcdc]">
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={heroPattern}
+      >
+        <div className="flex flex-col w-full md:w-1/2 xl:w-2/5 2xl:w-2/5 3xl:w-1/3 mx-auto p-8 md:p-10 2xl:p-12 3xl:p-14 rounded-2xl shadow-2xl bg-gray-200">
           <div className="flex flex-row gap-3 pb-4">
             <div>{svgPrint}</div>
 
