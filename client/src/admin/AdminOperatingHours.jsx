@@ -1,8 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
-import { API_BASE } from "../utils/apiBase";
-import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  fetchOperatingConfig,
+  updateOperatingConfig,
+  updateConfigField,
+  updateWeeklyHours,
+  updateSpecialWindows,
+} from "../redux/operatingSlice";
 
+// Days of the week configuration for the weekly hours interface
 const weekdays = [
   { key: "sun", label: "Sunday" },
   { key: "mon", label: "Monday" },
@@ -13,124 +19,182 @@ const weekdays = [
   { key: "sat", label: "Saturday" },
 ];
 
+/**
+ * AdminOperatingHours Component
+ *
+ * Manages the restaurant's operating hours and ordering configuration.
+ * Features:
+ * - Weekly recurring hours (multiple time windows per day)
+ * - Special one-time opening windows (e.g., holiday hours)
+ * - Force open/closed overrides for emergencies
+ * - Admin alert email configuration
+ * - Arizona timezone enforcement (no DST complications)
+ */
 export default function AdminOperatingHours() {
-  const token = useSelector((s) => s.auth.token);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const dispatch = useDispatch();
+
+  // Get operating hours state from Redux store
+  const { config, loading, saving, error } = useSelector(
+    (state) => state.operating
+  );
   const [formError, setFormError] = useState("");
   const [showHelp, setShowHelp] = useState(false);
-  const [cfg, setCfg] = useState({
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  devForceOpen: false,
-    forceClosed: false,
-  adminAlertEmails: [],
-    bannerMessageClosed: "We're closed right now. Please check back soon.",
-    bannerMessageOpen: "We're open and accepting orders!",
-    weeklyHours: {},
-    specialOpenWindows: [],
-  });
-  const authHeader = useMemo(
-    () => (token ? { Authorization: `Bearer ${token}` } : {}),
-    [token]
-  );
 
+  // Load operating hours configuration when component mounts
   useEffect(() => {
-    const load = async () => {
-      try {
-        const { data } = await axios.get(`${API_BASE}/operating-hours`, {
-          headers: authHeader,
-          withCredentials: true,
-        });
-        const cfgData = data?.config || {};
-        setCfg((c) => ({
-          ...c,
-          timezone: cfgData.timezone || c.timezone,
-          devForceOpen: !!cfgData.devForceOpen,
-          forceClosed: !!cfgData.forceClosed,
-          adminAlertEmails: Array.isArray(cfgData.adminAlertEmails) ? cfgData.adminAlertEmails : [],
-          bannerMessageClosed: cfgData.bannerMessageClosed || c.bannerMessageClosed,
-          bannerMessageOpen: cfgData.bannerMessageOpen || c.bannerMessageOpen,
-          weeklyHours: cfgData.weeklyHours || {},
-          specialOpenWindows: cfgData.specialOpenWindows || [],
-        }));
-        setLoading(false);
-      } catch {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [authHeader]);
+    dispatch(fetchOperatingConfig());
+  }, [dispatch]);
 
-  const updateWeekly = (day, idx, field, value) => {
-    setCfg((c) => {
-      const list = Array.isArray(c.weeklyHours?.[day]) ? [...c.weeklyHours[day]] : [];
-      list[idx] = { ...list[idx], [field]: value };
-      return { ...c, weeklyHours: { ...c.weeklyHours, [day]: list } };
-    });
+  // Debug logging
+  useEffect(() => {
+    console.log("Operating state:", { config, loading, saving, error });
+  }, [config, loading, saving, error]);
+
+  // Weekly hours management functions
+  /**
+   * Updates a specific time field (start or end) for a weekly hours window
+   * @param {string} day - Day of week key
+   * @param {number} idx - Index of the time window for that day
+   * @param {string} field - Field to update ('start' or 'end')
+   * @param {string} value - New time value (HH:MM format)
+   */
+  const updateWeeklyHour = (day, idx, field, value) => {
+    const list = Array.isArray(config?.weeklyHours?.[day])
+      ? [...config.weeklyHours[day]]
+      : [];
+    list[idx] = { ...list[idx], [field]: value };
+    dispatch(updateWeeklyHours({ day, hours: list }));
   };
+
+  /**
+   * Adds a new operating hours window for a specific day
+   * Defaults to 9:00 AM - 5:00 PM
+   * @param {string} day - Day of week key (sun, mon, tue, etc.)
+   */
   const addWindow = (day) => {
-    setCfg((c) => {
-      const list = Array.isArray(c.weeklyHours?.[day]) ? [...c.weeklyHours[day]] : [];
-      list.push({ start: "09:00", end: "17:00" });
-      return { ...c, weeklyHours: { ...c.weeklyHours, [day]: list } };
-    });
-  };
-  const removeWindow = (day, idx) => {
-    setCfg((c) => {
-      const list = Array.isArray(c.weeklyHours?.[day]) ? [...c.weeklyHours[day]] : [];
-      list.splice(idx, 1);
-      return { ...c, weeklyHours: { ...c.weeklyHours, [day]: list } };
-    });
+    const list = Array.isArray(config?.weeklyHours?.[day])
+      ? [...config.weeklyHours[day]]
+      : [];
+    list.push({ start: "09:00", end: "17:00" });
+    dispatch(updateWeeklyHours({ day, hours: list }));
   };
 
+  /**
+   * Removes an operating hours window for a specific day
+   * @param {string} day - Day of week key (sun, mon, tue, etc.)
+   * @param {number} idx - Index of the window to remove
+   */
+  const removeWindow = (day, idx) => {
+    const list = Array.isArray(config?.weeklyHours?.[day])
+      ? [...config.weeklyHours[day]]
+      : [];
+    list.splice(idx, 1);
+    dispatch(updateWeeklyHours({ day, hours: list }));
+  };
+
+  // save changes to the server
   const save = async () => {
-    setSaving(true);
     try {
-      // Basic validation for special windows
-      const invalid = (cfg.specialOpenWindows || []).some((w) => {
+      // Validate special opening windows - ensure all have valid dates and end > start
+      const invalid = (config?.specialOpenWindows || []).some((w) => {
         if (!w?.start || !w?.end) return true;
         const s = new Date(w.start);
         const e = new Date(w.end);
-        return !(s instanceof Date && !isNaN(s)) || !(e instanceof Date && !isNaN(e)) || e <= s;
+        return (
+          !(s instanceof Date && !isNaN(s)) ||
+          !(e instanceof Date && !isNaN(e)) ||
+          e <= s
+        );
       });
+
       if (invalid) {
-        setFormError("Please ensure all special windows have valid start/end and that end is after start.");
+        setFormError(
+          "Please ensure all special windows have valid start/end and that end is after start."
+        );
         return;
       }
+
       setFormError("");
+
+      // Prepare payload with Arizona timezone enforcement and cleaned email list
       const payload = {
-        timezone: cfg.timezone,
-  devForceOpen: !!cfg.devForceOpen,
-        forceClosed: !!cfg.forceClosed,
-  adminAlertEmails: (cfg.adminAlertEmails || []).filter(Boolean),
-        bannerMessageClosed: cfg.bannerMessageClosed,
-        bannerMessageOpen: cfg.bannerMessageOpen,
-        weeklyHours: cfg.weeklyHours,
-        specialOpenWindows: cfg.specialOpenWindows,
+        ...config,
+        timezone: "America/Phoenix", // Always force Arizona timezone
+        adminAlertEmails: (config?.adminAlertEmails || []).filter(Boolean), // Remove empty emails
       };
-  await axios.put(`${API_BASE}/operating-hours`, payload, {
-        headers: { "Content-Type": "application/json", ...authHeader },
-        withCredentials: true,
-      });
-      setCfg((c) => ({ ...c, ...payload }));
+
+      // Save configuration via Redux thunk
+      await dispatch(updateOperatingConfig(payload)).unwrap();
     } catch (e) {
       console.error(e);
-    } finally {
-      setSaving(false);
+      setFormError("Failed to save changes. Please try again.");
     }
   };
 
-  if (loading) return <div className="p-6 text-slate-300">Loading...</div>;
+  // Loading states
+  if (loading)
+    return (
+      <div className="p-6 text-slate-300">
+        Loading operating hours configuration...
+      </div>
+    );
+
+  // Error states
+  if (error) {
+    return (
+      <div className="p-6 text-slate-300">
+        <div className="bg-red-900/40 border border-red-700 rounded p-4 mb-4">
+          <h3 className="text-red-400 font-semibold mb-2">
+            Error Loading Configuration
+          </h3>
+          <p className="text-sm text-red-300 mb-4">{error}</p>
+          <button
+            onClick={() => dispatch(fetchOperatingConfig())}
+            className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded text-sm"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // No configuration found
+  if (!config) {
+    return (
+      <div className="p-6 text-slate-300">
+        <div className="bg-yellow-900/40 border border-yellow-700 rounded p-4">
+          <h3 className="text-yellow-400 font-semibold mb-2">
+            No Configuration Found
+          </h3>
+          <p className="text-sm text-yellow-300 mb-4">
+            Operating hours configuration could not be loaded. This might be a
+            first-time setup.
+          </p>
+          <button
+            onClick={() => dispatch(fetchOperatingConfig())}
+            className="px-4 py-2 bg-yellow-700 hover:bg-yellow-600 text-white rounded text-sm"
+          >
+            Retry Loading
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 text-slate-200">
+      {/* HEADER */}
       <div className="relative overflow-hidden rounded-2xl p-[1px] bg-gradient-to-br from-zinc-500/40 via-zinc-300/20 to-zinc-600/40 shadow-[0_8px_30px_rgba(0,0,0,0.35)] mb-6">
         <div className="relative z-10 rounded-2xl bg-gradient-to-b from-black/80 via-slate-900/80 to-slate-800/70 border border-white/10 p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold mb-2 text-slate-100 tracking-wide">Operating Hours & Ordering</h1>
+              <h1 className="text-2xl font-bold mb-2 text-slate-100 tracking-wide">
+                Operating Hours & Ordering
+              </h1>
               <p className="text-sm text-slate-300">
-                Control when customers can place orders. Show a banner on the site and disable ordering UI when closed.
+                Control when customers can place orders. Show a banner on the
+                site and disable ordering UI when closed.
               </p>
             </div>
             <button
@@ -146,27 +210,34 @@ export default function AdminOperatingHours() {
         <div className="pointer-events-none absolute -top-8 -left-10 w-2/3 h-24 rotate-[-20deg] bg-white/10 blur-md opacity-15" />
       </div>
 
+      {/* Help Toggle */}
       <div className="mb-6">
         {showHelp && (
           <div className="mt-3 rounded-xl border border-slate-600 bg-slate-900/80 p-4 text-slate-100 text-sm">
             <ul className="list-disc pl-5 space-y-1.5 leading-relaxed marker:text-purple-300">
               <li>
-                Weekly Hours: Add one or more time windows per day (in your business timezone). Leave a day empty to be closed.
+                Weekly Hours: Add one or more time windows per day (in your
+                business timezone). Leave a day empty to be closed.
               </li>
               <li>
-                Special Open Windows: Date/time ranges for one-off openings (e.g., open once a month). These override weekly hours during the window.
+                Special Open Windows: Date/time ranges for one-off openings
+                (e.g., open once a month). These override weekly hours during
+                the window.
               </li>
               <li>
-                Force Closed: Immediately stops ordering regardless of schedules (use for emergencies or breaks).
+                Force Closed: Immediately stops ordering regardless of schedules
+                (use for emergencies or breaks).
               </li>
               <li>
-                Timezone: Used to evaluate weekly hours and banners. Changing it affects future schedule calculations.
+                Timezone: Used to evaluate weekly hours and closed banner.
+                Changing it affects future schedule calculations.
               </li>
               <li>
-                Banners: Customize messages shown to customers when open/closed.
+                Closed Banner: Customize message shown to customers when closed.
               </li>
               <li>
-                Save Changes: Click Save to apply. Customers may need to refresh to see updated banners immediately.
+                Save Changes: Click Save to apply. Customers may need to refresh
+                to see updated banners immediately.
               </li>
             </ul>
           </div>
@@ -178,7 +249,10 @@ export default function AdminOperatingHours() {
           <h2 className="font-semibold mb-3">Weekly Hours</h2>
           <div className="space-y-4">
             {weekdays.map((d) => (
-              <div key={d.key} className="bg-slate-800/40 rounded-lg p-3 border border-slate-700">
+              <div
+                key={d.key}
+                className="bg-slate-800/40 rounded-lg p-3 border border-slate-700"
+              >
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium">{d.label}</span>
                   <button
@@ -190,19 +264,23 @@ export default function AdminOperatingHours() {
                   </button>
                 </div>
                 <div className="space-y-2">
-                  {(cfg.weeklyHours?.[d.key] || []).map((w, i) => (
+                  {(config.weeklyHours?.[d.key] || []).map((w, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <input
                         type="time"
                         value={w.start || ""}
-                        onChange={(e) => updateWeekly(d.key, i, "start", e.target.value)}
+                        onChange={(e) =>
+                          updateWeeklyHour(d.key, i, "start", e.target.value)
+                        }
                         className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"
                       />
                       <span>to</span>
                       <input
                         type="time"
                         value={w.end || ""}
-                        onChange={(e) => updateWeekly(d.key, i, "end", e.target.value)}
+                        onChange={(e) =>
+                          updateWeeklyHour(d.key, i, "end", e.target.value)
+                        }
                         className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"
                       />
                       <button
@@ -214,7 +292,7 @@ export default function AdminOperatingHours() {
                       </button>
                     </div>
                   ))}
-                  {!(cfg.weeklyHours?.[d.key] || []).length && (
+                  {!(config.weeklyHours?.[d.key] || []).length && (
                     <div className="text-xs text-slate-400">Closed</div>
                   )}
                 </div>
@@ -223,53 +301,82 @@ export default function AdminOperatingHours() {
           </div>
         </section>
 
+        {/* Settings */}
         <section className="bg-slate-900/40 rounded-xl border border-slate-700 p-4 space-y-4">
           <h2 className="font-semibold">Settings</h2>
+
+          {/* Form error display */}
           {formError && (
-            <div className="text-sm text-red-400 bg-red-950/40 border border-red-800 rounded p-2">{formError}</div>
+            <div className="text-sm text-red-400 bg-red-950/40 border border-red-800 rounded p-2">
+              {formError}
+            </div>
           )}
+          {/* override controls */}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
-              checked={!!cfg.devForceOpen}
-              onChange={(e) => setCfg((c) => ({ ...c, devForceOpen: e.target.checked }))}
+              checked={!!config.devForceOpen}
+              onChange={(e) =>
+                dispatch(
+                  updateConfigField({
+                    field: "devForceOpen",
+                    value: e.target.checked,
+                  })
+                )
+              }
             />
             Developer: Force open (override schedules)
           </label>
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
-              checked={!!cfg.forceClosed}
-              onChange={(e) => setCfg((c) => ({ ...c, forceClosed: e.target.checked }))}
+              checked={!!config.forceClosed}
+              onChange={(e) =>
+                dispatch(
+                  updateConfigField({
+                    field: "forceClosed",
+                    value: e.target.checked,
+                  })
+                )
+              }
             />
             Force closed now
           </label>
+
           <div>
-            <label className="block text-sm font-semibold text-blue-800 mb-1">Admin alert recipients</label>
+            <label className="block text-sm font-semibold text-blue-800 mb-1">
+              Admin alert recipients
+            </label>
             <div className="space-y-2">
-              {(cfg.adminAlertEmails || []).map((em, i) => (
+              {(config.adminAlertEmails || []).map((em, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <input
                     type="email"
                     value={em}
-                    onChange={(e) =>
-                      setCfg((c) => {
-                        const list = [...(c.adminAlertEmails || [])];
-                        list[i] = e.target.value;
-                        return { ...c, adminAlertEmails: list };
-                      })
-                    }
+                    onChange={(e) => {
+                      const list = [...(config.adminAlertEmails || [])];
+                      list[i] = e.target.value;
+                      dispatch(
+                        updateConfigField({
+                          field: "adminAlertEmails",
+                          value: list,
+                        })
+                      );
+                    }}
                     className="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"
                   />
                   <button
                     type="button"
-                    onClick={() =>
-                      setCfg((c) => {
-                        const list = [...(c.adminAlertEmails || [])];
-                        list.splice(i, 1);
-                        return { ...c, adminAlertEmails: list };
-                      })
-                    }
+                    onClick={() => {
+                      const list = [...(config.adminAlertEmails || [])];
+                      list.splice(i, 1);
+                      dispatch(
+                        updateConfigField({
+                          field: "adminAlertEmails",
+                          value: list,
+                        })
+                      );
+                    }}
                     className="text-xs px-2 py-1 rounded bg-red-700 hover:bg-red-600"
                   >
                     Remove
@@ -278,119 +385,151 @@ export default function AdminOperatingHours() {
               ))}
               <button
                 type="button"
-                onClick={() => setCfg((c) => ({ ...c, adminAlertEmails: [...(c.adminAlertEmails || []), ""] }))}
+                onClick={() => {
+                  const newList = [...(config.adminAlertEmails || []), ""];
+                  dispatch(
+                    updateConfigField({
+                      field: "adminAlertEmails",
+                      value: newList,
+                    })
+                  );
+                }}
                 className="text-xs px-2 py-1 rounded bg-sky-700 hover:bg-sky-600"
               >
                 Add recipient
               </button>
             </div>
           </div>
+
           <div className="space-y-2">
             <div>
-              <label className="block text-sm font-semibold text-blue-800 mb-1">Timezone</label>
+              <label className="block text-sm font-semibold text-blue-800 mb-1">
+                Business Timezone
+              </label>
+              <div className="w-full bg-slate-800/60 border border-slate-600 rounded px-3 py-2 text-sm text-slate-300">
+                <span className="font-mono">{config.timezone}</span>
+                <span className="ml-2 text-xs text-slate-400">
+                  (Arizona Time - No DST)
+                </span>
+              </div>
+              <p className="text-xs text-slate-800 mt-1">
+                All operating hours are evaluated in Arizona timezone.
+              </p>
+            </div>
+
+            {/* Closed Banner */}
+            <div>
+              <label className="block text-sm font-semibold text-blue-800 mb-1">
+                Closed banner message
+              </label>
               <input
                 type="text"
-                value={cfg.timezone || ""}
-                onChange={(e) => setCfg((c) => ({ ...c, timezone: e.target.value }))}
-                className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm"
-                placeholder="e.g. America/New_York"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-blue-800 mb-1">Open banner message</label>
-              <input
-                type="text"
-                value={cfg.bannerMessageOpen || ""}
-                onChange={(e) => setCfg((c) => ({ ...c, bannerMessageOpen: e.target.value }))}
+                value={config.bannerMessageClosed || ""}
+                onChange={(e) =>
+                  dispatch(
+                    updateConfigField({
+                      field: "bannerMessageClosed",
+                      value: e.target.value,
+                    })
+                  )
+                }
                 className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm"
               />
             </div>
+
+            {/* ----------------------------------------------------------------
+                SPECIAL OPENING WINDOWS - One-time date/time overrides
+                ---------------------------------------------------------------- */}
             <div>
-              <label className="block text-sm font-semibold text-blue-800 mb-1">Closed banner message</label>
-              <input
-                type="text"
-                value={cfg.bannerMessageClosed || ""}
-                onChange={(e) => setCfg((c) => ({ ...c, bannerMessageClosed: e.target.value }))}
-                className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-blue-800 mb-1">Special open windows</label>
+              <label className="block text-sm font-semibold text-blue-800 mb-1">
+                Special open windows
+              </label>
               <div className="space-y-2">
-                {(cfg.specialOpenWindows || []).map((w, i) => (
-                  <div key={i} className="flex flex-col gap-2 bg-slate-800/40 rounded-lg p-2 border border-slate-700">
+                {(config.specialOpenWindows || []).map((w, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-col gap-2 bg-slate-800/40 rounded-lg p-2 border border-slate-700"
+                  >
                     <div className="flex items-center gap-2 flex-wrap">
                       <input
                         type="datetime-local"
-                        value={w.start ? new Date(w.start).toISOString().slice(0, 16) : ""}
-                        onChange={(e) =>
-                          setCfg((c) => {
-                            const arr = [...(c.specialOpenWindows || [])];
-                            // Convert local datetime to ISO (UTC) for backend
-                            const iso = e.target.value ? new Date(e.target.value).toISOString() : "";
-                            arr[i] = { ...arr[i], start: iso };
-                            return { ...c, specialOpenWindows: arr };
-                          })
+                        value={
+                          w.start
+                            ? new Date(w.start).toISOString().slice(0, 16)
+                            : ""
                         }
+                        onChange={(e) => {
+                          const arr = [...(config.specialOpenWindows || [])];
+                          const iso = e.target.value
+                            ? new Date(e.target.value).toISOString()
+                            : "";
+                          arr[i] = { ...arr[i], start: iso };
+                          dispatch(updateSpecialWindows(arr));
+                        }}
                         className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"
                       />
                       <span>to</span>
                       <input
                         type="datetime-local"
-                        value={w.end ? new Date(w.end).toISOString().slice(0, 16) : ""}
-                        onChange={(e) =>
-                          setCfg((c) => {
-                            const arr = [...(c.specialOpenWindows || [])];
-                            const iso = e.target.value ? new Date(e.target.value).toISOString() : "";
-                            arr[i] = { ...arr[i], end: iso };
-                            return { ...c, specialOpenWindows: arr };
-                          })
+                        value={
+                          w.end
+                            ? new Date(w.end).toISOString().slice(0, 16)
+                            : ""
                         }
+                        onChange={(e) => {
+                          const arr = [...(config.specialOpenWindows || [])];
+                          const iso = e.target.value
+                            ? new Date(e.target.value).toISOString()
+                            : "";
+                          arr[i] = { ...arr[i], end: iso };
+                          dispatch(updateSpecialWindows(arr));
+                        }}
                         className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"
                       />
                       <input
                         type="text"
                         placeholder="Note (optional)"
                         value={w.note || ""}
-                        onChange={(e) =>
-                          setCfg((c) => {
-                            const arr = [...(c.specialOpenWindows || [])];
-                            arr[i] = { ...arr[i], note: e.target.value };
-                            return { ...c, specialOpenWindows: arr };
-                          })
-                        }
+                        onChange={(e) => {
+                          const arr = [...(config.specialOpenWindows || [])];
+                          arr[i] = { ...arr[i], note: e.target.value };
+                          dispatch(updateSpecialWindows(arr));
+                        }}
                         className="flex-1 min-w-[160px] bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm"
                       />
                       <button
                         type="button"
-                        onClick={() =>
-                          setCfg((c) => {
-                            const arr = [...(c.specialOpenWindows || [])];
-                            arr.splice(i, 1);
-                            return { ...c, specialOpenWindows: arr };
-                          })
-                        }
+                        onClick={() => {
+                          const arr = [...(config.specialOpenWindows || [])];
+                          arr.splice(i, 1);
+                          dispatch(updateSpecialWindows(arr));
+                        }}
                         className="text-xs px-2 py-1 rounded bg-red-700 hover:bg-red-600"
                       >
                         Remove
                       </button>
                     </div>
-                    {w.start && w.end && new Date(w.end) <= new Date(w.start) && (
-                      <div className="text-xs text-red-400">End must be after start.</div>
-                    )}
+                    {w.start &&
+                      w.end &&
+                      new Date(w.end) <= new Date(w.start) && (
+                        <div className="text-xs text-red-400">
+                          End must be after start.
+                        </div>
+                      )}
                   </div>
                 ))}
                 <button
                   type="button"
-                  onClick={() =>
-                    setCfg((c) => ({
-                      ...c,
-                      specialOpenWindows: [
-                        ...(c.specialOpenWindows || []),
-                        { start: new Date().toISOString(), end: new Date(Date.now() + 3600000).toISOString() },
-                      ],
-                    }))
-                  }
+                  onClick={() => {
+                    const newWindows = [
+                      ...(config.specialOpenWindows || []),
+                      {
+                        start: new Date().toISOString(),
+                        end: new Date(Date.now() + 3600000).toISOString(),
+                      },
+                    ];
+                    dispatch(updateSpecialWindows(newWindows));
+                  }}
                   className="text-xs px-2 py-1 rounded bg-sky-700 hover:bg-sky-600"
                 >
                   Add special window
@@ -398,6 +537,7 @@ export default function AdminOperatingHours() {
               </div>
             </div>
           </div>
+          {/* SAVE BUTTON */}
           <button
             type="button"
             onClick={save}
