@@ -52,6 +52,25 @@ export const changePassword = createAsyncThunk(
   }
 );
 
+// Change email thunk
+export const changeEmail = createAsyncThunk(
+  "auth/changeEmail",
+  async ({ newEmail, password }, { rejectWithValue }) => {
+    try {
+      const data = await authService.changeEmail({ newEmail, password });
+      return data; // pass to component for messaging
+    } catch (err) {
+      const message = err?.response?.data?.message || err?.message || "Request failed";
+      // Clear on auth errors
+      if (/expired|unauthorized|auth/i.test(message)) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userOn");
+      }
+      return rejectWithValue(message);
+    }
+  }
+);
+
 export const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -92,7 +111,11 @@ export const authSlice = createSlice({
       .addCase(status.fulfilled, (state, action) => {
         console.log("authSlice action.payload", action.payload);
         state.loading = false;
-        // state.authUser = action.payload.;
+        // Update user data from status response (includes email)
+        if (action.payload?.user) {
+          state.authUser = { ...state.authUser, ...action.payload.user };
+          localStorage.setItem("userOn", JSON.stringify(state.authUser));
+        }
       })
       .addCase(status.rejected, (state, action) => {
         console.log("rejected authSlice action.payload", action.payload);
@@ -123,6 +146,20 @@ export const authSlice = createSlice({
         // no direct state change; component handles UI feedback
       })
   .addCase(changePassword.rejected, () => {
+        // no direct state change
+      })
+      // change email updates the user's email in state
+  .addCase(changeEmail.pending, () => {
+        // optional: could track a flag if needed later
+      })
+  .addCase(changeEmail.fulfilled, (state, action) => {
+        // update email in stored user object
+        if (state.authUser && action.payload?.newEmail) {
+          state.authUser.email = action.payload.newEmail;
+          localStorage.setItem("userOn", JSON.stringify(state.authUser));
+        }
+      })
+  .addCase(changeEmail.rejected, () => {
         // no direct state change
       });
   },

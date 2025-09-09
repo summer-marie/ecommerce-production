@@ -30,6 +30,24 @@ const authService = {
     return response.data;
   },
 
+  changeEmail: async ({ newEmail, password }) => {
+    const token = localStorage.getItem("token");
+    console.log("NEW authService changeEmail token", token?.slice(0, 12) + "...");
+    const response = await axios.post(
+      `${API_BASE}/auth/change-email`,
+      { newEmail, password },
+      {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      }
+    );
+    console.log("NEW changeEmail response", response.data);
+    return response.data;
+  },
+
   status: async () => {
     const token = localStorage.getItem("token");
     console.log("NEW authService status token", token);

@@ -563,7 +563,7 @@ const AdminSidenav = () => {
 
                 {!isCollapsed && (
                   <span className="flex-1 ms-3 whitespace-nowrap">
-                    Change Password
+                    Change Password/Email
                   </span>
                 )}
               </Link>

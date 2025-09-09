@@ -5,6 +5,7 @@ import adminModel from "../admins/adminModel.js";
 import authLogin from "./authLogin.js";
 import authStatus from "./authStatus.js";
 import authChangePassword from "./authChangePassword.js";
+import authChangeEmail from "./authChangeEmail.js";
 import authLogout from "./authLogout.js";
 
 const authRouter = Router();
@@ -70,6 +71,24 @@ authRouter.post(
       if (!user) return res.status(401).json({ success: false, message: "Authentication failed", info: info?.message || info });
       req.user = user;
       return authChangePassword(req, res);
+    })(req, res, next);
+  }
+);
+
+// Change email (admin must be authenticated)
+authRouter.post(
+  "/change-email",
+  (req, res, next) => {
+  // [Auth] Change email request
+    next();
+  },
+  (req, res, next) => {
+    passport.authenticate("jwt", { session: false }, (err, user, info) => {
+  // Passport result processed
+      if (err) return res.status(500).json({ success: false, message: "Auth error" });
+      if (!user) return res.status(401).json({ success: false, message: "Authentication failed", info: info?.message || info });
+      req.user = user;
+      return authChangeEmail(req, res);
     })(req, res, next);
   }
 );

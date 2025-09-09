@@ -14,6 +14,7 @@ const authStatus = (req, res, next) => {
       message: "Authenticated successfully",
       user: {
         firstName: req.user.firstName,
+        email: req.user.email,
         role: req.user.role,
         id: req.user._id,
       },
