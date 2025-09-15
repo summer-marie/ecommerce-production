@@ -309,6 +309,19 @@ const OrderSuccess = () => {
             Print Receipt
           </button>
         </div>
+
+        {/* Brand Footer */}
+        <div className="text-center mt-8 pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <img
+              src={new URL("../assets/pizzaLogoMain.png", import.meta.url).href}
+              className="h-20 w-auto rounded-full"
+              alt="OverTheWall Pizza"
+            />
+            <span className="text-gray-600 font-medium">Thank you for choosing OverTheWall™ Pizza</span>
+          </div>
+          <p className="text-sm text-gray-500">Quality ingredients, authentic flavors</p>
+        </div>
       </div>
     </section>
   );
