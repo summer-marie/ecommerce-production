@@ -43,11 +43,23 @@ const Order = () => {
     .href;
 
   return (
-    <>
-      {/* Header */}
-      <h2 className="berkshireSwashFont mt-5 text-center text-3xl font-bold text-slate-800">
-        Our Menu
-      </h2>
+    <div className="relative min-h-screen">
+      {/* Faded Logo Background */}
+      <div 
+        className="fixed inset-0 bg-no-repeat bg-center opacity-15 pointer-events-none z-0"
+        style={{
+          backgroundImage: `url(${new URL("../assets/pizzaLogoMain.png", import.meta.url).href})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
+        }}
+      />
+      
+      {/* Content Layer */}
+      <div className="relative z-10">
+        {/* Header */}
+        <h2 className="berkshireSwashFont mt-5 text-center text-3xl font-bold text-slate-800">
+          Our Menu
+        </h2>
       <h3 className="amitaFont mt-5 text-center text-2xl font-bold text-slate-800">
         {isOpen ? "Flavor is just one click away" : "We are not accepting orders right now"}
       </h3>
@@ -207,7 +219,8 @@ const Order = () => {
           )}
         </div>
       </div>
-    </>
+      </div>
+    </div>
   );
 };
 
