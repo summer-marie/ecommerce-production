@@ -142,6 +142,8 @@ const IngredientModal = ({ isOpen, onClose, setShowModal }) => {
                   <option value="Sauce">Sauce</option>
                   <option value="Meat Topping">Meat Topping</option>
                   <option value="Veggie Topping">Veggie Topping</option>
+                  <option value="Herbs">Herbs</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
             </div>
@@ -217,7 +219,7 @@ const IngredientsTable = () => {
   // State to track the clicked ingredient
   const [alertIngredient, setAlertIngredient] = useState(null);
 
-  const itemTypesArray = ["Base", "Sauce", "Meat Topping", "Veggie Topping"];
+  const itemTypesArray = ["Base", "Sauce", "Meat Topping", "Veggie Topping", "Herbs", "Other"];
 
   const dispatch = useDispatch();
 
@@ -245,6 +247,8 @@ const IngredientsTable = () => {
         Sauce: 0,
         "Meat Topping": 0,
         "Veggie Topping": 0,
+        Herbs: 0,
+        Other: 0,
         Total: ingredients.length,
       }
     );
@@ -399,6 +403,16 @@ const IngredientsTable = () => {
               ${
                 type === "Veggie Topping"
                   ? "bg-green-100 text-green-800 border-green-800"
+                  : ""
+              }
+              ${
+                type === "Herbs"
+                  ? "bg-purple-100 text-purple-800 border-purple-800"
+                  : ""
+              }
+              ${
+                type === "Other"
+                  ? "bg-gray-100 text-gray-800 border-gray-800"
                   : ""
               }
             `}
