@@ -482,7 +482,7 @@ const AdminBuilderCreate = () => {
                         focus:border-sky-500"
                   required
                 >
-                  <option value="">- - Select Sauce - -</option>
+                  <option value="">- - None - -</option>
                   {sauceOptions.map((sauce) => (
                     <option key={sauce.id} value={sauce.name}>
                       {sauce.name}
