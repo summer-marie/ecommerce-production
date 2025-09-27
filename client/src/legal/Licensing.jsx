@@ -2,8 +2,20 @@
 
 const Licensing = () => {
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-8 relative">
+      {/* Faded Logo Background */}
+      <div 
+        className="fixed inset-0 bg-no-repeat bg-center opacity-15 pointer-events-none z-0"
+        style={{
+          backgroundImage: `url(${new URL("../assets/pizzaLogoMain.png", import.meta.url).href})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
+        }}
+      />
+      
+      {/* Content Layer */}
+      <div className="relative z-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
           <h1 className="berkshireSwashFont text-4xl font-bold text-gray-900 mb-4">
@@ -174,6 +186,7 @@ const Licensing = () => {
             </div>
           </section>
 
+        </div>
         </div>
       </div>
     </div>
