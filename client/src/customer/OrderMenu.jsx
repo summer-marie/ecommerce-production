@@ -130,11 +130,38 @@ const Order = () => {
                         )
                         .filter(Boolean)
                     : [];
-                  const allToppings = [...meatNames, ...veggieNames].join(", ");
+                  const herbNames = Array.isArray(builder?.herbs)
+                    ? builder.herbs
+                        .map((h) =>
+                          typeof h === "string"
+                            ? h
+                            : h && typeof h === "object"
+                            ? h.name
+                            : null
+                        )
+                        .filter(Boolean)
+                    : [];
+                  const otherAdditionNames = Array.isArray(builder?.otherAdditions)
+                    ? builder.otherAdditions
+                        .map((o) =>
+                          typeof o === "string"
+                            ? o
+                            : o && typeof o === "object"
+                            ? o.name
+                            : null
+                        )
+                        .filter(Boolean)
+                    : [];
+                  const allToppings = [
+                    ...meatNames,
+                    ...veggieNames,
+                    ...herbNames,
+                    ...otherAdditionNames,
+                  ].join(", ");
                   return (
                     <div
                       key={builder.id || index}
-                      className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col overflow-hidden h-[26rem] sm:h-[28rem] lg:h-[30rem] relative"
+                      className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col overflow-hidden h-[30rem] sm:h-[32rem] lg:h-[34rem] relative"
                     >
                       {!isOpen && (
                         <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px] z-10 flex items-center justify-center">
@@ -143,7 +170,7 @@ const Order = () => {
                           </span>
                         </div>
                       )}
-                      <div className="relative w-full h-40 sm:h-44 lg:h-48">
+                      <div className="relative w-full h-48 sm:h-56 lg:h-60 xl:h-64">
                         <LazyImage
                           className="absolute inset-0 w-full h-full object-cover rounded-t-lg"
                           src={imageSrc}
@@ -157,7 +184,7 @@ const Order = () => {
                         >
                           {builder.pizzaName}
                         </h5>
-                        <div className="space-y-2 mb-4 flex-1 min-h-[6rem] sm:min-h-[7rem]">
+                        <div className="space-y-2 mb-4 flex-1 min-h-[5rem] sm:min-h-[6rem]">
                           <div className={`text-sm sm:text-base leading-snug`}>
                             <div className="mb-2 break-words">
                               <strong>Pizza Base:</strong> {baseNames || "-"}
