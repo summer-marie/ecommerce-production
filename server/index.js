@@ -1,6 +1,7 @@
 // Environment and Core Node Modules
 import dotenv from "dotenv";
 import { logger } from "./utils/logger.js";
+import * as Sentry from "@sentry/node";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -10,6 +11,31 @@ const __dirname = path.dirname(__filename);
 
 // Load .env file from the same directory as this script
 dotenv.config({ path: path.join(__dirname, ".env") });
+
+// Initialize Sentry (safe even if DSN missing; it will no-op). Profiling is optional.
+let sentryIntegrations = [];
+if (process.env.SENTRY_ENABLE_PROFILING === 'true') {
+  try {
+    const { nodeProfilingIntegration } = await import('@sentry/profiling-node');
+    sentryIntegrations.push(nodeProfilingIntegration());
+  } catch (e) {
+    logger.warn({ err: e?.message }, 'Sentry profiling not installed; continuing without it');
+  }
+}
+Sentry.init({
+  dsn: process.env.SENTRY_DSN || undefined,
+  environment: process.env.NODE_ENV || 'development',
+  release: process.env.SENTRY_RELEASE || process.env.GIT_SHA || undefined,
+  integrations: sentryIntegrations,
+  tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE || 0.05),
+  profilesSampleRate: Number(process.env.SENTRY_PROFILES_SAMPLE_RATE || 0.0),
+  enabled: !!process.env.SENTRY_DSN,
+});
+if (process.env.SENTRY_DSN) {
+  logger.info('Sentry initialized', { env: process.env.NODE_ENV, release: process.env.SENTRY_RELEASE || process.env.GIT_SHA });
+} else {
+  logger.info('Sentry DSN not set; skipping Sentry instrumentation');
+}
 
 // Verify critical environment variables are loaded
 if (!process.env.JWT_SECRET) {
@@ -24,15 +50,25 @@ if (!process.env.MONGODB_ATLAS_URL) {
 }
 logger.info("Environment variables loaded successfully");
 
+// Graceful flush helper for fatal events
+async function flushAndExit(code) {
+  try {
+    if (process.env.SENTRY_DSN) {
+      await Sentry.flush(2000);
+    }
+  } catch (_) { /* swallow */ }
+  process.exit(code);
+}
+
 // Add global error handlers to catch unhandled errors
 process.on("uncaughtException", (error) => {
   logger.fatal({ err: { message: error.message, stack: error.stack, name: error.name } }, "uncaughtException");
-  process.exit(1);
+  flushAndExit(1);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
   logger.fatal({ reason, promise, stack: reason?.stack }, "unhandledRejection");
-  process.exit(1);
+  flushAndExit(1);
 });
 
 process.on("SIGTERM", () => {
@@ -119,6 +155,12 @@ const cookieSecret = process.env.COOKIE_SECRET;
 const sessionSecret = process.env.SESSION_SECRET;
 
 const app = express();
+
+// Sentry middleware setup for SDK version 8.x
+// Note: Request middleware is not required for error capture in modern Sentry versions
+if (process.env.SENTRY_DSN) {
+  logger.info('Sentry middleware: Using setupExpressErrorHandler pattern for SDK 8.x');
+}
 
 // Trust proxy for Railway (fixes rate limiting X-Forwarded-For errors)
 app.set("trust proxy", 1);
@@ -218,6 +260,13 @@ app.get("/", (req, res) => {
     port: process.env.PORT || 8010,
   });
 });
+
+// Optional Sentry debug route (env-gated)
+if (process.env.ENABLE_SENTRY_TEST === 'true') {
+  app.get('/debug-sentry', () => {
+    throw new Error('Sentry smoke test triggered via /debug-sentry');
+  });
+}
 
 // Health check for Railway
 app.get("/health", (req, res) => {
@@ -336,9 +385,21 @@ try {
       });
     });
 
+    // Sentry error handler (before your custom error handler)
+    if (process.env.SENTRY_DSN) {
+      try {
+        // Use the modern Sentry Express error handler for SDK 8.x
+        Sentry.setupExpressErrorHandler(app);
+        logger.info('Sentry error handler configured for SDK 8.x');
+      } catch (e) {
+        logger.error({ err: e?.message }, 'Failed to setup Sentry error handler');
+      }
+    }
+
     // Global error handling middleware (must remain last after routes)
     app.use((err, req, res, next) => {
       logger.error({ err: { message: err.message, stack: err.stack }, method: req.method, url: req.url }, "Unhandled route error");
+      // Sentry will automatically capture this error via the error handler we registered above
       res.status(err.status || 500).json({ success: false, message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error' });
     });
   } catch (sessionError) {
