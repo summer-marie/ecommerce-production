@@ -184,7 +184,6 @@ export const builderSlice = createSlice({
       })
       .addCase(builderToggleStatus.fulfilled, (state, action) => {
         // Diagnostic: log payload summary
-        // Removed verbose diagnostics; can reintroduce if future debugging needed
         // Replace entire list (mirrors order status update pattern)
         if (action.payload?.builders) {
           state.builders = action.payload.builders;

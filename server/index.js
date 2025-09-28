@@ -62,9 +62,18 @@ await import("./strategies/jwtStrategy.js");
 await import("./strategies/localStrategy.js");
 
 // Log admin alert email configuration on startup
-const emailAlertsEnabled = String(process.env.EMAIL_ADMIN_ON_NEW_ORDER || "true").toLowerCase() === "true";
-const transport = (process.env.EMAIL_TRANSPORT || (process.env.SENDGRID_API_KEY ? "sendgrid" : "none")).toLowerCase();
-console.log(`📧 Admin alerts: ${emailAlertsEnabled ? "ENABLED" : "DISABLED"} | transport: ${transport} | recipients: configured in DB`);
+const emailAlertsEnabled =
+  String(process.env.EMAIL_ADMIN_ON_NEW_ORDER || "true").toLowerCase() ===
+  "true";
+const transport = (
+  process.env.EMAIL_TRANSPORT ||
+  (process.env.SENDGRID_API_KEY ? "sendgrid" : "none")
+).toLowerCase();
+console.log(
+  `📧 Admin alerts: ${
+    emailAlertsEnabled ? "ENABLED" : "DISABLED"
+  } | transport: ${transport} | recipients: configured in DB`
+);
 
 // Express and Middleware
 import express from "express";
@@ -105,7 +114,6 @@ import { requireApiKey, createApiKeyRoutes } from "./middleware/apiKeyAuth.js";
 import {
   compressionMiddleware,
   performanceMiddleware,
-  dbOptimizationMiddleware,
 } from "./middleware/performance.js";
 // Routes
 import authRouter from "./auth/authIndex.js";
@@ -304,21 +312,21 @@ try {
     app.use(passport.session());
     console.log("✅ Passport initialized with session support");
 
-  // API route registration with appropriate security and caching middleware
-  // Apply auth rate limit only to the login endpoint to avoid throttling other auth actions
-  app.use("/auth/login", authRateLimit);
-  app.use("/auth", authRouter);
+    // API route registration with appropriate security and caching middleware
+    // Apply auth rate limit only to the login endpoint to avoid throttling other auth actions
+    app.use("/auth/login", authRateLimit);
+    app.use("/auth", authRouter);
     app.use("/admins", adminRateLimit, adminRouter);
     app.use("/orders", orderIndex);
-  // Removed ingredients cache (dataset is small; need instant freshness on admin edits)
-  app.use("/ingredients", ingredientsIndex);
-  // Removed builders cache (list is small; need immediate freshness after mutations)
-  app.use("/builders", builderIndex);
+    // Removed ingredients cache (dataset is small; need instant freshness on admin edits)
+    app.use("/ingredients", ingredientsIndex);
+    // Removed builders cache (list is small; need immediate freshness after mutations)
+    app.use("/builders", builderIndex);
     app.use("/messages", msgIndex);
     app.use("/payments", paymentRoutes);
-  app.use("/operating-hours", operatingRoutes);
+    app.use("/operating-hours", operatingRoutes);
     app.use("/monitoring", adminRateLimit, monitoringRouter);
-  app.use("/about", aboutRouter);
+    app.use("/about", aboutRouter);
 
     // Administrative API key management (requires admin authentication)
     createApiKeyRoutes(app);
