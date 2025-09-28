@@ -132,16 +132,5 @@ export const performanceMiddleware = (req, res, next) => {
   next();
 };
 
-// Database query optimization settings
-export const dbOptimizationMiddleware = (req, res, next) => {
-  // Add lean() to mongoose queries for better performance
-  req.mongooseOptions = {
-    lean: true, // Return plain objects instead of mongoose documents
-    maxTimeMS: 5000, // 5 second timeout for queries
-  };
-
-  next();
-};
-
 // Export memory cache for direct access if needed
 export { memoryCache };

@@ -365,13 +365,13 @@ const AdminSidenav = () => {
                   <span className="flex-1 ms-3 whitespace-nowrap">Inbox</span>
                 )}
 
-                <span
-                  className={`inline-flex items-center justify-center w-4 h-4 p-3.5 text-sm font-bold rounded-full text-white bg-sky-700 border-2 border-sky-300 shadow-md animate-pulse ${
-                    isCollapsed ? "ml-0" : "ms-3"
-                  }`}
-                >
-                  {messages?.messages?.length || 0}
-                </span>
+                {!isCollapsed && (
+                  <span
+                    className={`inline-flex items-center justify-center w-4 h-4 p-3.5 text-sm font-bold rounded-full text-white bg-sky-700 border-2 border-sky-300 shadow-md animate-pulse ms-3`}
+                  >
+                    {messages?.messages?.length || 0}
+                  </span>
+                )}
               </Link>
             </li>
             {/* Layout section under Customer Feedback */}
