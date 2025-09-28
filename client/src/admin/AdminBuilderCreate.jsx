@@ -130,6 +130,8 @@ const AdminBuilderCreate = () => {
     sauce: "Signature Red Sauce",
     meatTopping: ["", "", "", "", "", ""], // 6 meat slots
     veggieTopping: ["", "", "", "", "", ""], // 6 veggie slots
+    herbs: ["", "", ""], // up to 3 herb slots
+    otherAdditions: ["", "", ""], // up to 3 other addition slots
     image: null, // Base64 preview payload (data without header)
     imageFile: null, // Raw File for compression/conversion
   });
@@ -141,6 +143,8 @@ const AdminBuilderCreate = () => {
   );
   const sauceOptions = ingredients.filter((i) => i.itemType === "Sauce");
   const baseOptions = ingredients.filter((i) => i.itemType === "Base");
+  const herbOptions = ingredients.filter((i) => i.itemType === "Herbs");
+  const otherAdditionsOptions = ingredients.filter((i) => i.itemType === "Other");
   // Split base into crust vs cheese options using a simple heuristic
   const crustOptions = baseOptions.filter((i) => /crust/i.test(i?.name || ""));
   const cheeseOptionsOnly = baseOptions.filter(
@@ -229,6 +233,22 @@ const AdminBuilderCreate = () => {
         })
         .filter(Boolean);
 
+      const herbObjs = newPizza.herbs
+        .filter(Boolean)
+        .map((herb) => {
+          const found = herbOptions.find((opt) => opt.name === herb);
+          return found ? { ...found, amount: 1 } : null;
+        })
+        .filter(Boolean);
+
+      const otherAdditionObjs = newPizza.otherAdditions
+        .filter(Boolean)
+        .map((add) => {
+          const found = otherAdditionsOptions.find((opt) => opt.name === add);
+          return found ? { ...found, amount: 1 } : null;
+        })
+        .filter(Boolean);
+
       // Convert image to Base64 if selected
       let imageData = null;
       if (newPizza.imageFile) {
@@ -280,6 +300,8 @@ const AdminBuilderCreate = () => {
         sauce: sauceObj,
         meatTopping: meatToppingObjs,
         veggieTopping: veggieToppingObjs,
+        herbs: herbObjs,
+        otherAdditions: otherAdditionObjs,
         image: imageData,
       };
 
@@ -327,12 +349,23 @@ const AdminBuilderCreate = () => {
                   </label>
                   <input
                     value={newPizza.pizzaName}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      // Convert every word to Title Case (handles multiple spaces gracefully)
+                      const titleCased = raw
+                        .toLowerCase()
+                        .replace(/\s+/g, ' ') // collapse consecutive spaces
+                        .trimStart() // allow user to keep trailing space while typing
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                      // Preserve a trailing space if user is still typing
+                      const endsWithSpace = /\s$/.test(raw);
                       setNewPizza({
                         ...newPizza,
-                        pizzaName: e.target.value,
-                      })
-                    }
+                        pizzaName: endsWithSpace ? titleCased + ' ' : titleCased,
+                      });
+                    }}
                     type="text"
                     id="pizza-name"
                     className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light
@@ -375,9 +408,9 @@ const AdminBuilderCreate = () => {
               </div>
 
               {/* Upload new Photo */}
-              <div id="imgUploader" className="max-w-xl mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
+              <div id="imgUploader" className="w-full mb-6">
+                <div className="flex flex-col lg:flex-row items-start lg:items-stretch gap-6">
+                  <div className="w-full lg:flex-1">
                     <label
                       className="block mb-2 text-sm font-medium pl-2 text-gray-900 capitalize"
                       htmlFor="pizza_photo"
@@ -400,12 +433,16 @@ const AdminBuilderCreate = () => {
                     </div>
                   </div>
                   {newPizza?.image?.data && (
-                    <div className="flex-shrink-0 w-30 h-24 border border-gray-300 rounded-lg overflow-hidden">
+                    <div className="w-full lg:w-[520px] xl:w-[560px] border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
                       <img
                         src={`data:${newPizza.image.type};base64,${newPizza.image.data}`}
-                        alt="Current Pizza"
-                        className="w-full h-full object-cover"
+                        alt="Current Pizza Preview"
+                        className="w-full h-auto object-cover"
                       />
+                      <div className="px-3 py-2 bg-gray-100 text-xs text-gray-600 flex justify-between">
+                        <span>Preview</span>
+                        <span>{newPizza.image?.name}</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -428,8 +465,41 @@ const AdminBuilderCreate = () => {
                   placeholder="- - Select Crust - -"
                 />
 
+                {/* Sauce Selection moved directly under crust */}
+                <div className="mb-5">
+                  <label
+                    htmlFor="sauce"
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                  >
+                    Select Sauce Type
+                  </label>
+                  <select
+                    value={newPizza.sauce}
+                    onChange={(e) =>
+                      setNewPizza({ ...newPizza, sauce: e.target.value })
+                    }
+                    id="sauce"
+                    className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
+                      text-black 
+                        placeholder-gray-500 
+                        border-slate-500
+                        bg-gray-200 
+                        focus:bg-gray-300 
+                        focus:ring-white
+                        focus:border-sky-500"
+                    required
+                  >
+                    <option value="">- - None - -</option>
+                    {sauceOptions.map((sauce) => (
+                      <option key={sauce.id} value={sauce.name}>
+                        {sauce.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Cheese Selections */}
-                <h3 className="block mb-2 text-sm font-medium text-gray-900">
+                <h3 className="block mb-2 text-sm font-bold text-gray-900">
                   Select Cheese(s)
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
@@ -463,37 +533,6 @@ const AdminBuilderCreate = () => {
                 </div>
               </div>
 
-              <div className="mb-5">
-                <label
-                  htmlFor="sauce"
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                >
-                  Select Sauce Type
-                </label>
-                <select
-                  value={newPizza.sauce}
-                  onChange={(e) =>
-                    setNewPizza({ ...newPizza, sauce: e.target.value })
-                  }
-                  id="sauce"
-                  className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-                      text-black 
-                        placeholder-gray-500 
-                        border-slate-500
-                        bg-gray-200 
-                        focus:bg-gray-300 
-                        focus:ring-white
-                        focus:border-sky-500"
-                  required
-                >
-                  <option value="">- - None - -</option>
-                  {sauceOptions.map((sauce) => (
-                    <option key={sauce.id} value={sauce.name}>
-                      {sauce.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
               <h1 className="block text-lg font-medium text-gray-900 text-center"></h1>
 
               <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
@@ -541,6 +580,57 @@ const AdminBuilderCreate = () => {
                     }}
                     options={veggieOptions}
                     type="veggie"
+                  />
+                ))}
+              </div>
+
+              {/* Herbs Section */}
+              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
+                Herbs
+              </h1>
+              <hr className="mb-5" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                {[0, 1, 2].map((index) => (
+                  <ToppingDropdown
+                    key={`herb-${index}`}
+                    label={`Select Herb #${index + 1}`}
+                    value={newPizza.herbs[index]}
+                    onChange={(e) => {
+                      const updatedHerbs = [...newPizza.herbs];
+                      updatedHerbs[index] = e.target.value;
+                      setNewPizza({
+                        ...newPizza,
+                        herbs: updatedHerbs,
+                      });
+                    }}
+                    options={herbOptions}
+                    type="veggie"
+                  />
+                ))}
+              </div>
+
+              {/* Other Additions Section */}
+              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
+                Other Additions
+              </h1>
+              <hr className="mb-5" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                {[0, 1, 2].map((index) => (
+                  <BaseDropdown
+                    key={`other-${index}`}
+                    id={`other-${index}`}
+                    label={`Select Addition #${index + 1}`}
+                    value={newPizza.otherAdditions[index]}
+                    onChange={(e) => {
+                      const updatedOther = [...newPizza.otherAdditions];
+                      updatedOther[index] = e.target.value;
+                      setNewPizza({
+                        ...newPizza,
+                        otherAdditions: updatedOther,
+                      });
+                    }}
+                    options={otherAdditionsOptions}
+                    placeholder="- - None - -"
                   />
                 ))}
               </div>

@@ -444,6 +444,31 @@ const AdminUpdateOne = () => {
                   placeholder="- - Select Crust - -"
                 />
 
+                {/* Sauce Selection (moved directly under crust) */}
+                <div className="mb-5">
+                  <label
+                    htmlFor="sauce"
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                  >
+                    Select Sauce
+                  </label>
+                  <select
+                    value={pizzaForm.sauce || ""}
+                    onChange={(e) =>
+                      setPizzaForm({ ...pizzaForm, sauce: e.target.value })
+                    }
+                    id="sauce"
+                    className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2 text-black placeholder-gray-500 border-slate-500 bg-gray-200 focus:bg-gray-300 focus:ring-white focus:border-sky-500"
+                  >
+                    <option value="">- None -</option>
+                    {sauceOptions.map((option) => (
+                      <option key={option.name} value={option.name}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Cheese Selections */}
                 <h3 className="block mb-2 text-sm font-medium text-gray-900">
                   Select Cheese(s)
@@ -483,29 +508,7 @@ const AdminUpdateOne = () => {
                 </div>
               </div>
 
-              <div className="mb-5">
-                <label
-                  htmlFor="sauce"
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                >
-                  Update Sauce Type
-                </label>
-                <select
-                  value={pizzaForm.sauce || ""}
-                  onChange={(e) =>
-                    setPizzaForm({ ...pizzaForm, sauce: e.target.value })
-                  }
-                  id="sauce"
-                  className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2 text-black placeholder-gray-500 border-slate-500 bg-gray-200 focus:bg-gray-300 focus:ring-white focus:border-sky-500"
-                >
-                  <option value="">- None -</option>
-                  {sauceOptions.map((option) => (
-                    <option key={option.name} value={option.name}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
 
               <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
                 Meat Options

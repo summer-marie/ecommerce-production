@@ -7,7 +7,7 @@ const builderCreate = async (req, res) => {
   const log = getLog(req, { event: 'builder.create' });
   log.debug({ bodyKeys: Object.keys(req.body || {}) }, 'create builder request body');
 
-    const { pizzaName, base, sauce, meatTopping, veggieTopping, image } =
+    const { pizzaName, base, sauce, meatTopping, veggieTopping, herbs, otherAdditions, image } =
       req.body;
 
     // Validation
@@ -36,10 +36,12 @@ const builderCreate = async (req, res) => {
     const newPizza = await builderModel.create({
       pizzaName,
       pizzaPrice, // Use admin-entered price
-      base,
-      sauce,
-      meatTopping,
-      veggieTopping,
+  base,
+  sauce,
+  meatTopping,
+  veggieTopping,
+  herbs: Array.isArray(herbs) ? herbs : [],
+  otherAdditions: Array.isArray(otherAdditions) ? otherAdditions : [],
       image: image || null, // Firebase Storage image data
     });
 

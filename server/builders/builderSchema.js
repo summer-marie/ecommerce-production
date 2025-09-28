@@ -53,6 +53,26 @@ const builderSchema = new Schema({
       amount: { type: Number, default: 1 },
     },
   ],
+  // Herbs (e.g., basil, oregano) optional additions
+  herbs: [
+    {
+      name: { type: String, required: true },
+      description: String,
+      price: Number,
+      itemType: String,
+      amount: { type: Number, default: 1 },
+    },
+  ],
+  // Other additions (e.g., olive oil drizzle)
+  otherAdditions: [
+    {
+      name: { type: String, required: true },
+      description: String,
+      price: Number,
+      itemType: String,
+      amount: { type: Number, default: 1 },
+    },
+  ],
   image: {
     data: String, // Base64 encoded image data
     filename: String, // Original filename for reference

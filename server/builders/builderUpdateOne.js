@@ -7,7 +7,7 @@ const pizzaUpdateOne = async (req, res) => {
     const { id } = req.params;
 
     // Extract fields from request body
-    const { pizzaName, sauce, meatTopping, veggieTopping, base, image } =
+    const { pizzaName, sauce, meatTopping, veggieTopping, herbs, otherAdditions, base, image } =
       req.body;
 
     // Accept admin-provided price (string or number)
@@ -34,7 +34,9 @@ const pizzaUpdateOne = async (req, res) => {
       sauce,
       meatTopping,
       veggieTopping,
-      base,
+  base,
+  herbs: Array.isArray(herbs) ? herbs : [],
+  otherAdditions: Array.isArray(otherAdditions) ? otherAdditions : [],
     };
 
     // Only update image if provided
