@@ -5,34 +5,12 @@ import { logger } from "../utils/logger";
 import AlertSuccess2 from "../components/AlertSuccess2";
 import { pizzaGetOne, builderUpdateOne } from "../redux/builderSlice";
 import { ingredientGetAll } from "../redux/ingredientSlice";
+import ToppingGroup from "./components/ToppingGroup";
+import CheeseGroup from "./components/CheeseGroup";
 
 const successMsg = "Pizza was updated successfully";
 const successDescription = "Navigating you back to the admin menu....";
 
-// Reusable dropdown component
-const ToppingDropdown = ({ label, value, onChange, options, type }) => (
-  <div className="mb-5">
-    <label className="block mb-2 text-sm font-medium text-gray-900">
-      {label}
-    </label>
-    <select
-      value={value || ""}
-      onChange={onChange}
-      className={`text-sm rounded-lg block w-full p-2.5 shadow-sm-light border-2 text-white placeholder-gray-400 ${
-        type === "meat"
-          ? "border-red-950 bg-red-800 focus:bg-red-950 focus:ring-red-500 focus:border-red-500"
-          : "border-green-800 bg-emerald-500 focus:bg-emerald-800 focus:ring-emerald-100 focus:border-emerald-200"
-      }`}
-    >
-      <option value="">- None -</option>
-      {options.map((option) => (
-        <option key={option.name} value={option.name}>
-          {option.name}
-        </option>
-      ))}
-    </select>
-  </div>
-);
 
 // Reusable base ingredient display component
 const BaseIngredientDisplay = ({ value }) => (
@@ -123,6 +101,8 @@ const AdminUpdateOne = () => {
     (i) => i.itemType === "Veggie Topping"
   );
   const baseOptions = ingredients.filter((i) => i.itemType === "Base");
+  const herbOptions = ingredients.filter((i) => i.itemType === "Herbs");
+  const otherAdditionsOptions = ingredients.filter((i) => i.itemType === "Other");
   const crustOptions = baseOptions.filter((i) => /crust/i.test(i?.name || ""));
   const cheeseOptionsOnly = baseOptions.filter(
     (i) => !/crust/i.test(i?.name || "")
@@ -151,8 +131,10 @@ const AdminUpdateOne = () => {
           ? builder.sauce.name
           : builder.sauce || "";
 
-      let meatTopping = normalizeArray(builder.meatTopping, 6);
-      let veggieTopping = normalizeArray(builder.veggieTopping, 6);
+  let meatTopping = normalizeArray(builder.meatTopping, 6);
+  let veggieTopping = normalizeArray(builder.veggieTopping, 6);
+  let herbs = normalizeArray(builder.herbs, 3);
+  let otherAdditions = normalizeArray(builder.otherAdditions, 3);
 
       // Prefill base selections
       const crust = builder?.base?.crust?.name || "";
@@ -174,15 +156,12 @@ const AdminUpdateOne = () => {
         crust,
         cheeses,
         cheeseAmounts,
+        herbs,
+        otherAdditions,
       });
     }
   }, [builder]);
 
-  // Handle form changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setPizzaForm({ ...pizzaForm, [name]: value });
-  };
 
   // Natural price input handler: allow user to type freely within pattern
   const handlePriceChange = (e) => {
@@ -269,6 +248,17 @@ const AdminUpdateOne = () => {
         })
         .filter(Boolean);
 
+      // Map herbs
+      const herbs = (pizzaForm.herbs || [])
+        .map((name) => herbOptions.find((opt) => opt.name === name))
+        .filter(Boolean)
+        .map((h) => ({ ...h, amount: 1 }));
+
+      const otherAdditions = (pizzaForm.otherAdditions || [])
+        .map((name) => otherAdditionsOptions.find((opt) => opt.name === name))
+        .filter(Boolean)
+        .map((o) => ({ ...o, amount: 1 }));
+
       // Construct payload with full objects
       const payload = {
         id,
@@ -278,6 +268,8 @@ const AdminUpdateOne = () => {
         sauce: sauceObj || null,
         meatTopping,
         veggieTopping,
+        herbs,
+        otherAdditions,
         image: imageData,
       };
 
@@ -358,7 +350,11 @@ const AdminUpdateOne = () => {
                   </label>
                   <input
                     value={pizzaForm.pizzaName}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      const { value } = e.target;
+                      const capitalized = value.replace(/\b\w/g, (c) => c.toUpperCase());
+                      setPizzaForm({ ...pizzaForm, pizzaName: capitalized });
+                    }}
                     type="text"
                     id="pizza-name"
                     name="pizzaName"
@@ -390,9 +386,9 @@ const AdminUpdateOne = () => {
               </div>
 
               {/* Upload new Photo */}
-              <div id="imgUploader" className="max-w-xl mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
+              <div id="imgUploader" className="w-full mb-6">
+                <div className="flex flex-col lg:flex-row items-start lg:items-stretch gap-6">
+                  <div className="w-full lg:flex-1">
                     <label
                       className="block mb-2 text-sm font-medium pl-2 text-gray-900 capitalize"
                       htmlFor="pizza_photo"
@@ -414,16 +410,39 @@ const AdminUpdateOne = () => {
                       Add picture of desired pizza
                     </div>
                   </div>
-                  {pizzaForm?.image?.data &&
-                    typeof pizzaForm.image.data === "string" && (
-                      <div className="flex-shrink-0 w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
-                        <img
-                          src={pizzaForm.image.data}
-                          alt="Current Pizza"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
+                  {pizzaForm?.image && (
+                    (() => {
+                      const img = pizzaForm.image;
+                      let src = '';
+                      if (typeof img === 'string') {
+                        src = img.startsWith('data:') ? img : img;
+                      } else if (img.data) {
+                        // If it's already a full data URL (update flow) use directly; if it's base64 without header, attempt to construct
+                        if (typeof img.data === 'string' && img.data.startsWith('data:')) {
+                          src = img.data;
+                        } else if (typeof img.data === 'string' && img.data.length > 100 && !img.data.startsWith('data:')) {
+                          const mime = img.type || 'image/png';
+                          src = `data:${mime};base64,${img.data}`;
+                        } else {
+                          src = img.data;
+                        }
+                      }
+                      if (!src) return null;
+                      return (
+                        <div className="w-full lg:w-[520px] xl:w-[560px] border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
+                          <img
+                            src={src}
+                            alt="Current Pizza Preview"
+                            className="w-full h-auto object-cover"
+                          />
+                          <div className="px-3 py-2 bg-gray-100 text-xs text-gray-600 flex justify-between">
+                            <span>Preview</span>
+                            <span>{img.name || 'Current Image'}</span>
+                          </div>
+                        </div>
+                      );
+                    })()
+                  )}
                 </div>
               </div>
 
@@ -469,94 +488,83 @@ const AdminUpdateOne = () => {
                   </select>
                 </div>
 
-                {/* Cheese Selections */}
-                <h3 className="block mb-2 text-sm font-medium text-gray-900">
-                  Select Cheese(s)
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
-                  {[0, 1, 2].map((index) => (
-                    <div key={`cheese-slot-${index}`}>
-                      <BaseDropdown
-                        id={`cheese-${index}`}
-                        label={`Select Cheese #${index + 1}`}
-                        value={pizzaForm.cheeses?.[index] || ""}
-                        onChange={(e) => {
-                          const cheeses = [
-                            ...(pizzaForm.cheeses || ["", "", ""]),
-                          ];
-                          cheeses[index] = e.target.value;
-                          setPizzaForm({ ...pizzaForm, cheeses });
-                        }}
-                        options={cheeseOptionsOnly}
-                        placeholder="- - None - -"
-                      />
-                      <CheeseAmountDropdown
-                        id={`cheese-amt-${index}`}
-                        label="Cheese Amount"
-                        value={pizzaForm.cheeseAmounts?.[index] || "1"}
-                        onChange={(e) => {
-                          const cheeseAmounts = [
-                            ...(pizzaForm.cheeseAmounts || ["1", "1", "1"]),
-                          ];
-                          cheeseAmounts[index] = e.target.value;
-                          setPizzaForm({ ...pizzaForm, cheeseAmounts });
-                        }}
-                        disabled={!pizzaForm.cheeses?.[index]}
-                      />
-                    </div>
-                  ))}
-                </div>
+                <CheeseGroup
+                  cheeses={pizzaForm.cheeses || ["", "", ""]}
+                  cheeseAmounts={pizzaForm.cheeseAmounts || ["1", "1", "1"]}
+                  options={cheeseOptionsOnly}
+                  onChangeCheese={(idx, val) => {
+                    const cheeses = [...(pizzaForm.cheeses || ["", "", ""])];
+                    cheeses[idx] = val;
+                    const cheeseAmounts = [...(pizzaForm.cheeseAmounts || ["1", "1", "1"])];
+                    if (!val) cheeseAmounts[idx] = "1";
+                    setPizzaForm({ ...pizzaForm, cheeses, cheeseAmounts });
+                  }}
+                  onChangeAmount={(idx, val) => {
+                    const cheeseAmounts = [...(pizzaForm.cheeseAmounts || ["1", "1", "1"])];
+                    cheeseAmounts[idx] = val;
+                    setPizzaForm({ ...pizzaForm, cheeseAmounts });
+                  }}
+                  preventDuplicates
+                />
               </div>
 
 
 
-              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
-                Meat Options
-              </h1>
-              <hr className="mb-5" />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-                {[0, 1, 2, 3, 4, 5].map((index) => (
-                  <ToppingDropdown
-                    key={`meat-${index}`}
-                    label={`Update Meat #${index + 1}`}
-                    value={pizzaForm.meatTopping[index]}
-                    onChange={(e) => {
-                      const updatedMeatTopping = [...pizzaForm.meatTopping];
-                      updatedMeatTopping[index] = e.target.value;
-                      setPizzaForm({
-                        ...pizzaForm,
-                        meatTopping: updatedMeatTopping,
-                      });
-                    }}
-                    options={meatOptions}
-                    type="meat"
-                  />
-                ))}
-              </div>
+              <ToppingGroup
+                title="Meat Options"
+                labelPrefix="Update Meat"
+                values={pizzaForm.meatTopping}
+                options={meatOptions}
+                slots={6}
+                variant="meat"
+                onChange={(idx, val) => {
+                  const updated = [...pizzaForm.meatTopping];
+                  updated[idx] = val;
+                  setPizzaForm({ ...pizzaForm, meatTopping: updated });
+                }}
+              />
 
-              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
-                Veggie Options
-              </h1>
-              <hr className="mb-5" />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-                {[0, 1, 2, 3, 4, 5].map((index) => (
-                  <ToppingDropdown
-                    key={`veggie-${index}`}
-                    label={`Update Veggie #${index + 1}`}
-                    value={pizzaForm.veggieTopping[index]}
-                    onChange={(e) => {
-                      const updatedVeggieTopping = [...pizzaForm.veggieTopping];
-                      updatedVeggieTopping[index] = e.target.value;
-                      setPizzaForm({
-                        ...pizzaForm,
-                        veggieTopping: updatedVeggieTopping,
-                      });
-                    }}
-                    options={veggieOptions}
-                    type="veggie"
-                  />
-                ))}
-              </div>
+              <ToppingGroup
+                title="Veggie Options"
+                labelPrefix="Update Veggie"
+                values={pizzaForm.veggieTopping}
+                options={veggieOptions}
+                slots={6}
+                variant="veggie"
+                onChange={(idx, val) => {
+                  const updated = [...pizzaForm.veggieTopping];
+                  updated[idx] = val;
+                  setPizzaForm({ ...pizzaForm, veggieTopping: updated });
+                }}
+              />
+
+              <ToppingGroup
+                title="Herbs"
+                labelPrefix="Update Herb"
+                values={pizzaForm.herbs || ['', '', '']}
+                options={herbOptions}
+                slots={3}
+                variant="neutral"
+                onChange={(idx, val) => {
+                  const updated = [...(pizzaForm.herbs || ['', '', ''])];
+                  updated[idx] = val;
+                  setPizzaForm({ ...pizzaForm, herbs: updated });
+                }}
+              />
+
+              <ToppingGroup
+                title="Other Additions"
+                labelPrefix="Update Addition"
+                values={pizzaForm.otherAdditions || ['', '', '']}
+                options={otherAdditionsOptions}
+                slots={3}
+                variant="neutral"
+                onChange={(idx, val) => {
+                  const updated = [...(pizzaForm.otherAdditions || ['', '', ''])];
+                  updated[idx] = val;
+                  setPizzaForm({ ...pizzaForm, otherAdditions: updated });
+                }}
+              />
 
               <div className="pt-2">
                 <button

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 import AlertSuccess2 from "../components/AlertSuccess2";
+import ToppingGroup from "./components/ToppingGroup";
+import CheeseGroup from "./components/CheeseGroup";
 import { builderCreate } from "../redux/builderSlice";
 import { ingredientGetAll } from "../redux/ingredientSlice";
 import { convertImageToBase64, compressImage } from "../utils/imageUtils";
@@ -9,30 +11,6 @@ import { convertImageToBase64, compressImage } from "../utils/imageUtils";
 const successMsg = "Pizza was created successfully!!";
 const successDescription = "navigating you to the admin menu....";
 
-// Reusable dropdown component
-const ToppingDropdown = ({ label, value, onChange, options, type }) => (
-  <div className="mb-5">
-    <label className="block mb-2 text-sm font-medium text-gray-900">
-      {label}
-    </label>
-    <select
-      value={value}
-      onChange={onChange}
-      className={`text-sm rounded-lg block w-full p-2.5 shadow-sm-light border-2 text-white placeholder-gray-400 ${
-        type === "meat"
-          ? "border-red-950 bg-red-800 focus:bg-red-950 focus:ring-red-500 focus:border-red-500"
-          : "border-green-950 bg-green-800 focus:bg-green-950 focus:ring-green-500 focus:border-green-500"
-      }`}
-    >
-      <option value="">- - None - -</option>
-      {options.map((option) => (
-        <option key={option.id} value={option.name}>
-          {option.name}
-        </option>
-      ))}
-    </select>
-  </div>
-);
 
 // Reusable base ingredient display component
 const BaseIngredientDisplay = ({ value }) => (
@@ -81,41 +59,6 @@ const BaseDropdown = ({ id, label, value, onChange, options, placeholder }) => (
   </div>
 );
 
-// Cheese amount selector: Light(0.5), Regular(1), Extra(2)
-const CheeseAmountDropdown = ({
-  id,
-  label = "Cheese Amount",
-  value,
-  onChange,
-  disabled = false,
-}) => (
-  <div className="mb-2">
-    <label
-      htmlFor={id}
-      className="block mb-2 text-sm font-medium text-gray-900"
-    >
-      {label}
-    </label>
-    <select
-      id={id}
-      value={value}
-      onChange={onChange}
-      disabled={disabled}
-      className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-        text-black 
-        placeholder-gray-500 
-        border-slate-500
-        bg-gray-200 
-        focus:bg-gray-300 
-        focus:ring-white
-        focus:border-sky-500"
-    >
-      <option value="0.5">Light</option>
-      <option value="1">Regular</option>
-      <option value="2">Extra</option>
-    </select>
-  </div>
-);
 
 const AdminBuilderCreate = () => {
   const navigate = useNavigate();
@@ -144,7 +87,9 @@ const AdminBuilderCreate = () => {
   const sauceOptions = ingredients.filter((i) => i.itemType === "Sauce");
   const baseOptions = ingredients.filter((i) => i.itemType === "Base");
   const herbOptions = ingredients.filter((i) => i.itemType === "Herbs");
-  const otherAdditionsOptions = ingredients.filter((i) => i.itemType === "Other");
+  const otherAdditionsOptions = ingredients.filter(
+    (i) => i.itemType === "Other"
+  );
   // Split base into crust vs cheese options using a simple heuristic
   const crustOptions = baseOptions.filter((i) => /crust/i.test(i?.name || ""));
   const cheeseOptionsOnly = baseOptions.filter(
@@ -352,8 +297,13 @@ const AdminBuilderCreate = () => {
                     onChange={(e) => {
                       const { value } = e.target;
                       // Capitalize first letter of every word (matches ingredient modal behavior)
-                      const capitalized = value.replace(/\b\w/g, (char) => char.toUpperCase());
-                      setNewPizza((prev) => ({ ...prev, pizzaName: capitalized }));
+                      const capitalized = value.replace(/\b\w/g, (char) =>
+                        char.toUpperCase()
+                      );
+                      setNewPizza((prev) => ({
+                        ...prev,
+                        pizzaName: capitalized,
+                      }));
                     }}
                     type="text"
                     id="pizza-name"
@@ -487,142 +437,86 @@ const AdminBuilderCreate = () => {
                   </select>
                 </div>
 
-                {/* Cheese Selections */}
-                <h3 className="block mb-2 text-sm font-bold text-gray-900">
-                  Select Cheese(s)
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
-                  {[0, 1, 2].map((index) => (
-                    <div key={`cheese-slot-${index}`}>
-                      <BaseDropdown
-                        id={`cheese-${index}`}
-                        label={`Select Cheese #${index + 1}`}
-                        value={newPizza.cheeses[index]}
-                        onChange={(e) => {
-                          const cheeses = [...newPizza.cheeses];
-                          cheeses[index] = e.target.value;
-                          setNewPizza({ ...newPizza, cheeses });
-                        }}
-                        options={cheeseOptionsOnly}
-                        placeholder="- - None - -"
-                      />
-                      <CheeseAmountDropdown
-                        id={`cheese-amt-${index}`}
-                        label="Cheese Amount"
-                        value={newPizza.cheeseAmounts[index]}
-                        onChange={(e) => {
-                          const cheeseAmounts = [...newPizza.cheeseAmounts];
-                          cheeseAmounts[index] = e.target.value;
-                          setNewPizza({ ...newPizza, cheeseAmounts });
-                        }}
-                        disabled={!newPizza.cheeses[index]}
-                      />
-                    </div>
-                  ))}
-                </div>
+                <CheeseGroup
+                  cheeses={newPizza.cheeses}
+                  cheeseAmounts={newPizza.cheeseAmounts}
+                  options={cheeseOptionsOnly}
+                  onChangeCheese={(idx, val) => {
+                    const cheeses = [...newPizza.cheeses];
+                    cheeses[idx] = val;
+                    // If cheese cleared, reset amount to default '1'
+                    const cheeseAmounts = [...newPizza.cheeseAmounts];
+                    if (!val) cheeseAmounts[idx] = '1';
+                    setNewPizza({ ...newPizza, cheeses, cheeseAmounts });
+                  }}
+                  onChangeAmount={(idx, val) => {
+                    const cheeseAmounts = [...newPizza.cheeseAmounts];
+                    cheeseAmounts[idx] = val;
+                    setNewPizza({ ...newPizza, cheeseAmounts });
+                  }}
+                  preventDuplicates
+                />
               </div>
 
               <h1 className="block text-lg font-medium text-gray-900 text-center"></h1>
 
-              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
-                Meat Options
-              </h1>
-              <hr className="mb-5" />
+              <ToppingGroup
+                title="Meat Options"
+                labelPrefix="Select Meat"
+                values={newPizza.meatTopping}
+                options={meatOptions}
+                slots={6}
+                variant="meat"
+                onChange={(idx, val) => {
+                  const updated = [...newPizza.meatTopping];
+                  updated[idx] = val;
+                  setNewPizza({ ...newPizza, meatTopping: updated });
+                }}
+              />
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-                {[0, 1, 2, 3, 4, 5].map((index) => (
-                  <ToppingDropdown
-                    key={`meat-${index}`}
-                    label={`Select Meat #${index + 1}`}
-                    value={newPizza.meatTopping[index]}
-                    onChange={(e) => {
-                      const updatedMeatTopping = [...newPizza.meatTopping];
-                      updatedMeatTopping[index] = e.target.value;
-                      setNewPizza({
-                        ...newPizza,
-                        meatTopping: updatedMeatTopping,
-                      });
-                    }}
-                    options={meatOptions}
-                    type="meat"
-                  />
-                ))}
-              </div>
-
-              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
-                Veggie Options
-              </h1>
-              <hr className="mb-5" />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-                {[0, 1, 2, 3, 4, 5].map((index) => (
-                  <ToppingDropdown
-                    key={`veggie-${index}`}
-                    label={`Select Veggie #${index + 1}`}
-                    value={newPizza.veggieTopping[index]}
-                    onChange={(e) => {
-                      const updatedVeggieTopping = [...newPizza.veggieTopping];
-                      updatedVeggieTopping[index] = e.target.value;
-                      setNewPizza({
-                        ...newPizza,
-                        veggieTopping: updatedVeggieTopping,
-                      });
-                    }}
-                    options={veggieOptions}
-                    type="veggie"
-                  />
-                ))}
-              </div>
+              <ToppingGroup
+                title="Veggie Options"
+                labelPrefix="Select Veggie"
+                values={newPizza.veggieTopping}
+                options={veggieOptions}
+                slots={6}
+                variant="veggie"
+                onChange={(idx, val) => {
+                  const updated = [...newPizza.veggieTopping];
+                  updated[idx] = val;
+                  setNewPizza({ ...newPizza, veggieTopping: updated });
+                }}
+              />
 
               {/* Herbs Section */}
-              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
-                Herbs
-              </h1>
-              <hr className="mb-5" />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-                {[0, 1, 2].map((index) => (
-                  <ToppingDropdown
-                    key={`herb-${index}`}
-                    label={`Select Herb #${index + 1}`}
-                    value={newPizza.herbs[index]}
-                    onChange={(e) => {
-                      const updatedHerbs = [...newPizza.herbs];
-                      updatedHerbs[index] = e.target.value;
-                      setNewPizza({
-                        ...newPizza,
-                        herbs: updatedHerbs,
-                      });
-                    }}
-                    options={herbOptions}
-                    type="veggie"
-                  />
-                ))}
-              </div>
+              <ToppingGroup
+                title="Herbs"
+                labelPrefix="Select Herb"
+                values={newPizza.herbs}
+                options={herbOptions}
+                slots={3}
+                variant="neutral"
+                onChange={(idx, val) => {
+                  const updated = [...newPizza.herbs];
+                  updated[idx] = val;
+                  setNewPizza({ ...newPizza, herbs: updated });
+                }}
+              />
 
               {/* Other Additions Section */}
-              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
-                Other Additions
-              </h1>
-              <hr className="mb-5" />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-                {[0, 1, 2].map((index) => (
-                  <BaseDropdown
-                    key={`other-${index}`}
-                    id={`other-${index}`}
-                    label={`Select Addition #${index + 1}`}
-                    value={newPizza.otherAdditions[index]}
-                    onChange={(e) => {
-                      const updatedOther = [...newPizza.otherAdditions];
-                      updatedOther[index] = e.target.value;
-                      setNewPizza({
-                        ...newPizza,
-                        otherAdditions: updatedOther,
-                      });
-                    }}
-                    options={otherAdditionsOptions}
-                    placeholder="- - None - -"
-                  />
-                ))}
-              </div>
+              <ToppingGroup
+                title="Other Additions"
+                labelPrefix="Select Addition"
+                values={newPizza.otherAdditions}
+                options={otherAdditionsOptions}
+                slots={3}
+                variant="neutral"
+                onChange={(idx, val) => {
+                  const updated = [...newPizza.otherAdditions];
+                  updated[idx] = val;
+                  setNewPizza({ ...newPizza, otherAdditions: updated });
+                }}
+              />
 
               <div className="pt-2">
                 <button

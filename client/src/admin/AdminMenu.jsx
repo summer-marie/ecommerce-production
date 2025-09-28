@@ -153,6 +153,21 @@ const AdminMenu = () => {
                       .filter(Boolean)
                       .join(", ")
                   : "";
+                const safeHerbs = Array.isArray(builder?.herbs)
+                  ? builder.herbs
+                      .map((h) => (typeof h === "string" ? h : h?.name))
+                      .filter(Boolean)
+                      .join(", ")
+                  : "";
+                const safeOtherAdditions = Array.isArray(builder?.otherAdditions)
+                  ? builder.otherAdditions
+                      .map((o) => (typeof o === "string" ? o : o?.name))
+                      .filter(Boolean)
+                      .join(", ")
+                  : "";
+                const combinedOther = [safeHerbs, safeOtherAdditions]
+                  .filter(Boolean)
+                  .join(", ");
                 const imageSrc =
                   builder?.image && typeof builder.image.data === "string"
                     ? builder.image.data
@@ -244,6 +259,10 @@ const AdminMenu = () => {
                           <strong>Veggies:</strong>
                           <span className="ml-2">{safeVeggies || "-"}</span>
                         </div>
+                        <div>
+                          <strong>Other:</strong>
+                          <span className="ml-2">{combinedOther || "-"}</span>
+                        </div>
                       </div>
 
                       <h2 className="font-bold text-lg text-gray-900 mt-auto pt-2">
@@ -301,6 +320,21 @@ const AdminMenu = () => {
                       .filter(Boolean)
                       .join(", ")
                   : "";
+                const safeHerbs = Array.isArray(builder?.herbs)
+                  ? builder.herbs
+                      .map((h) => (typeof h === "string" ? h : h?.name))
+                      .filter(Boolean)
+                      .join(", ")
+                  : "";
+                const safeOtherAdditions = Array.isArray(builder?.otherAdditions)
+                  ? builder.otherAdditions
+                      .map((o) => (typeof o === "string" ? o : o?.name))
+                      .filter(Boolean)
+                      .join(", ")
+                  : "";
+                const combinedOther = [safeHerbs, safeOtherAdditions]
+                  .filter(Boolean)
+                  .join(", ");
                 const imageSrc =
                   builder?.image && typeof builder.image.data === "string"
                     ? builder.image.data
@@ -378,6 +412,10 @@ const AdminMenu = () => {
                         <div>
                           <strong>Veggies:</strong>
                           <span className="ml-2">{safeVeggies || "-"}</span>
+                        </div>
+                        <div>
+                          <strong>Other:</strong>
+                          <span className="ml-2">{combinedOther || "-"}</span>
                         </div>
                       </div>
                       <h2 className="font-bold text-lg text-gray-700 mt-auto pt-2">
