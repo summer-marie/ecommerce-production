@@ -1,8 +1,10 @@
 import builderModel from "./builderModel.js";
 import { invalidateCache } from "../middleware/performance.js";
+import { getLog } from "../utils/logger.js";
 
 const builderDeleteOne = async (req, res) => {
-  console.log("DELETE endpoint hit with id:", req.params.id);
+  const log = getLog(req, { event: 'builder.delete' });
+  log.debug({ id: req.params.id }, 'delete builder request');
   const { id } = req.params;
   try {
     const deletedBuilder = await builderModel.findByIdAndDelete(id);
@@ -11,7 +13,8 @@ const builderDeleteOne = async (req, res) => {
     }
     // Invalidate cache so deletion reflects
     await invalidateCache("api:/builders");
-    res.status(200).json({ success: true, id });
+  log.info({ id }, 'builder deleted');
+  res.status(200).json({ success: true, id });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }

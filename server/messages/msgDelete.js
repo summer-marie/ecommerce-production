@@ -1,9 +1,11 @@
 import messageModel from "./msgModel.js";
+import { getLog } from "../utils/logger.js";
 
 const messageDelete = async (req, res) => {
   const { id } = req.params;
 
-  console.log("Deleting message:", id);
+  const log = getLog(req, { event: 'message.delete' });
+  log.debug({ id }, 'deleting message');
 
   const deletedMessage = await messageModel.findByIdAndDelete(id);
 
@@ -13,7 +15,7 @@ const messageDelete = async (req, res) => {
       .json({ success: false, message: "Message not found" });
   }
 
-  console.log("Message deleted:", deletedMessage);
+  log.info({ id }, 'message deleted');
 
   res.status(200).json({
     success: true,

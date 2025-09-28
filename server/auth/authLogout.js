@@ -1,7 +1,9 @@
 import adminModel from "../admins/adminModel.js";
+import { getLog } from "../utils/logger.js";
 
 const authLogout = async (req, res) => {
-  console.log("auth logout", req.user);
+  const log = getLog(req, { event: 'auth.logout' });
+  log.debug({ userId: req.user?._id }, 'logout request');
 
   if (!req.user) {
     return res.status(401).json({ message: "Not authenticated." });
@@ -28,7 +30,7 @@ const authLogout = async (req, res) => {
 
     res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
-    console.error("Logout error:", err);
+  log.error({ err: err?.message }, 'logout error');
     res.status(500).json({ message: "Error logging out." });
   }
 };

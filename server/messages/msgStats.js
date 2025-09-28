@@ -1,4 +1,5 @@
 import { checkMessageLimit } from "../utils/messageCleanup.js";
+import { getLog } from "../utils/logger.js";
 
 const messageStats = async (req, res) => {
   try {
@@ -14,7 +15,8 @@ const messageStats = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error getting message stats:", error);
+      const log = getLog(req, { event: 'message.stats.error' });
+      log.error({ err: error?.message }, 'error getting message stats');
     res.status(500).json({
       success: false,
       error: "Failed to get message statistics",

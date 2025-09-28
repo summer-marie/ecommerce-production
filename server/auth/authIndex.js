@@ -2,6 +2,7 @@ import { Router } from "express";
 import passport from "passport";
 import jwt from "jsonwebtoken";
 import adminModel from "../admins/adminModel.js";
+import { getLog } from "../utils/logger.js";
 import authLogin from "./authLogin.js";
 import authStatus from "./authStatus.js";
 import authChangePassword from "./authChangePassword.js";
@@ -11,10 +12,10 @@ import authLogout from "./authLogout.js";
 const authRouter = Router();
 
 authRouter.post("/login", (req, res, next) => {
-  // [Auth] Login request
+  const log = getLog(req, { event: 'auth.login.attempt' });
   passport.authenticate("local", (err, user, info) => {
     if (err) {
-      console.error("[Auth] Passport authentication error:", err);
+      log.error({ err: err?.message }, 'passport authentication error');
       return res.status(500).json({
         success: false,
         message: "Authentication failed",
@@ -25,16 +26,15 @@ authRouter.post("/login", (req, res, next) => {
       });
     }
     if (!user) {
-  // Authentication failed - no user returned
+      log.warn({ info: info?.message || info }, 'invalid credentials');
       return res.status(401).json({
         success: false,
         message: "Invalid credentials",
       });
     }
-
     req.logIn(user, (err) => {
       if (err) {
-        console.error("[Auth] Login session error:", err);
+        log.error({ err: err?.message }, 'login session error');
         return res.status(500).json({
           success: false,
           message: "Login session failed",
@@ -44,8 +44,7 @@ authRouter.post("/login", (req, res, next) => {
               : "Internal server error",
         });
       }
-
-  // User authenticated, issuing token
+      log.info({ userId: user._id }, 'user authenticated');
       authLogin(req, res, next);
     });
   })(req, res, next);
@@ -60,17 +59,13 @@ authRouter.get(
 // Change password (admin must be authenticated) - simplified for now
 authRouter.post(
   "/change-password",
-  (req, res, next) => {
-  // [Auth] Change password request
-    next();
-  },
+  (req, res, next) => { next(); },
   (req, res, next) => {
     passport.authenticate("jwt", { session: false }, (err, user, info) => {
-  // Passport result processed
-      if (err) return res.status(500).json({ success: false, message: "Auth error" });
-      if (!user) return res.status(401).json({ success: false, message: "Authentication failed", info: info?.message || info });
-      req.user = user;
-      return authChangePassword(req, res);
+      const log = getLog(req, { event: 'auth.changePassword.attempt' });
+      if (err) { log.error({ err: err?.message }, 'jwt auth error'); return res.status(500).json({ success: false, message: "Auth error" }); }
+      if (!user) { log.warn({ info: info?.message || info }, 'auth failed'); return res.status(401).json({ success: false, message: "Authentication failed", info: info?.message || info }); }
+      req.user = user; return authChangePassword(req, res);
     })(req, res, next);
   }
 );
@@ -78,17 +73,13 @@ authRouter.post(
 // Change email (admin must be authenticated)
 authRouter.post(
   "/change-email",
-  (req, res, next) => {
-  // [Auth] Change email request
-    next();
-  },
+  (req, res, next) => { next(); },
   (req, res, next) => {
     passport.authenticate("jwt", { session: false }, (err, user, info) => {
-  // Passport result processed
-      if (err) return res.status(500).json({ success: false, message: "Auth error" });
-      if (!user) return res.status(401).json({ success: false, message: "Authentication failed", info: info?.message || info });
-      req.user = user;
-      return authChangeEmail(req, res);
+      const log = getLog(req, { event: 'auth.changeEmail.attempt' });
+      if (err) { log.error({ err: err?.message }, 'jwt auth error'); return res.status(500).json({ success: false, message: "Auth error" }); }
+      if (!user) { log.warn({ info: info?.message || info }, 'auth failed'); return res.status(401).json({ success: false, message: "Authentication failed", info: info?.message || info }); }
+      req.user = user; return authChangeEmail(req, res);
     })(req, res, next);
   }
 );

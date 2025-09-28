@@ -1,5 +1,6 @@
 import messageModel from "./msgModel.js";
 import sgMail from "@sendgrid/mail";
+import { getLog } from "../utils/logger.js";
 import {
   checkMessageLimit,
   cleanupOldMessages,
@@ -19,7 +20,8 @@ if (process.env.SENDGRID_API_KEY) {
 
 const messageCreate = async (req, res) => {
   try {
-    console.log("Received message data:", req.body);
+  const log = getLog(req, { event: 'message.create' });
+  log.debug({ bodyKeys: Object.keys(req.body || {}) }, 'received message data');
 
     const { email, subject, message } = req.body || {};
 
@@ -52,17 +54,12 @@ const messageCreate = async (req, res) => {
         mailResult = {
           messageId: result[0]?.headers?.["x-message-id"] || "sent",
         };
-        console.log("Contact email sent via SendGrid:", mailResult.messageId);
+  log.info({ messageId: mailResult.messageId }, 'contact email sent via sendgrid');
       } catch (err) {
-        console.error(
-          "Failed to send contact email via SendGrid:",
-          err?.message || err
-        );
+        log.error({ err: err?.message || err }, 'failed to send contact email via sendgrid');
       }
     } else {
-      console.warn(
-        "SendGrid API key not configured; skipping email send. Set SENDGRID_API_KEY."
-      );
+      log.warn('sendgrid api key not configured; skipping email send');
     }
 
     // Optionally save to DB with cleanup and limits
@@ -80,16 +77,14 @@ const messageCreate = async (req, res) => {
         // If at limit, remove oldest messages to make room
         if (limitInfo.limitReached) {
           await cleanupOldestMessages(1);
-          console.log(
-            "📝 Message limit reached, removed oldest message to make room"
-          );
+          log.info('message limit reached; removed oldest message');
         }
 
         // Save the new message
         saved = await messageModel.create({ email, subject, message });
-        console.log("💾 Message saved to database");
+  log.info('message saved to database');
       } catch (err) {
-        console.error("Failed to save contact message:", err?.message || err);
+  log.error({ err: err?.message || err }, 'failed to save contact message');
       }
     }
 
@@ -107,7 +102,8 @@ const messageCreate = async (req, res) => {
       saved: saved ? saved.toJSON() : null,
     });
   } catch (error) {
-    console.error("msgCreate error:", error);
+  const log = getLog(req, { event: 'message.create.error' });
+  log.error({ err: error?.message, stack: error?.stack }, 'message create handler error');
     return res
       .status(500)
       .json({ success: false, error: "Server error while processing message" });

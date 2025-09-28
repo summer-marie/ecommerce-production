@@ -1,9 +1,11 @@
 import orderModel from "./orderModel.js";
+import { getLog } from "../utils/logger.js";
 
 // Soft-cancel an order when payment fails
 // Sets payment.status = 'failed', stores optional failureReason, and sets order status to 'cancelled'
 // Does not modify isArchived (can be done later if desired)
 const orderMarkPaymentFailed = async (req, res) => {
+  const log = getLog(req, { event: 'order.payment.failMark' });
   try {
     const { orderNumber } = req.params;
     const { reason } = req.body || {};
@@ -35,7 +37,7 @@ const orderMarkPaymentFailed = async (req, res) => {
 
     return res.status(200).json({ success: true, order: updated });
   } catch (error) {
-    console.error("orderMarkPaymentFailed error:", error);
+    log.error({ err: error?.message }, 'order mark payment failed error');
     return res
       .status(500)
       .json({

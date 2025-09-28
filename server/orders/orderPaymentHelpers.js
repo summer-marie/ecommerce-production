@@ -1,4 +1,5 @@
 import orderModel from "./orderModel.js";
+import { logger, getLog } from "../utils/logger.js";
 
 // Update order payment status - used by Square payment integration
 export const updateOrderPaymentStatus = async (orderNumber, paymentData) => {
@@ -51,13 +52,10 @@ export const updateOrderPaymentStatus = async (orderNumber, paymentData) => {
       throw new Error(`Order ${orderNumber} not found`);
     }
 
-    console.log(`Order ${orderNumber} payment status updated to: ${status}`);
+    logger.info({ event: 'order.payment.update', orderNumber, status }, 'order payment status updated');
     return updatedOrder;
   } catch (error) {
-    console.error(
-      `Failed to update payment status for order ${orderNumber}:`,
-      error
-    );
+    logger.error({ event: 'order.payment.update.error', orderNumber, err: error.message }, 'failed to update order payment status');
     throw error;
   }
 };
@@ -68,14 +66,11 @@ export const getOrderByPaymentId = async (squarePaymentId) => {
     const order = await orderModel.findOne({
       "payment.squarePaymentId": squarePaymentId,
     });
-    return order;
   } catch (error) {
-    console.error(
-      `Failed to find order by payment ID ${squarePaymentId}:`,
-      error
-    );
+    logger.error({ event: 'order.payment.lookup.error', squarePaymentId, err: error.message }, 'failed to find order by square payment id');
     throw error;
   }
+  return order;
 };
 
 // Get orders by payment status
@@ -86,12 +81,9 @@ export const getOrdersByPaymentStatus = async (paymentStatus) => {
         "payment.status": paymentStatus,
       })
       .sort({ date: -1 });
-    return orders;
   } catch (error) {
-    console.error(
-      `Failed to get orders by payment status ${paymentStatus}:`,
-      error
-    );
+    logger.error({ event: 'order.payment.statusQuery.error', paymentStatus, err: error.message }, 'failed to get orders by payment status');
     throw error;
   }
+  return orders;
 };

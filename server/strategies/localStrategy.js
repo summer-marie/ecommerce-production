@@ -2,6 +2,7 @@ import passport from "passport";
 import { Strategy } from "passport-local";
 import * as argon2 from "argon2";
 import userModel from "../admins/adminModel.js";
+import { getLog } from "../logger.js";
 
 passport.serializeUser((user, done) => {
   // console.log('serializeUser', user)
@@ -26,30 +27,32 @@ passport.deserializeUser(async (id, done) => {
 export default passport.use(
   new Strategy({ usernameField: "email" }, async (username, password, done) => {
     try {
-      const normalizedEmail = String(username || "").trim().toLowerCase();
-      console.log("[Auth] Attempting login for email:", normalizedEmail);
+  const normalizedEmail = String(username || "").trim().toLowerCase();
+  const log = getLog(null, { operationId: 'localStrategyLogin' });
+  log.info({ event: 'auth.login.attempt', email: normalizedEmail }, 'Attempting login');
 
       const user = await userModel.findOne({ email: normalizedEmail });
       if (!user) {
-        console.log("[Auth] No user found for email:", normalizedEmail);
+        log.warn({ event: 'auth.login.noUser', email: normalizedEmail }, 'No user found for email');
         return done(null, false, { message: "Invalid credentials" });
       }
 
       if (user.status && user.status !== "active") {
-        console.log("[Auth] User not active:", normalizedEmail);
+        log.warn({ event: 'auth.login.inactive', email: normalizedEmail, status: user.status }, 'User not active');
         return done(null, false, { message: "Account is not active" });
       }
 
       const isPasswordCorrect = await argon2.verify(user.password, password);
       if (!isPasswordCorrect) {
-        console.log("[Auth] Password incorrect for user:", normalizedEmail);
+        log.warn({ event: 'auth.login.badPassword', email: normalizedEmail }, 'Incorrect password');
         return done(null, false, { message: "Invalid credentials" });
       }
 
-      console.log("[Auth] Login successful for user:", normalizedEmail);
+      log.info({ event: 'auth.login.success', email: normalizedEmail, userId: user._id }, 'Login successful');
       return done(null, user);
     } catch (err) {
-      console.error("[Auth] Login error:", err);
+      const log = getLog(null, { operationId: 'localStrategyLogin' });
+      log.error({ event: 'auth.login.error', err: err && err.message ? err.message : err }, 'Login error');
       return done(err, null);
     }
   })

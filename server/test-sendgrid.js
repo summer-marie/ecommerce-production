@@ -1,5 +1,6 @@
 import sgMail from "@sendgrid/mail";
 import dotenv from "dotenv";
+import { getLog } from "./logger.js";
 
 // Load environment variables
 dotenv.config();
@@ -7,12 +8,11 @@ dotenv.config();
 // Test SendGrid configuration
 const testSendGrid = async () => {
   try {
-    console.log("Testing SendGrid configuration...");
-    console.log("API Key exists:", !!process.env.SENDGRID_API_KEY);
-    console.log(
-      "API Key prefix:",
-      process.env.SENDGRID_API_KEY?.substring(0, 10) + "..."
-    );
+    const log = getLog(null, { operationId: 'testSendGrid' });
+    log.info({ event: 'test.sendgrid.start', apiKeyExists: !!process.env.SENDGRID_API_KEY }, 'Testing SendGrid configuration');
+    if (process.env.SENDGRID_API_KEY) {
+      log.debug({ event: 'test.sendgrid.keyPreview', prefix: process.env.SENDGRID_API_KEY.substring(0, 6) }, 'API key preview');
+    }
 
     // Set API key
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -25,18 +25,13 @@ const testSendGrid = async () => {
       html: "<p>This is a <strong>test email</strong> from your pizza app contact form setup.</p>",
     };
 
-    console.log("Attempting to send test email...");
-    console.log("To:", msg.to);
-    console.log("From:", msg.from);
+  log.info({ event: 'test.sendgrid.attempt', to: msg.to, from: msg.from }, 'Attempting to send test email');
 
     const result = await sgMail.send(msg);
-    console.log("✅ Test email sent successfully!");
-    console.log("Message ID:", result[0]?.headers?.["x-message-id"]);
+    log.info({ event: 'test.sendgrid.success', messageId: result[0]?.headers?.['x-message-id'] }, 'Test email sent');
   } catch (error) {
-    console.error("❌ SendGrid test failed:");
-    console.error("Error message:", error.message);
-    console.error("Error code:", error.code);
-    console.error("Full error:", error);
+    const log = getLog(null, { operationId: 'testSendGrid' });
+    log.error({ event: 'test.sendgrid.error', message: error.message, code: error.code, err: error }, 'SendGrid test failed');
   }
 };
 

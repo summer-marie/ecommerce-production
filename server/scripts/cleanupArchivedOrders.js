@@ -1,5 +1,6 @@
 import orderModel from "../orders/orderModel.js";
 import mongoose from "mongoose";
+import { getLog } from "../logger.js";
 
 /**
  * Cleanup archived orders older than 30 days
@@ -12,7 +13,8 @@ const cleanupArchivedOrders = async () => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    console.log(`🗑️  Starting cleanup of archived orders older than ${thirtyDaysAgo.toLocaleDateString()}`);
+  const log = getLog(null, { operationId: 'cleanupArchivedOrders' });
+  log.info({ event: 'script.cleanupArchived.start', cutoffDate: thirtyDaysAgo.toISOString().slice(0,10) }, 'Starting cleanup of archived orders');
 
     // Find and delete archived orders older than 30 days
     const result = await orderModel.deleteMany({
@@ -21,7 +23,7 @@ const cleanupArchivedOrders = async () => {
     });
 
     if (result.deletedCount > 0) {
-      console.log(`✅ Successfully deleted ${result.deletedCount} archived orders older than 30 days`);
+  log.info({ event: 'script.cleanupArchived.deleted', deletedCount: result.deletedCount }, 'Deleted archived orders older than cutoff');
       
       // Log the cleanup for audit trail
       const logEntry = {
@@ -38,7 +40,7 @@ const cleanupArchivedOrders = async () => {
         message: `Successfully cleaned up ${result.deletedCount} archived orders`
       };
     } else {
-      console.log("ℹ️  No archived orders older than 30 days found for cleanup");
+  log.info({ event: 'script.cleanupArchived.none' }, 'No archived orders older than cutoff');
       return {
         success: true,
         deletedCount: 0,
@@ -46,7 +48,8 @@ const cleanupArchivedOrders = async () => {
       };
     }
   } catch (error) {
-    console.error("❌ Error during archived orders cleanup:", error);
+  const log = getLog(null, { operationId: 'cleanupArchivedOrders' });
+  log.error({ event: 'script.cleanupArchived.error', err: error && error.message ? error.message : error }, 'Error during archived orders cleanup');
     return {
       success: false,
       error: error.message,
@@ -79,7 +82,8 @@ const getCleanupPreview = async () => {
       cutoffDate: thirtyDaysAgo
     };
   } catch (error) {
-    console.error("Error getting cleanup preview:", error);
+  const log = getLog(null, { operationId: 'cleanupArchivedOrders' });
+  log.error({ event: 'script.cleanupArchived.previewError', err: error && error.message ? error.message : error }, 'Error getting cleanup preview');
     return null;
   }
 };
@@ -89,23 +93,26 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   // Connect to MongoDB if not already connected
   if (mongoose.connection.readyState !== 1) {
     const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+    const log = getLog(null, { operationId: 'cleanupArchivedOrders' });
     if (!mongoUri) {
-      console.error("❌ MongoDB URI not found in environment variables");
+      log.error({ event: 'script.cleanupArchived.error', reason: 'missingMongoURI' }, 'MongoDB URI not found in env');
       process.exit(1);
     }
     
     await mongoose.connect(mongoUri);
-    console.log("📱 Connected to MongoDB for cleanup");
+    log.info({ event: 'script.cleanupArchived.connected' }, 'Connected to MongoDB for cleanup');
   }
 
   // Run the cleanup
   const result = await cleanupArchivedOrders();
-  console.log("Cleanup result:", result);
+  const log = getLog(null, { operationId: 'cleanupArchivedOrders' });
+  log.info({ event: 'script.cleanupArchived.result', result }, 'Cleanup result');
   
   // Close the connection if we opened it
   if (mongoose.connection.readyState === 1) {
-    await mongoose.disconnect();
-    console.log("📱 Disconnected from MongoDB");
+  await mongoose.disconnect();
+  const log2 = getLog(null, { operationId: 'cleanupArchivedOrders' });
+  log2.info({ event: 'script.cleanupArchived.done' }, 'Disconnected from MongoDB');
   }
   
   process.exit(result.success ? 0 : 1);

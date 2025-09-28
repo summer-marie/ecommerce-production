@@ -1,4 +1,5 @@
 import sgMail from "@sendgrid/mail";
+import { getLog } from "../utils/logger.js";
 
 /**
  * Send order confirmation/receipt email to customer
@@ -6,15 +7,18 @@ import sgMail from "@sendgrid/mail";
  * @param {Object} paymentData - Payment/receipt information from Square
  */
 export const sendOrderConfirmationEmail = async (orderData, paymentData = null) => {
+  const log = getLog(null, { event: 'email.orderConfirmation' });
   try {
     if (!process.env.SENDGRID_API_KEY) {
-      console.warn("SendGrid not configured - skipping receipt email");
+      log.warn('sendgrid not configured - skipping receipt email');
       return { sent: false, reason: "SendGrid not configured" };
     }
 
     // Set API key for each request to ensure it's properly loaded
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    console.log("🐛 DEBUG - Using SendGrid API key:", process.env.SENDGRID_API_KEY?.substring(0, 10) + "...");
+    if (process.env.NODE_ENV !== 'production') {
+      log.debug({ apiKeyPrefix: process.env.SENDGRID_API_KEY?.substring(0, 10) }, 'using sendgrid api key');
+    }
 
     const {
       firstName,
@@ -29,7 +33,7 @@ export const sendOrderConfirmationEmail = async (orderData, paymentData = null) 
     const customerEmail = orderData.email || orderData.customerEmail;
     
     if (!customerEmail) {
-      console.warn("No customer email provided - cannot send receipt");
+      log.warn('no customer email provided - cannot send receipt');
       return { sent: false, reason: "No customer email" };
     }
 
@@ -170,12 +174,12 @@ Thank you for choosing ${businessName}!
       html
     };
 
-    console.log(`Sending order confirmation email to ${customerEmail} for order #${orderNumber}`);
+  log.info({ customerEmail, orderNumber }, 'sending order confirmation email');
     
     const result = await sgMail.send(mailOptions);
     const messageId = result[0]?.headers?.["x-message-id"] || "sent";
     
-    console.log(`✅ Order confirmation email sent successfully: ${messageId}`);
+  log.info({ messageId, orderNumber }, 'order confirmation email sent');
     
     return {
       sent: true,
@@ -185,8 +189,7 @@ Thank you for choosing ${businessName}!
     };
 
   } catch (error) {
-    console.error("Failed to send order confirmation email:", error.message);
-    console.error("Error details:", error);
+    log.error({ err: error?.message }, 'failed to send order confirmation email');
     
     return {
       sent: false,
@@ -203,6 +206,7 @@ Thank you for choosing ${businessName}!
  * @param {string} customerEmail - Customer email address
  */
 export const sendPaymentReceiptEmail = async (receiptData, customerEmail) => {
+  const log = getLog(null, { event: 'email.paymentReceipt' });
   try {
     if (!process.env.SENDGRID_API_KEY || !customerEmail) {
       return { sent: false, reason: "SendGrid not configured or no email" };
@@ -210,7 +214,9 @@ export const sendPaymentReceiptEmail = async (receiptData, customerEmail) => {
 
     // Set API key for each request to ensure it's properly loaded
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    console.log("🐛 DEBUG - Payment receipt using SendGrid API key:", process.env.SENDGRID_API_KEY?.substring(0, 10) + "...");
+    if (process.env.NODE_ENV !== 'production') {
+      log.debug({ apiKeyPrefix: process.env.SENDGRID_API_KEY?.substring(0, 10) }, 'using sendgrid api key (payment receipt)');
+    }
 
     const businessName = "OverTheWall™ Pizza";
     const from = process.env.SENDGRID_FROM_EMAIL || "noreply@overthewallpizza.com";
@@ -248,10 +254,12 @@ export const sendPaymentReceiptEmail = async (receiptData, customerEmail) => {
       text: `Payment Receipt\nReceipt #: ${receiptData.receiptNumber}\nAmount: $${receiptData.amount}\nPayment ID: ${receiptData.paymentId}`
     });
 
-    return { sent: true, messageId: result[0]?.headers?.["x-message-id"] };
+    const messageId = result[0]?.headers?.["x-message-id"]; 
+    log.info({ customerEmail, receiptNumber: receiptData.receiptNumber, messageId }, 'payment receipt email sent');
+    return { sent: true, messageId };
 
   } catch (error) {
-    console.error("Failed to send payment receipt:", error);
+    log.error({ err: error?.message }, 'failed to send payment receipt');
     return { sent: false, error: error.message };
   }
 };

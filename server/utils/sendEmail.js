@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { getLog } from '../utils/logger.js';
 
 /**
  * Sends an email using Gmail SMTP.
@@ -8,6 +9,7 @@ import nodemailer from 'nodemailer';
  * @param {string} html - HTML email body (optional).
  */
 export default async function sendEmail({ to, subject, text, html }) {
+  const log = getLog(null, { event: 'email.send' });
   try {
     // Configure the transporter with Gmail SMTP settings
     const transporter = nodemailer.createTransport({
@@ -29,9 +31,9 @@ export default async function sendEmail({ to, subject, text, html }) {
 
     // Send the email
     const info = await transporter.sendMail(mailOptions);
-    console.log(`Email sent: ${info.response}`);
+    log.info({ to, subject, response: info.response }, 'email sent');
   } catch (error) {
-    console.error('Error sending email:', error);
+    log.error({ to, subject, err: error?.message }, 'error sending email');
     throw error;
   }
 }

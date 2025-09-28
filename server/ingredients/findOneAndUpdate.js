@@ -1,18 +1,19 @@
 import ingredientsModel from "./ingredientsModel.js";
 import { invalidateCache } from "../middleware/performance.js";
+import { getLog } from "../utils/logger.js";
 
 const findOneAndUpdate = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, itemType, price } = req.body;
 
+    const log = getLog(req, { event: 'ingredient.update' });
     const updateIngredient = await ingredientsModel.findOneAndUpdate(
       { _id: id },
       { name, description, itemType, price },
       { new: true }
     );
-
-    console.log("updateIngredient", updateIngredient);
+    log.debug({ id, found: !!updateIngredient }, 'update ingredient result');
 
     // If no ingredient found, return 404
     if (!updateIngredient) {
@@ -34,7 +35,8 @@ const findOneAndUpdate = async (req, res) => {
 
     res.status(200).json({ success: true, ingredient: updatedResponse });
   } catch (error) {
-    console.error(error);
+    const log = getLog(req, { event: 'ingredient.update.error' });
+    log.error({ err: error?.message }, 'ingredient update error');
     res
       .status(500)
       .json({ error: "An error occurred while updating the ingredient." });

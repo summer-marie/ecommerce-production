@@ -116,6 +116,43 @@ For detailed technical information, see the specialized README files:
 - **📁 `/server/payments/README.md`** - Square payment integration and transaction management
 - **📁 `/server/scripts/README.md`** - Administrative scripts and maintenance tools
 
+### 📝 Logging
+
+Structured logging is implemented across the backend (routes, utilities, scripts, tests) using a centralized Pino logger with request and operation correlation. For event naming standards, level usage, redaction guidance, and examples, see: **`LOGGING_CONVENTIONS.md`**.
+
+Example (inside an Express route handler):
+
+```js
+import { getLog } from './logger.js';
+
+export async function createOrder(req, res) {
+	const log = getLog(req, { feature: 'orderCreate' });
+	log.info({ event: 'order.create.start', itemCount: req.body.items?.length || 0 }, 'Creating order');
+	try {
+		// domain logic ...
+		const order = await orderService.create(req.body, req.user);
+		log.info({ event: 'order.create.success', orderId: order._id }, 'Order created');
+		return res.status(201).json(order);
+	} catch (err) {
+		log.error({ event: 'order.create.error', err: err.message }, 'Order creation failed');
+		return res.status(500).json({ error: 'Internal server error' });
+	}
+}
+```
+
+For background tasks / scripts (no req object):
+
+```js
+import { getLog } from './logger.js';
+
+async function runCleanup() {
+	const log = getLog(null, { operationId: 'nightlyCleanup' });
+	log.info({ event: 'script.cleanup.start' }, 'Starting nightly cleanup');
+	// work...
+	log.info({ event: 'script.cleanup.summary', removed: 42 }, 'Cleanup complete');
+}
+```
+
 ---
 
 ## 🎯 **Project Summary**

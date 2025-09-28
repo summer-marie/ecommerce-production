@@ -1,17 +1,17 @@
 import { cleanupOldMessages } from "../utils/messageCleanup.js";
+import { getLog } from "../utils/logger.js";
 
 // Schedule daily cleanup at 2 AM
 const scheduleMessageCleanup = () => {
   const runCleanup = async () => {
-    console.log("🕐 Running scheduled message cleanup...");
+    const log = getLog(null, { event: 'messages.cleanup.scheduled' });
+    log.info('running scheduled message cleanup');
     const deletedCount = await cleanupOldMessages();
 
     if (deletedCount > 0) {
-      console.log(
-        `✅ Daily cleanup completed: ${deletedCount} old messages removed`
-      );
+      log.info({ deleted: deletedCount }, 'daily cleanup removed old messages');
     } else {
-      console.log("✅ Daily cleanup completed: No old messages to remove");
+      log.info('daily cleanup no old messages');
     }
   };
 
@@ -35,7 +35,8 @@ const scheduleMessageCleanup = () => {
     setInterval(runCleanup, 24 * 60 * 60 * 1000);
   }, msUntil2AM);
 
-  console.log(`📅 Message cleanup scheduled for ${next2AM.toLocaleString()}`);
+  const log = getLog(null, { event: 'messages.cleanup.schedule' });
+  log.info({ nextRun: next2AM.toISOString() }, 'message cleanup scheduled');
 };
 
 export default scheduleMessageCleanup;

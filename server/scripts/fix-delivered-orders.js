@@ -1,27 +1,29 @@
 import mongoose from 'mongoose';
 import orderModel from '../orders/orderModel.js';
 import dotenv from 'dotenv';
+import { getLog } from '../logger.js';
 
 // Load environment variables
 dotenv.config();
 
 const fixDeliveredOrders = async () => {
   try {
-    console.log('Connecting to database...');
+  const log = getLog(null, { operationId: 'fixDeliveredOrders' });
+  log.info({ event: 'script.fixDelivered.start' }, 'Connecting to database');
     
     // Use the same connection string as your app
     const uri = process.env.MONGODB_ATLAS_URL;
     if (!uri) {
-      console.error('Missing MONGODB_ATLAS_URL environment variable');
+      log.error({ event: 'script.fixDelivered.error', reason: 'missingMongoURL' }, 'Missing MONGODB_ATLAS_URL environment variable');
       process.exit(1);
     }
     
-    await mongoose.connect(uri);
-    console.log('Connected to database');
+  await mongoose.connect(uri);
+  log.info({ event: 'script.fixDelivered.connected', mongoHostPreview: uri.replace(/^mongodb\+srv:\/\//, '').slice(0, 60) }, 'Connected to database');
     
     // Find all orders with "delivered" status
-    const deliveredOrders = await orderModel.find({ status: 'delivered' });
-    console.log(`Found ${deliveredOrders.length} orders with "delivered" status`);
+  const deliveredOrders = await orderModel.find({ status: 'delivered' });
+  log.info({ event: 'script.fixDelivered.found', deliveredCount: deliveredOrders.length }, 'Found delivered orders');
     
     if (deliveredOrders.length > 0) {
       // Update all "delivered" orders to "completed"
@@ -30,14 +32,14 @@ const fixDeliveredOrders = async () => {
         { $set: { status: 'completed' } }
       );
       
-      console.log(`Successfully updated ${result.modifiedCount} orders from "delivered" to "completed"`);
+  log.info({ event: 'script.fixDelivered.updated', updated: result.modifiedCount }, 'Updated delivered orders to completed');
     } else {
-      console.log('No orders with "delivered" status found');
+  log.info({ event: 'script.fixDelivered.none' }, 'No delivered orders found');
     }
     
     // Verify the update
-    const remainingDelivered = await orderModel.find({ status: 'delivered' });
-    console.log(`Remaining orders with "delivered" status: ${remainingDelivered.length}`);
+  const remainingDelivered = await orderModel.find({ status: 'delivered' });
+  log.info({ event: 'script.fixDelivered.remaining', remainingDelivered: remainingDelivered.length }, 'Remaining delivered orders count');
     
     // Show current status counts
     const statusCounts = await orderModel.aggregate([
@@ -46,13 +48,15 @@ const fixDeliveredOrders = async () => {
       { $sort: { _id: 1 } }
     ]);
     
-    console.log('Current status counts:', statusCounts);
+    log.info({ event: 'script.fixDelivered.statusCounts', statusCounts }, 'Current status counts');
     
   } catch (error) {
-    console.error('Error fixing delivered orders:', error);
+    const log = getLog(null, { operationId: 'fixDeliveredOrders' });
+    log.error({ event: 'script.fixDelivered.error', err: error && error.message ? error.message : error }, 'Error fixing delivered orders');
   } finally {
     await mongoose.disconnect();
-    console.log('Disconnected from database');
+    const log = getLog(null, { operationId: 'fixDeliveredOrders' });
+    log.info({ event: 'script.fixDelivered.done' }, 'Disconnected from database');
   }
 };
 

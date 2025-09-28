@@ -1,6 +1,6 @@
 // API key management and authentication system
 import crypto from "crypto";
-import { logInfo, logWarn, logError } from "./logger.js";
+import { getLog, logger } from "../utils/logger.js";
 
 class ApiKeyManager {
   constructor() {
@@ -45,19 +45,16 @@ class ApiKeyManager {
       isActive: true,
     });
 
-    logInfo("API keys initialized", {
+    logger.info({
       adminKey: `${adminKey.substring(0, 8)}...`,
       publicKey: `${publicKey.substring(0, 8)}...`,
       analyticsKey: `${analyticsKey.substring(0, 8)}...`,
       totalKeys: this.keys.size,
-    });
+    }, 'api keys initialized');
 
     // Development logging only
     if (process.env.NODE_ENV !== "production") {
-      console.log("\n🔑 API Keys Generated for Development:");
-      console.log(`Admin Key: ${adminKey}`);
-      console.log(`Public Key: ${publicKey}`);
-      console.log(`Analytics Key: ${analyticsKey}\n`);
+      logger.debug({ adminKey, publicKey, analyticsKey }, 'dev api keys generated');
     }
   }
 
@@ -176,12 +173,13 @@ export const requireApiKey = (permission = null) => {
     const apiKey = req.header("X-API-Key") || req.query.apiKey;
 
     if (!apiKey) {
-      logWarn("API request without key", {
+      const log = getLog(req, { event: 'apiKey.auth' });
+      log.warn({
         ip: req.ip,
         path: req.path,
         method: req.method,
         userAgent: req.get("user-agent"),
-      });
+      }, 'api request without key');
       return res.status(401).json({
         error: "API key required",
         message:
@@ -193,27 +191,29 @@ export const requireApiKey = (permission = null) => {
     const validation = apiKeyManager.validateKey(apiKey, permission);
 
     if (!validation.valid) {
-      logWarn("Invalid API key attempt", {
+      const log = getLog(req, { event: 'apiKey.auth' });
+      log.warn({
         ip: req.ip,
         path: req.path,
         method: req.method,
         error: validation.error,
         keyPrefix: `${apiKey.substring(0, 8)}...`,
         userAgent: req.get("user-agent"),
-      });
+      }, 'invalid api key attempt');
       return res.status(401).json({
         error: "Invalid API key",
         message: validation.error,
       });
     }
 
-    logInfo("Valid API key used", {
+    const log = getLog(req, { event: 'apiKey.auth' });
+    log.info({
       ip: req.ip,
       path: req.path,
       method: req.method,
       keyId: validation.keyData.keyId,
       keyName: validation.keyData.name,
-    });
+    }, 'valid api key used');
 
     // Attach key info to request for later use
     req.apiKeyData = validation.keyData;
@@ -233,7 +233,8 @@ export const createApiKeyRoutes = (app) => {
         total: keys.length,
       });
     } catch (error) {
-      logError("Error fetching API keys", { error: error.message });
+  const log = getLog(req, { event: 'apiKey.keys.list.error' });
+  log.error({ err: error.message }, 'error fetching api keys');
       res.status(500).json({
         error: "Failed to fetch API keys",
         message: error.message,
@@ -264,7 +265,8 @@ export const createApiKeyRoutes = (app) => {
         warning: "Store this key securely - it cannot be retrieved again",
       });
     } catch (error) {
-      logError("Error creating API key", { error: error.message });
+  const log = getLog(req, { event: 'apiKey.keys.create.error' });
+  log.error({ err: error.message }, 'error creating api key');
       res.status(500).json({
         error: "Failed to create API key",
         message: error.message,
@@ -310,7 +312,8 @@ export const createApiKeyRoutes = (app) => {
           });
         }
       } catch (error) {
-        logError("Error deactivating API key", { error: error.message });
+  const log = getLog(req, { event: 'apiKey.keys.deactivate.error' });
+  log.error({ err: error.message }, 'error deactivating api key');
         res.status(500).json({
           error: "Failed to deactivate API key",
           message: error.message,

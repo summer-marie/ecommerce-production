@@ -1,6 +1,7 @@
 import { withRetry } from "./emailRetry.js";
 import { getOrCreateOperatingDoc } from "../operatingHours/operatingModel.js";
 import sgMail from "@sendgrid/mail";
+import { getLog } from "../utils/logger.js";
 
 /**
  * Send an admin alert when a new order is created.
@@ -8,6 +9,7 @@ import sgMail from "@sendgrid/mail";
  */
 export async function sendAdminNewOrderEmail(order) {
   // Feature flag: allow disabling admin alerts in some environments
+  const log = getLog(null, { event: 'email.adminOrderAlert' });
   if (String(process.env.EMAIL_ADMIN_ON_NEW_ORDER || "true").toLowerCase() !== "true") {
     return { sent: false, reason: "Feature flag disabled" };
   }
@@ -15,7 +17,7 @@ export async function sendAdminNewOrderEmail(order) {
   const cfg = await getOrCreateOperatingDoc();
   const to = (cfg.adminAlertEmails || []).filter(Boolean);
   if (!to || to.length === 0) {
-    console.warn("Admin alert email skipped: no recipients configured in Operating Hours settings (adminAlertEmails)");
+    log.warn('admin alert email skipped: no recipients configured');
     return { sent: false, reason: "No recipient configured in DB" };
   }
 
@@ -71,7 +73,7 @@ export async function sendAdminNewOrderEmail(order) {
   // Choose transport: SendGrid if configured or requested, else Gmail SMTP
   // SendGrid-only path (no Gmail fallback)
   if (!process.env.SENDGRID_API_KEY) {
-    console.warn("Admin alert email skipped: SENDGRID_API_KEY not configured");
+    log.warn('admin alert email skipped: sendgrid api key not configured');
     return { sent: false, reason: "SendGrid not configured" };
   }
   const from = process.env.SENDGRID_FROM_EMAIL || "noreply@overthewallpizza.com";
@@ -79,6 +81,8 @@ export async function sendAdminNewOrderEmail(order) {
   return withRetry(async () => {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
     const result = await sgMail.send(mail);
-    return { sent: true, messageId: result[0]?.headers?.["x-message-id"] };
+    const messageId = result[0]?.headers?.["x-message-id"];
+    log.info({ messageId, orderNumber: order.orderNumber, recipients: to.length }, 'admin new order alert sent');
+    return { sent: true, messageId };
   }, { retries: 2, baseDelay: 600 });
 }

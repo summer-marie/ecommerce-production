@@ -1,4 +1,5 @@
 import adminModel from "../admins/adminModel.js";
+import { getLog } from "../utils/logger.js";
 
 // POST /auth/change-email
 // Requires JWT auth (passport.authenticate('jwt', { session: false }))
@@ -6,6 +7,7 @@ import adminModel from "../admins/adminModel.js";
 const authChangeEmail = async (req, res) => {
   // Change email request received
   
+  const log = getLog(req, { event: 'auth.changeEmail' });
   try {
     const userId = req.user?._id;
     const rawEmail = req.body?.newEmail;
@@ -61,7 +63,7 @@ const authChangeEmail = async (req, res) => {
       newEmail: newEmail
     });
   } catch (err) {
-    console.error("authChangeEmail error:", err);
+    log.error({ err: err?.message }, 'auth change email error');
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };

@@ -1,6 +1,8 @@
+import { getLog } from "../utils/logger.js";
+
 const authStatus = (req, res, next) => {
-  console.log("AUTH STATUS CHECK");
-  console.log("req.user", req.user);
+  const log = getLog(req, { event: 'auth.status' });
+  log.debug({ hasUser: !!req.user, userId: req.user?._id }, 'auth status check');
 
   if (!req.user) {
     return res.status(401).json({

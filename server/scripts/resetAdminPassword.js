@@ -2,6 +2,7 @@ import 'dotenv/config';
 import mongoose from 'mongoose';
 import * as argon2 from 'argon2';
 import adminModel from '../admins/adminModel.js';
+import { getLog } from '../utils/logger.js';
 
 // Usage:
 // EMAIL=user@example.com NEW_PASSWORD='StrongPass123' node scripts/resetAdminPassword.js
@@ -13,8 +14,9 @@ const EMAIL = (process.env.EMAIL || emailArg || '').trim().toLowerCase();
 const NEW_PASSWORD = process.env.NEW_PASSWORD || passArg || '';
 
 if (!EMAIL || !NEW_PASSWORD) {
-  console.error('Usage: EMAIL=<email> NEW_PASSWORD=<password> node scripts/resetAdminPassword.js');
-  console.error('   or: node scripts/resetAdminPassword.js <email> <password>');
+  const log = getLog(null, { event: 'script.resetAdminPassword' });
+  log.error('usage: EMAIL=<email> NEW_PASSWORD=<password> node scripts/resetAdminPassword.js');
+  log.error('   or: node scripts/resetAdminPassword.js <email> <password>');
   process.exit(1);
 }
 
@@ -25,9 +27,10 @@ if (!EMAIL || !NEW_PASSWORD) {
     }
     await mongoose.connect(process.env.MONGODB_ATLAS_URL);
 
+    const log = getLog(null, { event: 'script.resetAdminPassword' });
     const user = await adminModel.findOne({ email: EMAIL });
     if (!user) {
-      console.error('No admin found with email:', EMAIL);
+      log.warn({ email: EMAIL }, 'no admin found');
       process.exit(2);
     }
 
@@ -36,9 +39,10 @@ if (!EMAIL || !NEW_PASSWORD) {
     user.token = [];
     await user.save();
 
-    console.log('Password reset successfully for:', EMAIL);
+  log.info({ email: EMAIL }, 'password reset successfully');
   } catch (e) {
-    console.error('Failed to reset admin password:', e.message);
+    const log = getLog(null, { event: 'script.resetAdminPassword' });
+    log.error({ email: EMAIL, err: e?.message }, 'failed to reset admin password');
     process.exit(3);
   } finally {
     await mongoose.connection.close();

@@ -13,6 +13,7 @@ import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import adminModel from "../admins/adminModel.js";
+import { getLog } from "../logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,13 +23,15 @@ dotenv.config({ path: path.join(__dirname, "..", ".env") });
 async function run() {
   const mongoURL = process.env.MONGODB_ATLAS_URL;
 
+  const log = getLog(null, { operationId: 'purgeEmptyTokens' });
+
   if (!mongoURL) {
-    console.error("❌ No MongoDB connection string found.");
+    log.error({ event: 'script.purgeTokens.error', reason: 'missingMongoURL' }, 'No MongoDB connection string found');
     process.exit(1);
   }
 
   await mongoose.connect(mongoURL);
-  console.log("✅ Connected to MongoDB");
+  log.info({ event: 'script.purgeTokens.start', mongoHostPreview: mongoURL.replace(/^mongodb\+srv:\/\//, '').slice(0, 60) }, 'Connected to MongoDB');
 
   const nowSec = Math.floor(Date.now() / 1000);
   const jwtSecret = process.env.JWT_SECRET;
@@ -71,19 +74,20 @@ async function run() {
     totalRemaining += kept.length;
   }
 
-  console.log("🧹 Purge summary:", {
+  log.info({
+    event: 'script.purgeTokens.summary',
     adminsScanned: admins.length,
     modifiedDocs,
     removedEmpty: totalEmpty,
     removedExpiredOrInvalid: totalExpired,
     remainingValidTokens: totalRemaining,
-    timestamp: new Date().toISOString(),
-  });
+  }, 'Purge completed');
   await mongoose.disconnect();
-  console.log("🔌 Disconnected");
+  log.info({ event: 'script.purgeTokens.done' }, 'Disconnected from MongoDB');
 }
 
 run().catch((err) => {
-  console.error("❌ Purge failed:", err);
+  const log = getLog(null, { operationId: 'purgeEmptyTokens' });
+  log.error({ event: 'script.purgeTokens.error', err: err && err.message ? err.message : err }, 'Purge failed');
   process.exit(1);
 });

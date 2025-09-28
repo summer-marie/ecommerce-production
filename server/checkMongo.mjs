@@ -1,21 +1,21 @@
 import mongoose from "mongoose";
+import { getLog } from "./logger.js";
 
 (async () => {
   try {
+    const log = getLog(null, { operationId: 'checkMongo' });
     const uri = process.env.MONGODB_ATLAS_URL;
     if (!uri) {
-      console.error("CONNECT-ERR Missing MONGODB_ATLAS_URL");
+      log.error({ event: 'script.checkMongo.missingEnv' }, 'Missing MONGODB_ATLAS_URL');
       process.exit(1);
     }
-    console.log(
-      "Using URI host preview:",
-      uri.replace(/^mongodb\+srv:\/\//, "").slice(0, 100)
-    );
+    log.info({ event: 'script.checkMongo.start', hostPreview: uri.replace(/^mongodb\+srv:\/\//, '').slice(0, 80) }, 'Attempting MongoDB connection');
     await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
-    console.log("CONNECTED");
+    log.info({ event: 'script.checkMongo.connected' }, 'MongoDB connection successful');
     await mongoose.disconnect();
   } catch (e) {
-    console.error("CONNECT-ERR", e && e.message ? e.message : e);
+    const log = getLog(null, { operationId: 'checkMongo' });
+    log.error({ event: 'script.checkMongo.error', err: e && e.message ? e.message : e }, 'MongoDB connection failed');
     process.exit(1);
   }
 })();

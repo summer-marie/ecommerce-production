@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import adminModel from "../admins/adminModel.js";
+import { getLog } from "../utils/logger.js";
 
 const tokenExpiration = process.env.TOKEN_EXPIRATION || 60 * 60 * 24 * 30; // 30 days
 
@@ -25,7 +26,8 @@ const createToken = (user) => {
 
 const authLogin = async (req, res, next) => {
   const { _id } = req.user;
-  console.log("[Auth] Issuing token");
+  const log = getLog(req, { event: 'auth.login' });
+  log.debug({ userId: _id }, 'issuing token');
 
   try {
     const user = await adminModel.findOne({ _id });
@@ -62,7 +64,7 @@ const authLogin = async (req, res, next) => {
       },
     });
   } catch (err) {
-    console.error("authLogin error:", err);
+  log.error({ err: err?.message }, 'auth login error');
     res.status(500).json({
       success: false,
       message: "Authentication failed",

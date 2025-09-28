@@ -2,19 +2,21 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import * as argon2 from "argon2";
 import adminModel from "./admins/adminModel.js";
+import { getLog } from "./logger.js";
 
 const createAdmin = async () => {
   try {
     // Connect to MongoDB (use Atlas URL)
-    await mongoose.connect(process.env.MONGODB_ATLAS_URL);
-    console.log("Connected to MongoDB");
+  const log = getLog(null, { operationId: 'createAdmin' });
+  await mongoose.connect(process.env.MONGODB_ATLAS_URL);
+  log.info({ event: 'script.createAdmin.start' }, 'Connected to MongoDB');
 
     // Check if admin already exists
     const existingAdmin = await adminModel.findOne({
       email: "admin@pizza.com",
     });
     if (existingAdmin) {
-      console.log("Admin user already exists:", existingAdmin.email);
+      log.info({ event: 'script.createAdmin.exists', email: existingAdmin.email }, 'Admin user already exists');
       process.exit(0);
     }
 
@@ -33,11 +35,11 @@ const createAdmin = async () => {
     });
 
     await admin.save();
-    console.log("✅ Admin user created successfully!");
-    console.log("Email: admin@pizza.com");
-    console.log("Password: admin123");
+    log.info({ event: 'script.createAdmin.created', email: 'admin@pizza.com' }, 'Admin user created successfully');
+    log.info({ event: 'script.createAdmin.credentials', email: 'admin@pizza.com', passwordHint: 'admin123 (dev default)' }, 'Admin credentials');
   } catch (error) {
-    console.error("❌ Error creating admin:", error);
+    const log = getLog(null, { operationId: 'createAdmin' });
+    log.error({ event: 'script.createAdmin.error', err: error && error.message ? error.message : error }, 'Error creating admin');
   } finally {
     mongoose.connection.close();
   }

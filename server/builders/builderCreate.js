@@ -1,9 +1,11 @@
 import builderModel from "./builderModel.js";
 import { invalidateCache } from "../middleware/performance.js";
+import { getLog } from "../utils/logger.js";
 
 const builderCreate = async (req, res) => {
   try {
-    console.log("Request body:", req.body);
+  const log = getLog(req, { event: 'builder.create' });
+  log.debug({ bodyKeys: Object.keys(req.body || {}) }, 'create builder request body');
 
     const { pizzaName, base, sauce, meatTopping, veggieTopping, image } =
       req.body;
@@ -41,18 +43,21 @@ const builderCreate = async (req, res) => {
       image: image || null, // Firebase Storage image data
     });
 
-    console.log("New pizza created with Base64 image:", {
-      ...newPizza.toObject(),
-      image: newPizza.image
+    log.info({
+      id: newPizza._id,
+      pizzaName: newPizza.pizzaName,
+      price: newPizza.pizzaPrice,
+      hasImage: !!newPizza.image,
+      imageMeta: newPizza.image
         ? {
             filename: newPizza.image.filename,
             mimetype: newPizza.image.mimetype,
             dataSize: newPizza.image.data
               ? `${(newPizza.image.data.length / 1024).toFixed(2)} KB`
-              : "0 KB",
+              : '0 KB'
           }
-        : null,
-    });
+        : null
+    }, 'builder created');
 
     // Invalidate builders cache so new pizza appears immediately
     await invalidateCache("api:/builders");
@@ -63,7 +68,8 @@ const builderCreate = async (req, res) => {
       pizza: newPizza,
     });
   } catch (err) {
-    console.error("Full error details:", err);
+  const log = getLog(req, { event: 'builder.create.error' });
+  log.error({ err: err?.message }, 'builder create error');
     res.status(500).json({
       success: false,
       message: "Server error while creating pizza",

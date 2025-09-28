@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { cleanupArchivedOrders } from "./scripts/cleanupArchivedOrders.js";
+import { getLog } from "./logger.js";
 
 /**
  * Scheduled tasks for the ecommerce application
@@ -14,27 +15,26 @@ import { cleanupArchivedOrders } from "./scripts/cleanupArchivedOrders.js";
 const scheduleArchivedOrdersCleanup = () => {
   // Run daily at 2:00 AM (when site traffic is typically lowest)
   cron.schedule("0 2 * * *", async () => {
-    console.log("🕐 Starting scheduled archived orders cleanup at", new Date().toLocaleString());
-    
+    const log = getLog(null, { operationId: 'scheduleArchivedOrdersCleanup' });
+    log.info({ event: 'schedule.archivedOrders.start', at: new Date().toISOString() }, 'Starting scheduled archived orders cleanup');
     try {
       const result = await cleanupArchivedOrders();
-      
       if (result.success && result.deletedCount > 0) {
-        console.log(`✅ Scheduled cleanup completed: ${result.deletedCount} orders deleted`);
+        log.info({ event: 'schedule.archivedOrders.completed', deletedCount: result.deletedCount }, 'Scheduled cleanup deleted orders');
       } else if (result.success && result.deletedCount === 0) {
-        console.log("ℹ️  Scheduled cleanup completed: No orders to delete");
+        log.info({ event: 'schedule.archivedOrders.none' }, 'Scheduled cleanup found no orders to delete');
       } else {
-        console.error("❌ Scheduled cleanup failed:", result.error);
+        log.error({ event: 'schedule.archivedOrders.failed', error: result.error }, 'Scheduled cleanup failed');
       }
     } catch (error) {
-      console.error("❌ Error in scheduled cleanup:", error);
+      log.error({ event: 'schedule.archivedOrders.error', err: error && error.message ? error.message : error }, 'Error executing scheduled cleanup');
     }
   }, {
     scheduled: true,
     timezone: "America/New_York" // Adjust timezone as needed
   });
-
-  console.log("📅 Archived orders cleanup scheduled to run daily at 2:00 AM");
+  const log = getLog(null, { operationId: 'scheduleArchivedOrdersCleanup' });
+  log.info({ event: 'schedule.archivedOrders.scheduled', cron: '0 2 * * *', timezone: 'America/New_York' }, 'Archived orders cleanup scheduled');
 };
 
 /**
@@ -42,7 +42,8 @@ const scheduleArchivedOrdersCleanup = () => {
  * Call this function from your main server file to start all cron jobs
  */
 const initializeScheduledTasks = () => {
-  console.log("🚀 Initializing scheduled tasks...");
+  const log = getLog(null, { operationId: 'scheduledTasksInit' });
+  log.info({ event: 'schedule.init.start' }, 'Initializing scheduled tasks');
   
   scheduleArchivedOrdersCleanup();
   
@@ -51,7 +52,7 @@ const initializeScheduledTasks = () => {
   // scheduleBackups();
   // scheduleReports();
   
-  console.log("✅ All scheduled tasks initialized");
+  log.info({ event: 'schedule.init.done' }, 'All scheduled tasks initialized');
 };
 
 export { initializeScheduledTasks, scheduleArchivedOrdersCleanup };

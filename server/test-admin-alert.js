@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { sendAdminNewOrderEmail } from './utils/orderAlertService.js';
+import { getLog } from './logger.js';
 
 // Load server/.env
 const __filename = fileURLToPath(import.meta.url);
@@ -23,11 +24,12 @@ const mockOrder = {
 };
 
 (async () => {
+  const log = getLog(null, { operationId: 'testAdminAlert' });
   try {
     const result = await sendAdminNewOrderEmail(mockOrder);
-    console.log('Admin alert send result:', result);
+    log.info({ event: 'test.adminAlert.success', recipients: result && result.recipients ? result.recipients.length : undefined }, 'Admin alert send result');
   } catch (err) {
-    console.error('Admin alert send failed:', err);
+    log.error({ event: 'test.adminAlert.error', err: err && err.message ? err.message : err }, 'Admin alert send failed');
     process.exit(1);
   }
 })();

@@ -1,5 +1,6 @@
 import * as argon2 from "argon2";
 import adminModel from "../admins/adminModel.js";
+import { getLog } from "../utils/logger.js";
 
 // POST /auth/change-password
 // Requires JWT auth (passport.authenticate('jwt', { session: false }))
@@ -7,6 +8,7 @@ import adminModel from "../admins/adminModel.js";
 const authChangePassword = async (req, res) => {
   // Change password request received
   
+  const log = getLog(req, { event: 'auth.changePassword' });
   try {
     const userId = req.user?._id;
     const rawCurrent = req.body?.currentPassword;
@@ -62,7 +64,7 @@ const authChangePassword = async (req, res) => {
       requireRelogin: true 
     });
   } catch (err) {
-    console.error("authChangePassword error:", err);
+    log.error({ err: err?.message }, 'auth change password error');
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };

@@ -1,5 +1,6 @@
 import builderModel from "./builderModel.js";
 import { invalidateCache } from "../middleware/performance.js";
+import { getLog } from "../utils/logger.js";
 
 const pizzaUpdateOne = async (req, res) => {
   try {
@@ -53,18 +54,22 @@ const pizzaUpdateOne = async (req, res) => {
         .json({ success: false, message: "Pizza not found" });
     }
 
-    console.log("Pizza updated with Base64 image:", {
-      ...updatedPizza.toObject(),
-      image: updatedPizza.image
+    const log = getLog(req, { event: 'builder.update' });
+    log.info({
+      id: updatedPizza._id,
+      pizzaName: updatedPizza.pizzaName,
+      price: updatedPizza.pizzaPrice,
+      hasImage: !!updatedPizza.image,
+      imageMeta: updatedPizza.image
         ? {
             filename: updatedPizza.image.filename,
             mimetype: updatedPizza.image.mimetype,
             dataSize: updatedPizza.image.data
               ? `${(updatedPizza.image.data.length / 1024).toFixed(2)} KB`
-              : "0 KB",
+              : '0 KB'
           }
-        : null,
-    });
+        : null
+    }, 'builder updated');
     // Invalidate builders cache for fresh data
     await invalidateCache("api:/builders");
 
@@ -74,7 +79,8 @@ const pizzaUpdateOne = async (req, res) => {
       builder: updatedPizza,
     });
   } catch (err) {
-    console.error("Update error:", err);
+  const log = getLog(req, { event: 'builder.update.error' });
+  log.error({ err: err?.message }, 'builder update error');
     res
       .status(500)
       .json({ success: false, message: "Server error", error: err.message });
