@@ -190,24 +190,12 @@ const AdminMenu = () => {
                       >
                         Update Pizza
                       </button>
-                      <button
-                        onClick={() => handleDeleteClick(builder)}
-                        type="button"
-                        className="absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-top-left transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
-                            shadow-red-800/80 
-                            text-white 
-                            from-black
-                            via-red-500 
-                            to-red-600
-                            focus:ring-red-800"
-                      >
-                        Delete
-                      </button>
+                      {/* Deactivate now positioned at top-left */}
                       <button
                         onClick={() => handleToggleStatus(builder)}
                         type="button"
                         disabled={togglingId === (builder.id || builder._id)}
-                        className={`absolute z-10 bottom-1 left-1 sm:bottom-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center bg-gradient-to-t focus:ring-4 focus:outline-none whitespace-nowrap transform origin-bottom-left transition-all sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                        className={`absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center bg-gradient-to-t focus:ring-4 focus:outline-none whitespace-nowrap transform origin-top-left transition-all sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
                             shadow-orange-800/80 text-white from-orange-950 via-orange-500 to-orange-600 focus:ring-orange-800
                             ${
                               togglingId === (builder.id || builder._id)
@@ -218,6 +206,20 @@ const AdminMenu = () => {
                         {togglingId === (builder.id || builder._id)
                           ? "Updating..."
                           : "Deactivate"}
+                      </button>
+                      {/* Delete moved to bottom-left */}
+                      <button
+                        onClick={() => handleDeleteClick(builder)}
+                        type="button"
+                        className="absolute z-10 bottom-1 left-1 sm:bottom-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-bottom-left transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                            shadow-red-800/80 
+                            text-white 
+                            from-black
+                            via-red-500 
+                            to-red-600
+                            focus:ring-red-800"
+                      >
+                        Delete
                       </button>
                     </div>
                     <div className="p-3 flex-1 flex flex-col">

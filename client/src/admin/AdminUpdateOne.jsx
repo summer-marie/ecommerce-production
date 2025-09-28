@@ -184,18 +184,34 @@ const AdminUpdateOne = () => {
     setPizzaForm({ ...pizzaForm, [name]: value });
   };
 
+  // Natural price input handler: allow user to type freely within pattern
   const handlePriceChange = (e) => {
-    let input = e.target.value.replace(/\D/g, ""); // Remove all non-digits
-    if (input.length === 0) {
+    const { value } = e.target;
+
+    // Allow clearing
+    if (value === "") {
       setPizzaForm({ ...pizzaForm, pizzaPrice: "" });
       return;
     }
-    // Pad with zeros if needed, then insert decimal
-    while (input.length < 3) input = "0" + input;
-    const dollars = input.slice(0, -2);
-    const cents = input.slice(-2);
-    const formatted = `${parseInt(dollars, 10)}.${cents}`;
-    setPizzaForm({ ...pizzaForm, pizzaPrice: formatted });
+
+    // Accept only digits with optional single decimal and up to 2 fractional digits
+    const pricePattern = /^\d+(\.\d{0,2})?$/;
+    if (!pricePattern.test(value)) {
+      return; // Ignore invalid keystroke
+    }
+    setPizzaForm({ ...pizzaForm, pizzaPrice: value });
+  };
+
+  // On blur normalize to two decimals (e.g., 10 -> 10.00, 10.5 -> 10.50, 10. -> 10.00)
+  const handlePriceBlur = () => {
+    const raw = pizzaForm?.pizzaPrice;
+    if (raw === undefined || raw === null || raw === "") return;
+    const num = Number(raw);
+    if (!Number.isFinite(num)) {
+      setPizzaForm({ ...pizzaForm, pizzaPrice: "" });
+      return;
+    }
+    setPizzaForm({ ...pizzaForm, pizzaPrice: num.toFixed(2) });
   };
 
   // const handleFileChange = (e) => {
@@ -363,9 +379,9 @@ const AdminUpdateOne = () => {
                     value={pizzaForm.pizzaPrice}
                     type="text"
                     inputMode="decimal"
-                    pattern="[0-9]*(\\.[0-9]{0,2})?"
                     placeholder="00.00"
                     onChange={handlePriceChange}
+                    onBlur={handlePriceBlur}
                     id="pizzaPrice"
                     className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light text-black placeholder-gray-500 border-slate-500 bg-gray-200 focus:bg-gray-100 focus:border-sky-700"
                     required
