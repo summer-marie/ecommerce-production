@@ -62,23 +62,22 @@ const InstallConsentModal = () => {
   useEffect(() => {
     // Capture the install prompt so consent can be collected before proceeding (mobile only)
     const onBeforeInstall = (e) => {
-      // Suppress desktop install; we only support install on mobile
-      if (!isMobileDevice()) {
-        e.preventDefault();
+      const mobile = isMobileDevice();
+      if (!mobile) {
+        // Do NOT call preventDefault on desktop so browser can decide (avoids console warning)
         return;
       }
+      // Intercept on mobile so we can show our consent modal first
       e.preventDefault();
       setDeferredPrompt(e);
-      // Only display modal when current version hasn’t been accepted yet
       if (!alreadyAccepted()) {
         setRequireConsentOnly(false);
         setShow(true);
       }
     };
 
-    window.addEventListener("beforeinstallprompt", onBeforeInstall);
-    return () =>
-      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("beforeinstallprompt", onBeforeInstall, { passive: true });
+    return () => window.removeEventListener("beforeinstallprompt", onBeforeInstall);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
