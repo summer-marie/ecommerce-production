@@ -1,3 +1,4 @@
+import { logger } from "../utils/logger";
 const squarePaymentService = {
   // Wait for Square SDK to load
   waitForSquareSDK: () => {
@@ -45,12 +46,13 @@ const squarePaymentService = {
   // Initialize Square Web Payments
   initializeSquarePayments: async () => {
     try {
-      console.log("Starting Square payments initialization...");
-      console.log("App ID:", import.meta.env.VITE_SQUARE_APPLICATION_ID);
-      console.log("Location ID:", import.meta.env.VITE_SQUARE_LOCATION_ID);
+      logger.debug("Square init start", {
+        appId: import.meta.env.VITE_SQUARE_APPLICATION_ID ? 'present' : 'missing',
+        locationId: import.meta.env.VITE_SQUARE_LOCATION_ID ? 'present' : 'missing'
+      });
 
       const Square = await squarePaymentService.waitForSquareSDK();
-      console.log("Square SDK loaded:", Square);
+  logger.debug("Square SDK loaded", { hasPayments: !!Square?.payments });
 
       if (!import.meta.env.VITE_SQUARE_APPLICATION_ID) {
         throw new Error(
@@ -69,10 +71,10 @@ const squarePaymentService = {
         import.meta.env.VITE_SQUARE_LOCATION_ID
       );
 
-      console.log("Square payments instance created:", paymentsInstance);
+      logger.debug("Square payments instance created");
       return paymentsInstance;
     } catch (error) {
-      console.error("Square initialization error:", error);
+      logger.error("Square initialization error", error);
       throw new Error(`Square SDK initialization failed: ${error.message}`);
     }
   },

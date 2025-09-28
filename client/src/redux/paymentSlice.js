@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import paymentService from "./paymentService";
+import { logger } from "../utils/logger";
 
 // Mirror style of orderSlice: verbose logging & standard state keys
 const initialState = {
@@ -12,9 +13,9 @@ const initialState = {
 export const createSquarePayment = createAsyncThunk(
   "payment/createSquarePayment",
   async (paymentData) => {
-    console.log("redux createSquarePayment paymentData", paymentData);
+    logger.debug("createSquarePayment start", { paymentData });
     const response = await paymentService.createSquarePayment(paymentData);
-    console.log("redux createSquarePayment response", response);
+    logger.debug("createSquarePayment response", response?.data);
     return response.data;
   }
 );
@@ -23,9 +24,9 @@ export const createSquarePayment = createAsyncThunk(
 export const getSquarePaymentStatus = createAsyncThunk(
   "payment/getSquarePaymentStatus",
   async (paymentId) => {
-    console.log("redux getSquarePaymentStatus paymentId", paymentId);
+    logger.debug("getSquarePaymentStatus start", { paymentId });
     const response = await paymentService.getSquarePaymentStatus(paymentId);
-    console.log("redux getSquarePaymentStatus response", response);
+    logger.debug("getSquarePaymentStatus response", response?.data);
     return response.data;
   }
 );
@@ -34,9 +35,9 @@ export const getSquarePaymentStatus = createAsyncThunk(
 export const testSquareConnection = createAsyncThunk(
   "payment/testSquareConnection",
   async () => {
-    console.log("redux testSquareConnection");
+    logger.debug("testSquareConnection start");
     const response = await paymentService.testSquareConnection();
-    console.log("redux testSquareConnection response", response);
+    logger.debug("testSquareConnection response", response?.data);
     return response.data;
   }
 );
@@ -49,75 +50,51 @@ export const paymentSlice = createSlice({
     builder
       // Create payment
       .addCase(createSquarePayment.pending, (state, action) => {
-        console.log("paymentSlice createSquarePayment.pending", action.payload);
+        logger.debug("createSquarePayment.pending", action.payload);
         state.loading = true;
         state.error = null;
       })
       .addCase(createSquarePayment.fulfilled, (state, action) => {
-        console.log(
-          "paymentSlice createSquarePayment.fulfilled",
-          action.payload
-        );
+        logger.debug("createSquarePayment.fulfilled", action.payload);
         state.loading = false;
         state.lastResult = action.payload;
       })
       .addCase(createSquarePayment.rejected, (state, action) => {
-        console.log(
-          "paymentSlice createSquarePayment.rejected",
-          action.payload
-        );
+        logger.warn("createSquarePayment.rejected", action.payload);
         state.loading = false;
         state.error = action.error?.message;
       })
 
       // Get payment status
       .addCase(getSquarePaymentStatus.pending, (state, action) => {
-        console.log(
-          "paymentSlice getSquarePaymentStatus.pending",
-          action.payload
-        );
+        logger.debug("getSquarePaymentStatus.pending", action.payload);
         state.loading = true;
         state.error = null;
       })
       .addCase(getSquarePaymentStatus.fulfilled, (state, action) => {
-        console.log(
-          "paymentSlice getSquarePaymentStatus.fulfilled",
-          action.payload
-        );
+        logger.debug("getSquarePaymentStatus.fulfilled", action.payload);
         state.loading = false;
         state.lastResult = action.payload;
       })
       .addCase(getSquarePaymentStatus.rejected, (state, action) => {
-        console.log(
-          "paymentSlice getSquarePaymentStatus.rejected",
-          action.payload
-        );
+        logger.warn("getSquarePaymentStatus.rejected", action.payload);
         state.loading = false;
         state.error = action.error?.message;
       })
 
       // Test Square connection
       .addCase(testSquareConnection.pending, (state, action) => {
-        console.log(
-          "paymentSlice testSquareConnection.pending",
-          action.payload
-        );
+        logger.debug("testSquareConnection.pending", action.payload);
         state.loading = true;
         state.error = null;
       })
       .addCase(testSquareConnection.fulfilled, (state, action) => {
-        console.log(
-          "paymentSlice testSquareConnection.fulfilled",
-          action.payload
-        );
+        logger.debug("testSquareConnection.fulfilled", action.payload);
         state.loading = false;
         state.lastResult = action.payload;
       })
       .addCase(testSquareConnection.rejected, (state, action) => {
-        console.log(
-          "paymentSlice testSquareConnection.rejected",
-          action.payload
-        );
+        logger.warn("testSquareConnection.rejected", action.payload);
         state.loading = false;
         state.error = action.error?.message;
       });

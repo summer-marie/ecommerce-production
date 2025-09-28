@@ -38,13 +38,22 @@ export default function AdminOperatingHours() {
   const { config, loading, saving, error } = useSelector(
     (state) => state.operating
   );
+  // Auth state so we only attempt secure fetch once token is known
+  const { token, loading: authLoading } = useSelector((s) => s.auth);
   const [formError, setFormError] = useState("");
   const [showHelp, setShowHelp] = useState(false);
 
-  // Load operating hours configuration when component mounts
+  // Load operating hours configuration when auth token available (prevents early 401)
   useEffect(() => {
+    // Don't fetch until auth slice finished its initial hydration
+    if (authLoading) return;
+    if (!token) {
+      logger.debug("Skipping operating config fetch – no auth token");
+      return;
+    }
+    logger.debug("Fetching operating config with token present");
     dispatch(fetchOperatingConfig());
-  }, [dispatch]);
+  }, [dispatch, token, authLoading]);
 
   // Debug logging
   useEffect(() => {
@@ -140,7 +149,21 @@ export default function AdminOperatingHours() {
       </div>
     );
 
-  // Error states
+  // Not logged in (after auth resolved)
+  if (!authLoading && !token) {
+    return (
+      <div className="p-6 text-slate-300">
+        <div className="bg-yellow-900/40 border border-yellow-700 rounded p-4 mb-4">
+          <h3 className="text-yellow-400 font-semibold mb-2">Admin Login Required</h3>
+          <p className="text-sm text-yellow-300 mb-4">
+            You need to be logged in as an admin to view and edit operating hours.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error states (401 or other)
   if (error) {
     return (
       <div className="p-6 text-slate-300">

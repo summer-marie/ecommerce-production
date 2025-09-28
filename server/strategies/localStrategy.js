@@ -5,12 +5,12 @@ import userModel from "../admins/adminModel.js";
 import { getLog } from "../utils/logger.js";
 
 passport.serializeUser((user, done) => {
-  // console.log('serializeUser', user)
+  // Using session serialization (debug logging suppressed to avoid noise)
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
-  // console.log('deserializedUser', id)
+  // Session deserialization (debug logging suppressed to avoid noise)
   try {
     // Both work, so i kept them both for ref.
     // const findUser = await userModel.findById(id)

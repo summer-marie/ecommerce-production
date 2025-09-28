@@ -452,11 +452,11 @@ export const handleSquareWebhook = async (req, res) => {
 //         })) || [],
 //     });
 //   } catch (error) {
-//     console.error("Square connection test failed:", error);
-//     res.status(500).json({
-//       error: "Square connection failed",
-//       details: error.message,
-//     });
+//     // logger.error({ err: error.message }, 'Square connection test failed');
+//     // res.status(500).json({
+//     //   error: "Square connection failed",
+//     //   details: error.message,
+//     // });
 //   }
 // };
 
