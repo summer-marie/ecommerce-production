@@ -4,6 +4,7 @@ import builderGetMany from "./builderGetMany.js";
 import pizzaUpdateOne from "./builderUpdateOne.js";
 import builderGetOne from "./builderGetOne.js";
 import builderDeleteOne from "./builderDeleteOne.js";
+import builderToggleStatus from "./builderToggleStatus.js";
 
 const builderIndex = express.Router();
 
@@ -15,6 +16,9 @@ builderIndex.get("/", builderGetMany);
 
 // Update one
 builderIndex.put("/:id", pizzaUpdateOne);
+
+// Toggle active status
+builderIndex.patch("/:id/toggle-status", builderToggleStatus);
 
 // Get One
 builderIndex.get("/pizza-detail/:id", builderGetOne);

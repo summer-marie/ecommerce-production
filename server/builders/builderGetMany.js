@@ -21,7 +21,7 @@ const builderGetMany = async (req, res) => {
       return { id, ...rest };
     });
 
-    logInfo("Pizza builders retrieved", { count: getBuiltPizzas.length });
+  logInfo("Pizza builders retrieved", { count: getBuiltPizzas.length });
 
     res.status(200).json({
       success: true,

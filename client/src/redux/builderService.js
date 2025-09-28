@@ -45,5 +45,11 @@ const builderService = {
     const response = await axios.delete(`${API_BASE}/builders/${id}`);
     return response.data; // { success: true, id: ... }
   },
+
+  builderToggleStatus: async (id, active) => {
+    const response = await axios.patch(`${API_BASE}/builders/${id}/toggle-status`, { active });
+    // (Diagnostics removed) - rely on slice state for UI; add back if needed
+    return response.data; // { success: true, pizza, builders }
+  },
 };
 export default builderService;

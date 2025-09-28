@@ -104,7 +104,6 @@ import { requireApiKey, createApiKeyRoutes } from "./middleware/apiKeyAuth.js";
 // Performance Middleware
 import {
   compressionMiddleware,
-  cacheMiddleware,
   performanceMiddleware,
   dbOptimizationMiddleware,
 } from "./middleware/performance.js";
@@ -311,8 +310,10 @@ try {
   app.use("/auth", authRouter);
     app.use("/admins", adminRateLimit, adminRouter);
     app.use("/orders", orderIndex);
-    app.use("/ingredients", cacheMiddleware(600), ingredientsIndex);
-    app.use("/builders", cacheMiddleware(300), builderIndex);
+  // Removed ingredients cache (dataset is small; need instant freshness on admin edits)
+  app.use("/ingredients", ingredientsIndex);
+  // Removed builders cache (list is small; need immediate freshness after mutations)
+  app.use("/builders", builderIndex);
     app.use("/messages", msgIndex);
     app.use("/payments", paymentRoutes);
   app.use("/operating-hours", operatingRoutes);

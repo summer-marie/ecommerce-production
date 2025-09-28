@@ -58,6 +58,10 @@ const builderSchema = new Schema({
     filename: String, // Original filename for reference
     mimetype: String, // Image MIME type (image/jpeg, image/png, etc.)
   },
+  active: {
+    type: Boolean,
+    default: true, // New pizzas are active by default
+  },
 });
 
 builderSchema

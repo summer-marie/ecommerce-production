@@ -67,6 +67,15 @@ export const builderDeleteOneAlt = createAsyncThunk(
   }
 );
 
+// Toggle Status
+export const builderToggleStatus = createAsyncThunk(
+  "builder/toggleStatus",
+  async ({ id, active }) => {
+    const response = await builderService.builderToggleStatus(id, active);
+    return response; // full payload includes pizza + builders list
+  }
+);
+
 export const builderSlice = createSlice({
   name: "builder",
   initialState,
@@ -166,6 +175,30 @@ export const builderSlice = createSlice({
         if (index !== -1) {
           state.builders.splice(index, 1);
         }
+        state.loading = false;
+      })
+
+      // Toggle Status
+      .addCase(builderToggleStatus.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(builderToggleStatus.fulfilled, (state, action) => {
+        // Diagnostic: log payload summary
+        // Removed verbose diagnostics; can reintroduce if future debugging needed
+        // Replace entire list (mirrors order status update pattern)
+        if (action.payload?.builders) {
+          state.builders = action.payload.builders;
+        } else if (action.payload?.pizza) {
+          // Fallback: update single pizza
+          const updatedPizza = action.payload.pizza;
+          const idx = state.builders.findIndex(
+            (b) => b.id === updatedPizza.id || b._id === updatedPizza._id
+          );
+          if (idx !== -1) state.builders[idx] = updatedPizza;
+        }
+        state.loading = false;
+      })
+      .addCase(builderToggleStatus.rejected, (state) => {
         state.loading = false;
       });
   },
