@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router";
 import { useState, useEffect, useCallback } from "react";
+import { logger } from "../utils/logger";
 import { builderGetMany, builderDeleteOneAlt, builderToggleStatus } from "../redux/builderSlice";
 import { useSelector, useDispatch } from "react-redux";
 import AlertBlack from "../components/AlertBlack";
@@ -42,14 +43,14 @@ const AdminMenu = () => {
     setShowAlert(false);
     const id = alertPizza?.id;
     if (!id) {
-      console.error("No pizza id set for deletion");
+      logger.error("No pizza id set for deletion");
       return;
     }
     await dispatch(builderDeleteOneAlt(id)).unwrap();
     // Refresh the builders list after deletion
     await dispatch(builderGetMany()).unwrap();
     setAlertPizza(null);
-    console.log("Pizza deleted with ID:", id);
+  logger.info("Pizza deleted", { id });
   };
 
   const handleCancel = () => {
@@ -71,7 +72,7 @@ const AdminMenu = () => {
     try {
       await dispatch(builderToggleStatus({ id, active: newActiveStatus })).unwrap();
     } catch (err) {
-      console.error('Toggle failed', err);
+      logger.error('Toggle failed', err);
     } finally {
       setTogglingId(null);
     }

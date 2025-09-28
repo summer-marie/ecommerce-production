@@ -1,5 +1,6 @@
 // Frontend Performance Optimization Utilities
 import { memo, useEffect, useState } from "react";
+import { logger } from "./logger";
 
 // Performance monitoring hook
 export const usePerformanceMonitor = (componentName) => {
@@ -12,7 +13,7 @@ export const usePerformanceMonitor = (componentName) => {
 
       // Log slow renders (> 16ms threshold for 60fps)
       if (renderTime > 16) {
-        console.warn(
+        logger.warn(
           `Slow render detected in ${componentName}: ${renderTime.toFixed(2)}ms`
         );
       }
@@ -50,17 +51,17 @@ export const withPerformanceOptimization = (
 // Bundle analyzer function for development
 export const logBundlePerformance = () => {
   if (import.meta.env.MODE === "development") {
-    console.group("🚀 Frontend Performance Metrics");
-    console.log(
+    logger.log("🚀 Frontend Performance Metrics");
+    logger.debug(
       "Bundle chunks loaded:",
       document.querySelectorAll("script[src]").length
     );
-    console.log("Images loaded:", document.querySelectorAll("img").length);
-    console.log(
+    logger.debug("Images loaded:", document.querySelectorAll("img").length);
+    logger.debug(
       "Memory usage:",
       navigator.memory ? navigator.memory.usedJSHeapSize : "Not available"
     );
-    console.groupEnd();
+    // groupEnd removed; using simple log lines via logger
   }
 };
 

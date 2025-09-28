@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import orderService from "./orderService";
+import { logger } from "../utils/logger";
 
 const initialState = {
   loading: false,
@@ -43,9 +44,9 @@ const initialState = {
 
 // Order create
 export const createOrder = createAsyncThunk("order/create", async (order) => {
-  console.log("redux createOrder order", order);
+  logger.debug("createOrder start", order);
   const response = await orderService.createOrder(order);
-  console.log(response);
+  logger.debug("createOrder response", response?.data?.orderNumber);
   return response.data;
 });
 
@@ -54,33 +55,33 @@ export const orderUpdateStatus = createAsyncThunk(
   "order/update",
   async (payload) => {
     // payload expected: { id: string, status: { status: string } }
-    console.log("redux orderUpdateStatus", payload);
+    logger.debug("orderUpdateStatus start", payload);
     const response = await orderService.orderUpdateStatus(payload);
-    console.log(response);
+    logger.debug("orderUpdateStatus response", response?.data?.status);
     return response.data;
   }
 );
 // Order get one
 export const orderGetOne = createAsyncThunk("order/getOne", async (id) => {
-  console.log("redux orderGetOne order", id);
+  logger.debug("orderGetOne start", id);
   const response = await orderService.orderGetOne(id);
-  console.log(response);
+  logger.debug("orderGetOne response", response?.data?.order?.orderNumber);
   return response.data;
 });
 
 // Get ALL
 export const orderGetAll = createAsyncThunk("order/getAll", async () => {
-  console.log("redux orderGetAll order");
+  logger.debug("orderGetAll start");
   const response = await orderService.orderGetAll();
-  console.log("redux orderGetAll order response", response);
+  logger.debug("orderGetAll response", response?.data?.orders?.length);
   return response.data;
 });
 
 // Get Only open orders
 export const orderGetOpen = createAsyncThunk("order/getOpen", async () => {
-  console.log("redux orderGetOpen order");
+  logger.debug("orderGetOpen start");
   const response = await orderService.orderGetOpen();
-  console.log("redux orderGetOpen order response", response);
+  logger.debug("orderGetOpen response", response?.data?.orders?.length);
   return response.data;
 });
 
@@ -88,9 +89,9 @@ export const orderGetOpen = createAsyncThunk("order/getOpen", async () => {
 export const orderGetArchived = createAsyncThunk(
   "order/getArchived",
   async () => {
-    console.log("redux orderGetArchived order");
+    logger.debug("orderGetArchived start");
     const response = await orderService.orderGetArchived();
-    console.log("redux orderGetArchived order response", response);
+    logger.debug("orderGetArchived response", response?.data?.orders?.length);
     return response.data;
   }
 );
@@ -99,9 +100,12 @@ export const orderGetArchived = createAsyncThunk(
 export const orderArchiveOne = createAsyncThunk(
   "order/archiveOne",
   async (id) => {
-    console.log("redux orderArchiveOne id", id);
+    logger.debug("orderArchiveOne start", id);
     const response = await orderService.orderArchiveOne(id);
-    console.log(response);
+    logger.debug(
+      "orderArchiveOne response",
+      response?.data?.order?.orderNumber
+    );
     return response.data;
   }
 );
@@ -130,9 +134,9 @@ export const markOrderPaymentFailed = createAsyncThunk(
 export const getCleanupPreview = createAsyncThunk(
   "order/getCleanupPreview",
   async () => {
-    console.log("redux getCleanupPreview");
+    logger.debug("getCleanupPreview start");
     const response = await orderService.getCleanupPreview();
-    console.log("redux getCleanupPreview response", response);
+    logger.debug("getCleanupPreview response", response?.data?.preview?.count);
     return response.data;
   }
 );
@@ -142,9 +146,12 @@ export const cleanupArchivedOrders = createAsyncThunk(
   "order/cleanupArchived",
   async (_, { rejectWithValue }) => {
     try {
-      console.log("redux cleanupArchivedOrders");
+      logger.debug("cleanupArchivedOrders start");
       const response = await orderService.cleanupArchivedOrders();
-      console.log("redux cleanupArchivedOrders response", response);
+      logger.debug(
+        "cleanupArchivedOrders response",
+        response?.data?.deletedCount
+      );
       return response.data;
     } catch (err) {
       const payload = err?.response?.data || {
@@ -163,26 +170,32 @@ export const orderSlice = createSlice({
     builder
 
       // Create one
-      .addCase(createOrder.pending, (state, action) => {
-        console.log("orderSlice createOrder.pending", action.payload);
+      .addCase(createOrder.pending, (state) => {
+        logger.debug("orderSlice createOrder.pending");
         state.loading = true;
       })
       .addCase(createOrder.fulfilled, (state, action) => {
-        console.log("orderSlice createOrder.fulfilled", action.payload);
+        logger.debug(
+          "orderSlice createOrder.fulfilled",
+          action.payload?.order?.orderNumber
+        );
         state.loading = false;
       })
       .addCase(createOrder.rejected, (state, action) => {
-        console.log("orderSlice createOrder.rejected", action.payload);
+        logger.warn("orderSlice createOrder.rejected", action.payload);
         state.loading = false;
       })
 
       // Update status
-      .addCase(orderUpdateStatus.pending, (state, action) => {
-        console.log("orderSlice orderUpdateStatus.pending", action.payload);
+      .addCase(orderUpdateStatus.pending, (state) => {
+        logger.debug("orderSlice orderUpdateStatus.pending");
         state.loading = true;
       })
       .addCase(orderUpdateStatus.fulfilled, (state, action) => {
-        console.log("orderSlice orderUpdateStatus.fulfilled", action.payload);
+        logger.debug(
+          "orderSlice orderUpdateStatus.fulfilled",
+          action.payload?.order?.status
+        );
         // const updatedOrder = state.orders.map((order) =>
         //   order._id === action.payload._id ? action.payload : order
         // )
@@ -191,77 +204,92 @@ export const orderSlice = createSlice({
       })
 
       .addCase(orderUpdateStatus.rejected, (state, action) => {
-        console.log("orderSlice orderUpdateStatus.rejected", action.payload);
+        logger.warn("orderSlice orderUpdateStatus.rejected", action.payload);
         state.loading = false;
       })
 
       // Order get one
-      .addCase(orderGetOne.pending, (state, action) => {
-        console.log("orderSlice orderGetOne.pending", action.payload);
+      .addCase(orderGetOne.pending, (state) => {
+        logger.debug("orderSlice orderGetOne.pending");
         state.loading = true;
       })
       .addCase(orderGetOne.fulfilled, (state, action) => {
-        console.log("orderSlice orderGetOne.fulfilled", action.payload);
+        logger.debug(
+          "orderSlice orderGetOne.fulfilled",
+          action.payload?.order?.orderNumber
+        );
         state.loading = false;
         state.order = action.payload.order;
       })
       .addCase(orderGetOne.rejected, (state, action) => {
-        console.log("orderSlice orderGetOne.rejected", action.payload);
+        logger.warn("orderSlice orderGetOne.rejected", action.payload);
         state.loading = false;
       })
 
       // Get all/No Validation
-      .addCase(orderGetAll.pending, (state, action) => {
-        console.log("orderSlice orderGetAll.pending", action.payload);
+      .addCase(orderGetAll.pending, (state) => {
+        logger.debug("orderSlice orderGetAll.pending");
         state.loading = true;
       })
       .addCase(orderGetAll.fulfilled, (state, action) => {
-        console.log("orderSlice orderGetAll.fulfilled", action.payload);
+        logger.debug(
+          "orderSlice orderGetAll.fulfilled",
+          action.payload?.orders?.length
+        );
         state.loading = false;
         state.orders = action.payload.orders;
       })
       .addCase(orderGetAll.rejected, (state, action) => {
-        console.log("orderSlice orderGetAll.rejected", action.payload);
+        logger.warn("orderSlice orderGetAll.rejected", action.payload);
         state.loading = false;
       })
 
       // Get only open orders
-      .addCase(orderGetOpen.pending, (state, action) => {
-        console.log("orderSlice orderGetOpen.pending", action.payload);
+      .addCase(orderGetOpen.pending, (state) => {
+        logger.debug("orderSlice orderGetOpen.pending");
         state.loading = true;
       })
       .addCase(orderGetOpen.fulfilled, (state, action) => {
-        console.log("orderSlice orderGetOpen.fulfilled", action.payload);
+        logger.debug(
+          "orderSlice orderGetOpen.fulfilled",
+          action.payload?.orders?.length
+        );
         state.loading = false;
         state.orders = action.payload.orders;
       })
       .addCase(orderGetOpen.rejected, (state, action) => {
-        console.log("orderSlice orderGetOpen.rejected", action.payload);
+        logger.warn("orderSlice orderGetOpen.rejected", action.payload);
         state.loading = false;
       })
 
       // Get archived orders
-      .addCase(orderGetArchived.pending, (state, action) => {
-        console.log("orderSlice orderGetArchived.pending", action.payload);
+      .addCase(orderGetArchived.pending, (state) => {
+        logger.debug("orderSlice orderGetArchived.pending");
         state.loading = true;
       })
       .addCase(orderGetArchived.fulfilled, (state, action) => {
-        console.log("orderSlice orderGetArchived.fulfilled", action.payload);
+        logger.debug(
+          "orderSlice orderGetArchived.fulfilled",
+          action.payload?.orders?.length
+        );
         state.loading = false;
         state.orders = action.payload.orders;
       })
       .addCase(orderGetArchived.rejected, (state, action) => {
-        console.log("orderSlice orderGetArchived.rejected", action.payload);
+        logger.warn("orderSlice orderGetArchived.rejected", action.payload);
         state.loading = false;
       })
 
       // Archive order
-      .addCase(orderArchiveOne.pending, (state, action) => {
-        console.log("orderSlice orderArchiveOne.pending", action.payload);
+      .addCase(orderArchiveOne.pending, (state) => {
+        logger.debug("orderSlice orderArchiveOne.pending");
         state.loading = true;
       })
       .addCase(orderArchiveOne.fulfilled, (state, action) => {
-        console.log("orderSlice orderArchiveOne.fulfilled", action.payload);
+        logger.debug(
+          "orderSlice orderArchiveOne.fulfilled",
+          action.payload?.order?.orderNumber
+        );
 
         state.loading = false;
         // Update the archived order in state.orders by id
@@ -270,22 +298,19 @@ export const orderSlice = createSlice({
         );
       })
       .addCase(orderArchiveOne.rejected, (state, action) => {
-        console.log("orderSlice orderArchiveOne.rejected", action.payload);
+        logger.warn("orderSlice orderArchiveOne.rejected", action.payload);
         state.loading = false;
       })
 
       // Mark order payment failed
-      .addCase(markOrderPaymentFailed.pending, (state, action) => {
-        console.log(
-          "orderSlice markOrderPaymentFailed.pending",
-          action.payload
-        );
+      .addCase(markOrderPaymentFailed.pending, (state) => {
+        logger.debug("orderSlice markOrderPaymentFailed.pending");
         state.loading = true;
       })
       .addCase(markOrderPaymentFailed.fulfilled, (state, action) => {
-        console.log(
+        logger.debug(
           "orderSlice markOrderPaymentFailed.fulfilled",
-          action.payload
+          action.payload?.order?.status
         );
         state.loading = false;
         // Optionally update state.orders with returned order
@@ -297,7 +322,7 @@ export const orderSlice = createSlice({
         }
       })
       .addCase(markOrderPaymentFailed.rejected, (state, action) => {
-        console.log(
+        logger.warn(
           "orderSlice markOrderPaymentFailed.rejected",
           action.payload || action.error
         );
@@ -307,39 +332,50 @@ export const orderSlice = createSlice({
       })
 
       // Get cleanup preview
-      .addCase(getCleanupPreview.pending, (state, action) => {
-        console.log("orderSlice getCleanupPreview.pending", action.payload);
+      .addCase(getCleanupPreview.pending, (state) => {
+        logger.debug("orderSlice getCleanupPreview.pending");
         state.cleanup.loading = true;
         state.cleanup.error = null;
       })
       .addCase(getCleanupPreview.fulfilled, (state, action) => {
-        console.log("orderSlice getCleanupPreview.fulfilled", action.payload);
+        logger.debug(
+          "orderSlice getCleanupPreview.fulfilled",
+          action.payload?.preview?.count
+        );
         state.cleanup.loading = false;
         state.cleanup.preview = action.payload.preview;
       })
       .addCase(getCleanupPreview.rejected, (state, action) => {
-        console.log("orderSlice getCleanupPreview.rejected", action.payload);
+        logger.warn("orderSlice getCleanupPreview.rejected", action.payload);
         state.cleanup.loading = false;
-        state.cleanup.error = action.payload?.message || "Failed to get cleanup preview";
+        state.cleanup.error =
+          action.payload?.message || "Failed to get cleanup preview";
       })
 
       // Cleanup archived orders
-      .addCase(cleanupArchivedOrders.pending, (state, action) => {
-        console.log("orderSlice cleanupArchivedOrders.pending", action.payload);
+      .addCase(cleanupArchivedOrders.pending, (state) => {
+        logger.debug("orderSlice cleanupArchivedOrders.pending");
         state.cleanup.loading = true;
         state.cleanup.error = null;
       })
       .addCase(cleanupArchivedOrders.fulfilled, (state, action) => {
-        console.log("orderSlice cleanupArchivedOrders.fulfilled", action.payload);
+        logger.debug(
+          "orderSlice cleanupArchivedOrders.fulfilled",
+          action.payload?.deletedCount
+        );
         state.cleanup.loading = false;
         state.cleanup.lastCleanupResult = action.payload;
         // If we're on the archived orders page, we should refresh the orders list
         // This will be handled by the component
       })
       .addCase(cleanupArchivedOrders.rejected, (state, action) => {
-        console.log("orderSlice cleanupArchivedOrders.rejected", action.payload);
+        logger.warn(
+          "orderSlice cleanupArchivedOrders.rejected",
+          action.payload
+        );
         state.cleanup.loading = false;
-        state.cleanup.error = action.payload?.message || "Failed to cleanup archived orders";
+        state.cleanup.error =
+          action.payload?.message || "Failed to cleanup archived orders";
       });
   },
 });

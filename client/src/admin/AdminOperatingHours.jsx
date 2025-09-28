@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { logger } from "../utils/logger";
 import { useSelector, useDispatch } from "react-redux";
 import {
   fetchOperatingConfig,
@@ -47,7 +48,7 @@ export default function AdminOperatingHours() {
 
   // Debug logging
   useEffect(() => {
-    console.log("Operating state:", { config, loading, saving, error });
+  logger.debug("Operating hours state", { config, loading, saving, error });
   }, [config, loading, saving, error]);
 
   // Weekly hours management functions
@@ -126,7 +127,7 @@ export default function AdminOperatingHours() {
       // Save configuration via Redux thunk
       await dispatch(updateOperatingConfig(payload)).unwrap();
     } catch (e) {
-      console.error(e);
+  logger.error(e);
       setFormError("Failed to save changes. Please try again.");
     }
   };

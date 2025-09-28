@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import builderService from "./builderService";
+import { logger } from "../utils/logger.js";
 
 const initialState = {
   loading: false,
@@ -17,9 +18,9 @@ const initialState = {
 
 // Get Many
 export const builderGetMany = createAsyncThunk("builder/getMany", async () => {
-  console.log("redux builderGetMany builder");
+  logger.debug("builderGetMany start");
   const response = await builderService.builderGetMany();
-  console.log("redux builderGetMany builder response", response);
+  logger.debug("builderGetMany success", response?.data?.count);
   return response.data;
 });
 
@@ -27,9 +28,9 @@ export const builderGetMany = createAsyncThunk("builder/getMany", async () => {
 export const builderCreate = createAsyncThunk(
   "builder/create",
   async (builder) => {
-    console.log("redux builderCreate builder", builder);
+    logger.debug("builderCreate", builder?.pizzaName);
     const response = await builderService.builderCreate(builder);
-    console.log(response);
+    logger.debug("builderCreate response", response?.pizza?.id || response?.id);
     return response.data;
   }
 );
@@ -83,12 +84,12 @@ export const builderSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Create
-      .addCase(builderCreate.pending, (state, action) => {
-        console.log("builderSlice builderCreate.pending", action.payload);
+      .addCase(builderCreate.pending, (state) => {
+        logger.debug("builderCreate.pending");
         state.loading = true;
       })
       .addCase(builderCreate.fulfilled, (state, action) => {
-        console.log("builderSlice builderCreate.fulfilled", action.payload);
+        logger.debug("builderCreate.fulfilled");
         state.loading = false;
         // Optimistically add new pizza to list if returned shape matches
         if (action.payload?.pizza) {
@@ -104,58 +105,55 @@ export const builderSlice = createSlice({
         }
       })
       .addCase(builderCreate.rejected, (state, action) => {
-        console.log("builderSlice builderCreate.rejected", action.payload);
+        logger.warn("builderCreate.rejected", action.payload);
         state.loading = false;
       })
 
       // Get Many
-      .addCase(builderGetMany.pending, (state, action) => {
-        console.log("builderSlice builderGetMany.pending", action.payload);
+      .addCase(builderGetMany.pending, (state) => {
+        logger.debug("builderGetMany.pending");
         state.loading = true;
       })
       .addCase(builderGetMany.fulfilled, (state, action) => {
-        console.log("builderSlice builderGetMany.fulfilled", action.payload);
+        logger.debug("builderGetMany.fulfilled", action.payload?.count);
         state.loading = false;
         // Updates state
         state.builders = action.payload.builders;
       })
       .addCase(builderGetMany.rejected, (state, action) => {
-        console.log("builderSlice builderGetMany.rejected", action.payload);
+        logger.warn("builderGetMany.rejected", action.payload);
         state.loading = false;
       })
 
       // Pizza get one
-      .addCase(pizzaGetOne.pending, (state, action) => {
-        console.log("builderSlice pizzaGetOne.pending", action.payload);
+      .addCase(pizzaGetOne.pending, (state) => {
+        logger.debug("pizzaGetOne.pending");
         state.loading = true;
       })
       .addCase(pizzaGetOne.fulfilled, (state, action) => {
         if (!action.payload) {
-          console.error("pizzaGetOne.fulfilled: payload is undefined!", action);
+          logger.error("pizzaGetOne.fulfilled missing payload");
           state.loading = false;
           state.builder = null;
           return;
         }
         const builderData = action.payload; // action.payload IS the pizza object
-        console.log("builderSlice pizzaGetOne.fulfilled", builderData);
+        logger.debug("pizzaGetOne.fulfilled", builderData?.id);
         state.loading = false;
         state.builder = builderData;
       })
       .addCase(pizzaGetOne.rejected, (state, action) => {
-        console.log("builderSlice pizzaGetOne.rejected", action.payload);
+        logger.warn("pizzaGetOne.rejected", action.payload);
         state.loading = false;
       })
 
       // Update
-      .addCase(builderUpdateOne.pending, (state, action) => {
-        console.log("builderSlice builderUpdateOne.pending", action.payload);
+      .addCase(builderUpdateOne.pending, (state) => {
+        logger.debug("builderUpdateOne.pending");
         state.loading = true;
       })
       .addCase(builderUpdateOne.fulfilled, (state, action) => {
-        console.log(
-          "builderSlice builderUpdateOne.fulfilled",
-          action.payload.builder
-        );
+        logger.debug("builderUpdateOne.fulfilled", action.payload?.builder?.id);
         state.loading = false;
         state.builder = action.payload.builder;
         state.builders = state.builders.map((b) =>
@@ -163,7 +161,7 @@ export const builderSlice = createSlice({
         );
       })
       .addCase(builderUpdateOne.rejected, (state, action) => {
-        console.log("builderSlice builderUpdateOne.rejected", action.payload);
+        logger.warn("builderUpdateOne.rejected", action.payload);
         state.loading = false;
       })
 
@@ -180,6 +178,7 @@ export const builderSlice = createSlice({
 
       // Toggle Status
       .addCase(builderToggleStatus.pending, (state) => {
+        logger.debug("builderToggleStatus.pending");
         state.loading = true;
       })
       .addCase(builderToggleStatus.fulfilled, (state, action) => {
@@ -198,6 +197,7 @@ export const builderSlice = createSlice({
         state.loading = false;
       })
       .addCase(builderToggleStatus.rejected, (state) => {
+        logger.warn("builderToggleStatus.rejected");
         state.loading = false;
       });
   },

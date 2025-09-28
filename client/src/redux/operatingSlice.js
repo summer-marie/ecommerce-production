@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { API_BASE } from "../utils/apiBase";
+import { logger } from "../utils/logger";
 
 // public
 export const fetchOperatingStatus = createAsyncThunk(
@@ -17,18 +18,17 @@ export const fetchOperatingConfig = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     try {
       const { auth } = getState();
-      console.log('Fetching operating config. Auth token present:', !!auth.token);
-      console.log('API_BASE:', API_BASE);
+  logger.debug('Fetching operating config', { hasToken: !!auth.token, API_BASE });
       
       const { data } = await axios.get(`${API_BASE}/operating-hours`, {
         headers: auth.token ? { Authorization: `Bearer ${auth.token}` } : {},
         withCredentials: true,
       });
       
-      console.log('Operating config response:', data);
+  logger.debug('Operating config response', data);
       return data.config;
     } catch (error) {
-      console.error('Operating config fetch error:', error.response?.data || error.message);
+  logger.error('Operating config fetch error', error.response?.data || error.message);
       return rejectWithValue(error.response?.data || "Failed to fetch config");
     }
   }

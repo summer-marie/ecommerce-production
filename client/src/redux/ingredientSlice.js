@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { logger } from "../utils/logger";
 import ingredientService from "./ingredientService";
 
 const initialState = {
@@ -25,9 +26,9 @@ export const createIngredient = createAsyncThunk(
 export const ingredientGetAll = createAsyncThunk(
   "ingredient/getAll",
   async () => {
-    console.log("redux ingredientGetAll ingredient");
+    logger.debug("ingredientGetAll thunk start");
     const response = await ingredientService.ingredientGetAll();
-    console.log("redux ingredientGetAll ingredient response", response);
+    logger.debug("ingredientGetAll thunk response", response);
     return response.data;
   }
 );
@@ -36,9 +37,9 @@ export const ingredientGetAll = createAsyncThunk(
 export const ingredientGetOne = createAsyncThunk(
   "ingredient/getOne",
   async (id) => {
-    console.log("redux ingredientGetOne order", id);
+    logger.debug("ingredientGetOne thunk start", { id });
     const response = await ingredientService.ingredientGetOne(id);
-    console.log("redux ingredientGetOne order response", response);
+    logger.debug("ingredientGetOne thunk response", response);
     return response.data;
   }
 );
@@ -47,9 +48,9 @@ export const ingredientGetOne = createAsyncThunk(
 export const ingredientUpdateOne = createAsyncThunk(
   "ingredient/updateOne",
   async (ingredient) => {
-    console.log("redux ingredientUpdateOne ingredient", ingredient);
+    logger.debug("ingredientUpdateOne thunk start", ingredient);
     const response = await ingredientService.ingredientUpdateOne(ingredient);
-    console.log("redux ingredientUpdateOne ingredient response", response);
+    logger.debug("ingredientUpdateOne thunk response", response);
     return response.data;
   }
 );
@@ -59,7 +60,7 @@ export const ingredientDeleteOne = createAsyncThunk(
   "ingredient/deleteOne",
   async (id) => {
     const response = await ingredientService.ingredientsDeleteOne(id);
-    console.log("redux ingredientDeleteOne response", response);
+    logger.debug("ingredientDeleteOne thunk response", response);
     return response.id; // Just return the id
   }
 );
@@ -73,19 +74,22 @@ export const ingredientSlice = createSlice({
 
       // Orders create one
       .addCase(createIngredient.pending, (state, action) => {
-        console.log("ingredientSlice createIngredient.pending", action.payload);
+        logger.debug(
+          "ingredientSlice createIngredient.pending",
+          action.payload
+        );
         state.loading = true;
       })
       .addCase(createIngredient.fulfilled, (state, action) => {
         state.ingredients.push(action.payload);
-        console.log(
+        logger.debug(
           "ingredientSlice createIngredient.fulfilled",
-          action.payload
+          action.payload?.name || action.payload?.id
         );
         state.loading = false;
       })
       .addCase(createIngredient.rejected, (state, action) => {
-        console.log(
+        logger.warn(
           "ingredientSlice createIngredient.rejected",
           action.payload
         );
@@ -94,13 +98,20 @@ export const ingredientSlice = createSlice({
 
       // Orders get all/No Validation
       .addCase(ingredientGetAll.pending, (state, action) => {
-        console.log("ingredientSlice ingredientGetAll.pending", action.payload);
+        logger.debug(
+          "ingredientSlice ingredientGetAll.pending",
+          action.payload
+        );
         state.loading = true;
       })
       .addCase(ingredientGetAll.fulfilled, (state, action) => {
-        console.log(
-          "ingredientSlice ingredientGetAll.fulfilled",
-          action.payload
+        logger.debug(
+          "ingredientSlice ingredientGetAll.fulfilled count",
+          Array.isArray(action.payload?.ingredients)
+            ? action.payload.ingredients.length
+            : Array.isArray(action.payload)
+            ? action.payload.length
+            : 0
         );
         state.loading = false;
         if (Array.isArray(action.payload?.ingredients)) {
@@ -113,7 +124,7 @@ export const ingredientSlice = createSlice({
         }
       })
       .addCase(ingredientGetAll.rejected, (state, action) => {
-        console.log(
+        logger.warn(
           "ingredientSlice ingredientGetAll.rejected",
           action.payload
         );
@@ -122,20 +133,23 @@ export const ingredientSlice = createSlice({
 
       // Get One
       .addCase(ingredientGetOne.pending, (state, action) => {
-        console.log("ingredientSlice ingredientGetOne.pending", action.payload);
+        logger.debug(
+          "ingredientSlice ingredientGetOne.pending",
+          action.payload
+        );
         state.loading = true;
       })
       .addCase(ingredientGetOne.fulfilled, (state, action) => {
-        console.log(
+        logger.debug(
           "ingredientSlice ingredientGetOne.fulfilled",
-          action.payload.ingredient
+          action.payload.ingredient?.name
         );
         state.loading = false;
         // Updates state
         state.ingredient = action.payload.ingredient;
       })
       .addCase(ingredientGetOne.rejected, (state, action) => {
-        console.log(
+        logger.warn(
           "ingredientSlice ingredientGetOne.rejected",
           action.payload
         );
@@ -144,16 +158,16 @@ export const ingredientSlice = createSlice({
 
       // Update One
       .addCase(ingredientUpdateOne.pending, (state, action) => {
-        console.log(
+        logger.debug(
           "ingredientSlice ingredientUpdateOne.pending",
           action.payload
         );
         state.loading = true;
       })
       .addCase(ingredientUpdateOne.fulfilled, (state, action) => {
-        console.log(
+        logger.debug(
           "ingredientSlice ingredientUpdateOne.fulfilled",
-          action.payload
+          action.payload?.ingredient?.name
         );
         state.loading = false;
         state.ingredients = state.ingredients.map((ingredient) =>
@@ -163,7 +177,7 @@ export const ingredientSlice = createSlice({
         );
       })
       .addCase(ingredientUpdateOne.rejected, (state, action) => {
-        console.log(
+        logger.warn(
           "ingredientSlice ingredientUpdateOne.rejected",
           action.payload
         );
@@ -172,14 +186,14 @@ export const ingredientSlice = createSlice({
 
       // Delete One
       .addCase(ingredientDeleteOne.pending, (state, action) => {
-        console.log(
+        logger.debug(
           "ingredientSlice ingredientDeleteOne.pending",
           action.payload
         );
         state.loading = true;
       })
       .addCase(ingredientDeleteOne.fulfilled, (state, action) => {
-        console.log(
+        logger.debug(
           "ingredientSlice ingredientDeleteOne.fulfilled",
           action.payload
         );
@@ -191,7 +205,7 @@ export const ingredientSlice = createSlice({
       })
 
       .addCase(ingredientDeleteOne.rejected, (state, action) => {
-        console.log(
+        logger.warn(
           "ingredientSlice ingredientDeleteOne.rejected",
           action.payload
         );

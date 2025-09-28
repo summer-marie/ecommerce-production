@@ -1,21 +1,22 @@
 import axios from "axios";
 import { API_BASE } from "../utils/apiBase.js";
+import { logger } from "../utils/logger";
 
 const paymentService = {
   createSquarePayment: async (paymentData) => {
     try {
       const url = `${API_BASE}/payments/square/create-payment`;
       if (import.meta.env.DEV) {
-        console.log("[Square] create payment request", { url, paymentData });
+        logger.info("[Square] create payment request", { url });
       }
       const res = await axios.post(url, paymentData);
       if (import.meta.env.DEV) {
-        console.log("[Square] create payment response", res.data);
+        logger.debug("[Square] create payment response", res.data);
       }
       return res;
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.error(
+        logger.error(
           "[Square] create payment error",
           err?.response?.data || err.message
         );

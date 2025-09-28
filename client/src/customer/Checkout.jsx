@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { logger } from "../utils/logger";
 import { useNavigate } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
 import { clearCart, removeFromCart } from "../redux/cartSlice";
@@ -156,7 +157,7 @@ const Checkout = () => {
               })
             ).unwrap();
           } catch (softCancelErr) {
-            console.warn("Soft cancel failed", softCancelErr);
+            logger.warn("Soft cancel failed", softCancelErr);
           }
         }
         setPaymentError(
@@ -202,7 +203,7 @@ const Checkout = () => {
   dispatch(clearCart());
   navigate("/order-success", { state: { orderData: successData } });
     } catch (error) {
-      console.error("Cash order creation failed", error);
+  logger.error("Cash order creation failed", error);
       setPaymentError("Failed to create order. Please try again.");
     } finally {
       setIsPaymentProcessing(false);

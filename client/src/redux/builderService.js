@@ -1,4 +1,5 @@
 import axios from "axios";
+import { logger } from "../utils/logger.js";
 // If we later rename env var to VITE_API_BASE we won't need to touch below template literals
 import { API_BASE } from "../utils/apiBase.js";
 
@@ -9,16 +10,16 @@ const builderService = {
 
   builderCreate: async (pizzaData) => {
     try {
-      console.log("Sending pizza data to server...", pizzaData);
+      logger.debug("Sending pizza data", pizzaData);
       const response = await axios.post(`${API_BASE}/builders`, pizzaData, {
         headers: {
           "Content-Type": "application/json",
         },
       });
-      console.log("Server response:", response.data);
+      logger.debug("Create pizza response", response.data);
       return response.data;
     } catch (error) {
-      console.error("Builder create error details:", {
+      logger.error("Builder create error", {
         message: error.message,
         response: error.response?.data,
       });
@@ -47,8 +48,10 @@ const builderService = {
   },
 
   builderToggleStatus: async (id, active) => {
-    const response = await axios.patch(`${API_BASE}/builders/${id}/toggle-status`, { active });
-    // (Diagnostics removed) - rely on slice state for UI; add back if needed
+    const response = await axios.patch(
+      `${API_BASE}/builders/${id}/toggle-status`,
+      { active }
+    );
     return response.data; // { success: true, pizza, builders }
   },
 };

@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router";
 import { useEffect, useState } from "react";
+import { logger } from "../utils/logger";
 
 const OrderSuccess = () => {
   const location = useLocation();
@@ -11,7 +12,7 @@ const OrderSuccess = () => {
     const data = location.state?.orderData;
     if (data) {
       setOrderData(data);
-      console.log("Order success data:", data);
+      logger.info("order success data", data);
     }
   }, [location.state]);
 
@@ -21,7 +22,7 @@ const OrderSuccess = () => {
       setAddressCopied(true);
       setTimeout(() => setAddressCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy address:', err);
+      logger.error('Failed to copy address', err);
     }
   };
 

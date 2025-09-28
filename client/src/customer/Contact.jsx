@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from "../utils/logger";
 import { useDispatch } from "react-redux";
 import { sendMessage } from "../redux/messageSlice";
 
@@ -18,7 +19,7 @@ const Contact = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
     } catch (err) {
-      console.error("Failed to copy email:", err);
+      logger.error("Failed to copy email", err);
       // Fallback for older browsers
       const textArea = document.createElement("textarea");
       textArea.value = "support@otwpizza.com";
@@ -39,12 +40,12 @@ const Contact = () => {
       return;
     }
 
-    console.log("handle submit called with formData:", formData);
+  logger.debug("contact form submit", formData);
 
     setIsLoading(true);
     try {
       const result = await dispatch(sendMessage(formData)).unwrap();
-      console.log("Message sent successfully:", result);
+  logger.info("contact message sent", result);
 
       setFormData({
         email: "",
@@ -53,7 +54,7 @@ const Contact = () => {
       });
       alert("Message sent successfully!");
     } catch (err) {
-      console.error("Send message failed:", err);
+      logger.error("Send message failed", err);
       alert("Failed to send message. Please try again.");
     } finally {
       setIsLoading(false);

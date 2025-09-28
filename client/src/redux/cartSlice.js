@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { logger } from "../utils/logger";
 
 const cartSlice = createSlice({
   name: "cart",
@@ -7,17 +8,17 @@ const cartSlice = createSlice({
   },
   reducers: {
     addToCart: (state, action) => {
-      console.log("cartSlice REDUCER addToCart", action.payload);
+      logger.debug("cartSlice addToCart", action.payload);
       state.items.push(action.payload);
     },
     removeFromCart: (state, action) => {
-      console.log("cartSlice REDUCER removeFromCart", action.payload);
+      logger.debug("cartSlice removeFromCart", action.payload);
       state.items = state.items.filter(
         (item) => item.cartItemId !== action.payload
       );
     },
     clearCart: (state) => {
-      console.log("cartSlice REDUCER clearCart");
+      logger.debug("cartSlice clearCart");
       state.items = [];
     },
   },

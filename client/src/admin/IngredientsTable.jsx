@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { logger } from "../utils/logger";
 import { useSelector, useDispatch } from "react-redux";
 import {
   createIngredient,
@@ -44,7 +45,7 @@ const IngredientModal = ({ isOpen, onClose, setShowModal }) => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("handle submit");
+  logger.debug("Submitting new ingredient");
     const newIngredient = {
       ...formData,
       price: formData.price === "" ? 0 : parseFloat(formData.price),
@@ -230,7 +231,7 @@ const IngredientsTable = () => {
 
   // Log editing state to console for debugging
   useEffect(() => {
-    console.log(editing);
+    logger.debug("Editing ingredient state updated", editing);
   }, [editing]);
 
   // Function to count ingredients by type
@@ -279,7 +280,7 @@ const IngredientsTable = () => {
       // Fetch fresh, sorted data from server
       await dispatch(ingredientGetAll()).unwrap();
     } catch (error) {
-      console.error("Update failed:", error);
+      logger.error("Update failed:", error);
     } finally {
       setSavingId(null);
       setLoading(false);
@@ -294,12 +295,12 @@ const IngredientsTable = () => {
   const handleConfirm = async () => {
     setShowAlert(false);
     if (deleteId) {
-      console.log("Deleting ingredient with ID:", deleteId); // Log deleteId
+      logger.info("Deleting ingredient with ID:", deleteId);
       await dispatch(ingredientDeleteOne(deleteId)).unwrap();
       await dispatch(ingredientGetAll()).unwrap(); // Refresh ingredients list
       setDeleteId(null);
     } else {
-      console.error("No deleteId set");
+      logger.error("No deleteId set");
     }
   };
 

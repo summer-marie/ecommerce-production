@@ -1,4 +1,5 @@
 import axios from "axios";
+import { logger } from "../utils/logger";
 import { API_BASE } from "../utils/apiBase.js";
 
 const ingredientService = {
@@ -22,9 +23,9 @@ const ingredientService = {
   },
 
   ingredientsDeleteOne: async (id) => {
-    console.log("API call to delete ingredient with ID:", id); // Log API call
+    logger.info("Deleting ingredient via API", { id });
     const response = await axios.delete(`${API_BASE}/ingredients/${id}`);
-    console.log("API response for delete:", response.data); // Log API response
+    logger.debug("Delete ingredient response", response.data);
     return response.data; // { success: true, id: ... }
   },
 };

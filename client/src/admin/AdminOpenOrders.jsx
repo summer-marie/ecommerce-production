@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from "../utils/logger";
 import { useSelector, useDispatch } from "react-redux";
 import AlertBlack from "../components/AlertBlack";
 import {
@@ -113,20 +114,20 @@ const AdminOpenOrders = () => {
 
   // Direct status update function for badge buttons
   const handleDirectStatusUpdate = async (id, newStatus) => {
-    console.log("=== STATUS UPDATE START ===");
-    console.log("Updating order:", { id, newStatus });
+    logger.debug("=== STATUS UPDATE START ===");
+    logger.info("Updating order status", { id, newStatus });
 
     // Prevent double-clicks
     if (updatingOrderId === id) {
-      console.log("Update already in progress for order:", id);
+      logger.warn("Update already in progress for order", id);
       return;
     }
 
     setUpdatingOrderId(id);
 
     // Log current counts before update
-    const beforeCounts = getStatusCounts();
-    console.log("Counts BEFORE update:", beforeCounts);
+  const beforeCounts = getStatusCounts();
+  logger.debug("Counts BEFORE update", beforeCounts);
 
     try {
       const result = await dispatch(
@@ -136,16 +137,16 @@ const AdminOpenOrders = () => {
         })
       ).unwrap();
 
-      console.log("Server returned orders count:", result.orders?.length);
+  logger.debug("Server returned orders count", result.orders?.length);
 
       // Log counts after update
       setTimeout(() => {
         const afterCounts = getStatusCounts();
-        console.log("Counts AFTER update:", afterCounts);
-        console.log("=== STATUS UPDATE END ===");
+        logger.debug("Counts AFTER update", afterCounts);
+        logger.debug("=== STATUS UPDATE END ===");
       }, 100);
     } catch (error) {
-      console.error("Status update failed:", {
+      logger.error("Status update failed", {
         id,
         newStatus,
         error,
@@ -176,7 +177,7 @@ const AdminOpenOrders = () => {
 
   // When user cancels in the alert
   const handleCancel = () => {
-    console.log("Cancel Clicked");
+    logger.debug("Cancel archive clicked");
     setShowAlert(false);
     setArchiveOrder(null); // Clear the archive order
     setBulkArchiveData(null); // Clear bulk data
@@ -190,9 +191,7 @@ const AdminOpenOrders = () => {
 
       if (bulkArchiveData) {
         // Handle bulk archiving
-        console.log(
-          `Bulk archiving ${bulkArchiveData.count} ${bulkArchiveData.status} orders`
-        );
+        logger.info("Bulk archiving orders", { count: bulkArchiveData.count, status: bulkArchiveData.status });
 
         // Archive all orders in the bulk selection
         for (const order of bulkArchiveData.orders) {
@@ -208,7 +207,7 @@ const AdminOpenOrders = () => {
         const orderId = getOrderId(archiveOrder);
 
         if (!orderId) {
-          console.error("No valid order ID found in archiveOrder object");
+          logger.error("No valid order ID found in archiveOrder object");
           return;
         }
 
@@ -225,7 +224,7 @@ const AdminOpenOrders = () => {
         window.scrollTo(0, currentScrollY);
       }, 100);
     } catch (error) {
-      console.error("Error archiving order(s):", error);
+      logger.error("Error archiving order(s)", error);
     }
 
     setShowAlert(false);

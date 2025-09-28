@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
+import { logger } from "../utils/logger";
 import AlertSuccess2 from "../components/AlertSuccess2";
 import { pizzaGetOne, builderUpdateOne } from "../redux/builderSlice";
 import { ingredientGetAll } from "../redux/ingredientSlice";
@@ -101,7 +102,7 @@ const AdminUpdateOne = () => {
   const ingredients = useSelector((state) => state.ingredient.ingredients);
   const [pizzaForm, setPizzaForm] = useState(null);
   const { id } = useParams();
-  console.log("USE PARAMS", id);
+  logger.debug("AdminUpdateOne param id", id);
 
   // Options for sauce, meat, and veggie toppings - dropdowns
   const sauceOptions = ingredients.filter((i) => i.itemType === "Sauce");
@@ -244,18 +245,18 @@ const AdminUpdateOne = () => {
         image: imageData,
       };
 
-      console.log("Submitting payload:", payload);
+  logger.info("Submitting pizza update payload", payload);
 
       await dispatch(builderUpdateOne(payload)).unwrap();
       setShowSuccessAlert(true);
       setTimeout(() => navigate("/admin-menu"), 2000);
     } catch (error) {
-      console.error("Error updating pizza:", error);
+      logger.error("Error updating pizza:", error);
       // You might want to show an error alert here
     }
   };
 
-  console.log("pizzaForm:", pizzaForm);
+  logger.debug("pizzaForm state", pizzaForm);
 
   if (!pizzaForm) return <div>Loading...</div>;
 

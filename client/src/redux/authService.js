@@ -1,20 +1,21 @@
 import axios from "axios";
+import { logger } from "../utils/logger";
 import { API_BASE } from "../utils/apiBase.js";
 
 const authService = {
   login: async ({ email, password }) => {
-    console.log("NEW authService login", email, password);
+  logger.debug("authService login attempt", { email });
     const response = await axios.post(`${API_BASE}/auth/login`, {
       email,
       password,
     });
-    console.log(" NEW response", response.data);
+  logger.debug("authService login response", response.data);
     return response.data;
   },
 
   changePassword: async ({ currentPassword, newPassword }) => {
     const token = localStorage.getItem("token");
-    console.log("NEW authService changePassword token", token?.slice(0, 12) + "...");
+  logger.debug("authService changePassword token prefix", token?.slice(0, 12) + "...");
     const response = await axios.post(
       `${API_BASE}/auth/change-password`,
       { currentPassword, newPassword },
@@ -26,13 +27,13 @@ const authService = {
         },
       }
     );
-    console.log("NEW changePassword response", response.data);
+  logger.debug("authService changePassword response", response.data);
     return response.data;
   },
 
   changeEmail: async ({ newEmail, password }) => {
     const token = localStorage.getItem("token");
-    console.log("NEW authService changeEmail token", token?.slice(0, 12) + "...");
+  logger.debug("authService changeEmail token prefix", token?.slice(0, 12) + "...");
     const response = await axios.post(
       `${API_BASE}/auth/change-email`,
       { newEmail, password },
@@ -44,13 +45,13 @@ const authService = {
         },
       }
     );
-    console.log("NEW changeEmail response", response.data);
+  logger.debug("authService changeEmail response", response.data);
     return response.data;
   },
 
   status: async () => {
     const token = localStorage.getItem("token");
-    console.log("NEW authService status token", token);
+  logger.debug("authService status token prefix", token?.slice(0, 12) + "...");
     const response = await axios.get(`${API_BASE}/auth/status`, {
       withCredentials: true,
       headers: {
@@ -58,7 +59,7 @@ const authService = {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     });
-    console.log("NEW response", response.data);
+  logger.debug("authService status response", response.data);
     return response.data;
   },
 

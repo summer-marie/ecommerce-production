@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../redux/authSlice";
+import { logger } from "../utils/logger.js";
 import { ClipLoader } from "react-spinners";
 import { getMessages } from "../redux/messageSlice";
 
@@ -13,7 +14,7 @@ const AdminSidenav = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const messages = useSelector((state) => state.message);
 
-  console.log("location", location);
+  logger.debug("location", location.pathname);
 
   useEffect(() => {
     dispatch(getMessages());
@@ -29,14 +30,14 @@ const AdminSidenav = () => {
             await dispatch(logout()).unwrap();
             resolve();
           } catch (error) {
-            console.error("Logout failed:", error);
+            logger.error("Logout failed inner", error?.message);
             setLoading(false);
           }
         }, 1000);
       });
       navigate("/");
     } catch (error) {
-      console.error("Logout failed:", error);
+  logger.error("Logout failed outer", error?.message);
       setLoading(false);
     }
   };
