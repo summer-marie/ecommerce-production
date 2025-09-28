@@ -1,5 +1,5 @@
 import ingredientsModel from "./ingredientsModel.js";
-import { logInfo, logError } from "../middleware/logger.js";
+import { logger } from "../utils/logger.js";
 
 const ingredientsGetAll = async (req, res) => {
   try {
@@ -15,7 +15,7 @@ const ingredientsGetAll = async (req, res) => {
       return { id, ...rest };
     });
 
-    logInfo("Ingredients retrieved", { count: ingredients.length });
+  logger.info({ count: ingredients.length }, "Ingredients retrieved");
 
     res.status(200).json({
       success: true,
@@ -24,7 +24,7 @@ const ingredientsGetAll = async (req, res) => {
       cached: false,
     });
   } catch (error) {
-    logError("Error getting ingredients", { error: error.message });
+  logger.error({ error: error.message }, "Error getting ingredients");
     res.status(500).json({
       success: false,
       message: "Failed to retrieve ingredients",

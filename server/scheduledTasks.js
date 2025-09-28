@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import { cleanupArchivedOrders } from "./scripts/cleanupArchivedOrders.js";
-import { getLog } from "./logger.js";
+import { getLog } from "./utils/logger.js";
 
 /**
  * Scheduled tasks for the ecommerce application

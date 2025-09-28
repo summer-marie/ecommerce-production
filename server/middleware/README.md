@@ -8,7 +8,6 @@ This directory contains all middleware components that handle cross-cutting conc
 |------|---------|------------|
 | `advancedSecurity.js` | Advanced security headers, rate limiting, attack prevention | Global/Selective routes |
 | `apiKeyAuth.js` | API key authentication for external integrations | API endpoints |
-| `logger.js` | Request/response logging with Winston | All requests |
 | `operatingHoursGuard.js` | Business hours enforcement | Order-related endpoints |
 | `performance.js` | Performance monitoring and optimization | Global |
 | `security.js` | Basic security headers and CORS | Global |
@@ -29,7 +28,7 @@ This directory contains all middleware components that handle cross-cutting conc
 - **Session Management**: Secure session handling
 
 ### Performance & Monitoring  
-- **Request Logging**: Comprehensive audit trails
+- **Request Logging**: Centralized structured logging via Pino (`utils/logger.js`)
 - **Performance Metrics**: Response time monitoring
 - **Error Tracking**: Centralized error handling
 - **Health Checks**: System status monitoring
@@ -71,12 +70,15 @@ Most middleware can be configured through environment variables:
 - Logging levels
 - Performance monitoring intervals
 
-## 🔍 Monitoring
+## 🔍 Monitoring & Logging
 
-All middleware includes comprehensive logging and can be monitored through:
-- Application logs (`logs/combined.log`)
-- Error tracking (`logs/error.log`) 
-- Performance metrics endpoint
-- Health check endpoints
+All middleware emits structured logs through the single Pino instance (`utils/logger.js`). Legacy Winston usage has been fully removed. Log destinations:
+- Stdout (platform aggregation)
+- Optional file logs (rotate externally if needed)
 
-For detailed implementation and configuration options, see individual middleware files.
+Key endpoints & signals:
+- Performance metrics: `/monitoring/performance`
+- Health checks: `/health` and `/monitoring/health`
+- Security events: rate limiting, invalid API keys, sanitization warnings
+
+For logging standards and production shipping guidance see `LOGGING_CONVENTIONS.md` and `PRODUCTION_LOGGING.md`.

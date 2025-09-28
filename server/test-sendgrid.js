@@ -1,6 +1,6 @@
 import sgMail from "@sendgrid/mail";
 import dotenv from "dotenv";
-import { getLog } from "./logger.js";
+import { getLog } from "./utils/logger.js";
 
 // Load environment variables
 dotenv.config();

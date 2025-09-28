@@ -74,13 +74,7 @@ import passport from "passport";
 
 // Security Middleware
 import { securityHeaders, generalRateLimit } from "./middleware/security.js";
-import {
-  requestLogger,
-  errorLogger,
-  logInfo,
-  logError,
-  logWarn,
-} from "./middleware/logger.js";
+// Removed deprecated middleware/logger bridge; using direct logger and custom error handler below
 // Advanced Security Middleware
 import {
   advancedHelmet,
@@ -115,7 +109,7 @@ import { initializeScheduledTasks } from "./scheduledTasks.js";
 import aboutRouter from "./about/aboutIndex.js";
 
 // Replace console.log with proper logging
-logInfo("Environment check", {
+logger.info("Environment check", {
   mongodbUrl: process.env.MONGODB_ATLAS_URL ? "Set" : "Missing",
 });
 
@@ -255,7 +249,7 @@ try {
     socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
   });
 
-  logInfo(`✅ Pizza app connected to database`, {
+  logger.info(`✅ Pizza app connected to database`, {
     host: mongoURL.includes("mongodb+srv")
       ? "MongoDB Atlas Cloud"
       : "Local MongoDB",
@@ -343,7 +337,10 @@ try {
     });
 
     // Global error handling middleware (must remain last after routes)
-    app.use(errorLogger);
+    app.use((err, req, res, next) => {
+      logger.error({ err: { message: err.message, stack: err.stack }, method: req.method, url: req.url }, "Unhandled route error");
+      res.status(err.status || 500).json({ success: false, message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error' });
+    });
   } catch (sessionError) {
   logger.error({ err: sessionError }, "Failed to setup session store");
     throw sessionError;
@@ -357,18 +354,18 @@ try {
         const count = await mongoose.connection.collections[
           name
         ].countDocuments();
-        logInfo("Collection count", { collection: name, count });
+  logger.info({ collection: name, count }, "Collection count");
       }
     }
   } catch (verifyErr) {
-    logWarn("Collection count check failed", { error: verifyErr.message });
+  logger.warn({ error: verifyErr.message }, "Collection count check failed");
   }
 
   logger.info("Starting server");
 
   app.listen(port, "0.0.0.0", () => {
   logger.info("Server is now listening for connections");
-    logInfo(`🚀 Pizza app server started`, {
+    logger.info(`🚀 Pizza app server started`, {
       port,
       host: "0.0.0.0",
       environment: process.env.NODE_ENV || "development",
@@ -383,6 +380,6 @@ try {
   });
 } catch (err) {
   logger.fatal({ err }, "Startup error");
-  logError("❌ Database connection failed", { error: err.message });
+  logger.error({ error: err.message }, "❌ Database connection failed");
   process.exit(1); // Exit process if database connection fails
 }

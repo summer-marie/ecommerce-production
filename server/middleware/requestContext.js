@@ -1,9 +1,9 @@
-import { v4 as uuid } from 'uuid';
 import { withRequestContext } from '../utils/logger.js';
+import crypto from 'node:crypto';
 
 export function requestContext(req, res, next) {
   const start = process.hrtime.bigint();
-  const requestId = req.headers['x-request-id'] || uuid();
+  const requestId = req.headers['x-request-id'] || crypto.randomUUID();
   req.id = requestId;
   req.log = withRequestContext({ requestId });
 

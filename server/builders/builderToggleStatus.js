@@ -1,5 +1,5 @@
 import builderModel from "./builderModel.js";
-import { logInfo, logError } from "../middleware/logger.js";
+import { logger } from "../utils/logger.js";
 
 // Toggle a pizza's active flag and return updated list
 const builderToggleStatus = async (req, res) => {
@@ -7,7 +7,7 @@ const builderToggleStatus = async (req, res) => {
     const { id } = req.params;
     const { active } = req.body;
 
-    logInfo("Toggling pizza status", { id, active });
+  logger.info({ id, active }, "Toggling pizza status");
 
     if (typeof active !== "boolean") {
       return res.status(400).json({ success: false, message: "Active must be boolean" });
@@ -15,11 +15,11 @@ const builderToggleStatus = async (req, res) => {
 
     const updatedPizza = await builderModel.findByIdAndUpdate(id, { active }, { new: true });
     if (!updatedPizza) {
-      logError("Pizza not found for status toggle", { id });
+  logger.warn({ id }, "Pizza not found for status toggle");
       return res.status(404).json({ success: false, message: "Pizza not found" });
     }
 
-    logInfo("Pizza status updated", { id, pizzaName: updatedPizza.pizzaName, active: updatedPizza.active });
+  logger.info({ id, pizzaName: updatedPizza.pizzaName, active: updatedPizza.active }, "Pizza status updated");
 
     // Return full list so client can replace state
     const builders = await builderModel.find({}).sort({ pizzaName: 1 });
@@ -31,7 +31,7 @@ const builderToggleStatus = async (req, res) => {
       count: builders.length,
     });
   } catch (error) {
-    logError("Error toggling pizza status", { error: error.message });
+  logger.error({ error: error.message }, "Error toggling pizza status");
     res.status(500).json({ success: false, message: "Failed to update pizza status" });
   }
 };

@@ -1,6 +1,6 @@
 import orderModel from "../orders/orderModel.js";
 import mongoose from "mongoose";
-import { getLog } from "../logger.js";
+import { getLog } from "../utils/logger.js";
 
 /**
  * Cleanup archived orders older than 30 days

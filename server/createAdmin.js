@@ -2,7 +2,7 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import * as argon2 from "argon2";
 import adminModel from "./admins/adminModel.js";
-import { getLog } from "./logger.js";
+import { getLog } from "./utils/logger.js";
 
 const createAdmin = async () => {
   try {

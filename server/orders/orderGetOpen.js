@@ -1,9 +1,9 @@
 import orderModel from "./orderModel.js";
-import { logInfo, logError } from "../middleware/logger.js";
+import { logger } from "../utils/logger.js";
 
 const orderGetOpen = async (req, res) => {
   try {
-    logInfo("Attempting to get open orders");
+  logger.info("Attempting to get open orders");
 
     // Simplified query first to test database connection
     const getOrders = await orderModel
@@ -14,7 +14,7 @@ const orderGetOpen = async (req, res) => {
       .sort({ date: -1 })
       .limit(100);
 
-    logInfo("Open orders retrieved successfully", { count: getOrders.length });
+  logger.info({ count: getOrders.length }, "Open orders retrieved successfully");
 
     res.status(200).json({
       success: true,
@@ -22,10 +22,7 @@ const orderGetOpen = async (req, res) => {
       count: getOrders.length,
     });
   } catch (error) {
-    logError("Error getting open orders", {
-      error: error.message,
-      stack: error.stack,
-    });
+    logger.error({ error: error.message, stack: error.stack }, "Error getting open orders");
     res.status(500).json({
       success: false,
       message: "Failed to retrieve open orders",

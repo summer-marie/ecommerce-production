@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { getLog } from "./logger.js";
+import { getLog } from "./utils/logger.js";
 
 (async () => {
   try {

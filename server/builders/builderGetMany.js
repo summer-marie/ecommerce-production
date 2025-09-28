@@ -1,5 +1,5 @@
 import builderModel from "./builderModel.js";
-import { logInfo, logError } from "../middleware/logger.js";
+import { logger } from "../utils/logger.js";
 
 const builderGetMany = async (req, res) => {
   try {
@@ -21,7 +21,7 @@ const builderGetMany = async (req, res) => {
       return { id, ...rest };
     });
 
-  logInfo("Pizza builders retrieved", { count: getBuiltPizzas.length });
+  logger.info({ count: getBuiltPizzas.length }, "Pizza builders retrieved");
 
     res.status(200).json({
       success: true,
@@ -29,7 +29,7 @@ const builderGetMany = async (req, res) => {
       count: getBuiltPizzas.length,
     });
   } catch (error) {
-    logError("Error getting pizza builders", { error: error.message });
+  logger.error({ error: error.message }, "Error getting pizza builders");
     res.status(500).json({
       success: false,
       message: "Failed to retrieve pizza builders",

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import orderModel from '../orders/orderModel.js';
 import dotenv from 'dotenv';
-import { getLog } from '../logger.js';
+import { getLog } from '../utils/logger.js';
 
 // Load environment variables
 dotenv.config();

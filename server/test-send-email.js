@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import sgMail from '@sendgrid/mail';
-import { getLog } from './logger.js';
+import { getLog } from './utils/logger.js';
 
 // Load server/.env
 const __filename = fileURLToPath(import.meta.url);

@@ -37,7 +37,7 @@
 - **Node-cron 4.2.1** - Reliable scheduled task management
 
 **Performance & Monitoring:**
-- **Winston 3.17.0** - Professional logging with multiple transports
+- **Pino** - High-performance structured JSON logging (replaced legacy Winston)
 - **Compression 1.8.1** - Response compression for faster delivery
 - **Connect-Mongo 5.1.0** - Efficient MongoDB session storage
 
@@ -118,12 +118,14 @@ For detailed technical information, see the specialized README files:
 
 ### 📝 Logging
 
-Structured logging is implemented across the backend (routes, utilities, scripts, tests) using a centralized Pino logger with request and operation correlation. For event naming standards, level usage, redaction guidance, and examples, see: **`LOGGING_CONVENTIONS.md`**.
+Structured logging is implemented across the backend (routes, utilities, scripts, tests) using a centralized **Pino** logger with request and operation correlation. Winston was previously used but has been fully removed in favor of lower overhead, faster structured JSON logging. (The legacy `middleware/logger.js` bridge file has been deleted.)
+
+For event naming standards, level usage, redaction guidance, and examples, see: **`LOGGING_CONVENTIONS.md`** and **`PRODUCTION_LOGGING.md`** (deployment & shipping guidance).
 
 Example (inside an Express route handler):
 
 ```js
-import { getLog } from './logger.js';
+import { getLog } from './utils/logger.js';
 
 export async function createOrder(req, res) {
 	const log = getLog(req, { feature: 'orderCreate' });
@@ -143,7 +145,7 @@ export async function createOrder(req, res) {
 For background tasks / scripts (no req object):
 
 ```js
-import { getLog } from './logger.js';
+import { getLog } from './utils/logger.js';
 
 async function runCleanup() {
 	const log = getLog(null, { operationId: 'nightlyCleanup' });

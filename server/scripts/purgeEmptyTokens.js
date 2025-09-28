@@ -13,7 +13,7 @@ import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import adminModel from "../admins/adminModel.js";
-import { getLog } from "../logger.js";
+import { getLog } from "../utils/logger.js"; // confirmed correct path
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

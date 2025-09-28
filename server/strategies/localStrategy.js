@@ -2,7 +2,7 @@ import passport from "passport";
 import { Strategy } from "passport-local";
 import * as argon2 from "argon2";
 import userModel from "../admins/adminModel.js";
-import { getLog } from "../logger.js";
+import { getLog } from "../utils/logger.js";
 
 passport.serializeUser((user, done) => {
   // console.log('serializeUser', user)

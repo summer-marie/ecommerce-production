@@ -4,7 +4,7 @@ import slowDown from "express-slow-down";
 import helmet from "helmet";
 // import removed: use a safe custom sanitizer below to avoid assigning to read-only req props
 import hpp from "hpp";
-import { logInfo, logWarn, logError } from "./logger.js";
+import { logger } from "../utils/logger.js";
 
 // Configurable rate limiting factory
 export const createRateLimiter = (options = {}) => {
@@ -18,12 +18,12 @@ export const createRateLimiter = (options = {}) => {
     standardHeaders: true,
     legacyHeaders: false,
     handler: (req, res) => {
-      logWarn("Rate limit exceeded", {
+      logger.warn({
         ip: req.ip,
         userAgent: req.get("user-agent"),
         path: req.path,
         method: req.method,
-      });
+      }, "Rate limit exceeded");
       res.status(429).json({
         error: "Too many requests",
         message: "Rate limit exceeded. Please try again later.",
@@ -69,12 +69,12 @@ export const speedLimiter = slowDown({
     const delay = (used - 50) * 100; // Add 100ms delay for each request over limit
 
     if (delay > 0) {
-      logWarn("Request speed limited", {
+      logger.warn({
         ip: req.ip,
         delay: `${delay}ms`,
         requestCount: used,
         path: req.path,
-      });
+      }, "Request speed limited");
     }
 
     return delay;
@@ -142,7 +142,7 @@ export const mongoSanitizer = (req, res, next) => {
       req.params = stripMongoOperators(req.params);
     }
   } catch (error) {
-    logError("MongoDB sanitization error", { error: error.message });
+  logger.error({ error: error.message }, "MongoDB sanitization error");
     // continue even if sanitization fails
   }
   next();
@@ -180,7 +180,7 @@ export const xssProtection = (req, res, next) => {
     // Skip req.query to avoid "Cannot set property query" error
     // Query parameters are already sanitized by mongoSanitizer if needed
   } catch (error) {
-    logWarn("XSS protection error", { error: error.message });
+  logger.warn({ error: error.message }, "XSS protection error");
   }
   next();
 };
@@ -196,11 +196,11 @@ export const createApiKeyAuth = (validKeys = []) => {
     const apiKey = req.header("X-API-Key") || req.query.apiKey;
 
     if (!apiKey) {
-      logWarn("API request without key", {
+      logger.warn({
         ip: req.ip,
         path: req.path,
         userAgent: req.get("user-agent"),
-      });
+      }, "API request without key");
       return res.status(401).json({
         error: "API key required",
         message: "Please provide a valid API key",
@@ -208,23 +208,23 @@ export const createApiKeyAuth = (validKeys = []) => {
     }
 
     if (!validKeys.includes(apiKey)) {
-      logWarn("Invalid API key used", {
+      logger.warn({
         ip: req.ip,
         path: req.path,
         providedKey: apiKey.substring(0, 8) + "...",
         userAgent: req.get("user-agent"),
-      });
+      }, "Invalid API key used");
       return res.status(401).json({
         error: "Invalid API key",
         message: "The provided API key is not valid",
       });
     }
 
-    logInfo("Valid API key used", {
+    logger.info({
       ip: req.ip,
       path: req.path,
       keyPrefix: apiKey.substring(0, 8) + "...",
-    });
+    }, "Valid API key used");
 
     req.apiKey = apiKey;
     next();
@@ -259,11 +259,11 @@ export const createIpFilter = (options = {}) => {
 
     // Check blacklist first
     if (blacklist.length > 0 && blacklist.includes(clientIp)) {
-      logWarn("Blocked IP attempt", {
+      logger.warn({
         ip: clientIp,
         path: req.path,
         userAgent: req.get("user-agent"),
-      });
+      }, "Blocked IP attempt");
       return res.status(403).json({
         error: "Access denied",
         message: "Your IP address has been blocked",
@@ -272,11 +272,11 @@ export const createIpFilter = (options = {}) => {
 
     // Check whitelist if defined
     if (whitelist.length > 0 && !whitelist.includes(clientIp)) {
-      logWarn("Non-whitelisted IP attempt", {
+      logger.warn({
         ip: clientIp,
         path: req.path,
         userAgent: req.get("user-agent"),
-      });
+      }, "Non-whitelisted IP attempt");
       return res.status(403).json({
         error: "Access denied",
         message: "Your IP address is not authorized",
@@ -292,7 +292,7 @@ export const securityLogger = (req, res, next) => {
   const startTime = Date.now();
 
   // Log request details
-  logInfo("Request received", {
+  logger.info({
     method: req.method,
     path: req.path,
     ip: req.ip,
@@ -300,30 +300,30 @@ export const securityLogger = (req, res, next) => {
     contentType: req.get("content-type"),
     contentLength: req.get("content-length"),
     timestamp: new Date().toISOString(),
-  });
+  }, "Request received");
 
   // Override res.end to log response
   const originalEnd = res.end;
   res.end = function (...args) {
     const duration = Date.now() - startTime;
 
-    logInfo("Request completed", {
+    logger.info({
       method: req.method,
       path: req.path,
       statusCode: res.statusCode,
       duration: `${duration}ms`,
       ip: req.ip,
-    });
+    }, "Request completed");
 
     // Log security-relevant responses
     if (res.statusCode >= 400) {
-      logWarn("Security-relevant response", {
+      logger.warn({
         method: req.method,
         path: req.path,
         statusCode: res.statusCode,
         ip: req.ip,
         userAgent: req.get("user-agent"),
-      });
+      }, "Security-relevant response");
     }
 
     return originalEnd.apply(this, args);

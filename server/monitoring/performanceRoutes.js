@@ -1,7 +1,7 @@
 // Performance monitoring and health check endpoints
 import mongoose from "mongoose";
 import { memoryCache } from "../middleware/performance.js";
-import { logInfo, logError } from "../middleware/logger.js";
+import { logger } from "../utils/logger.js";
 
 // Health check endpoint for monitoring service status
 export const healthCheck = async (req, res) => {
@@ -89,10 +89,10 @@ export const performanceMetrics = async (req, res) => {
       ).toFixed(2)} KB`,
     };
 
-    logInfo("Performance metrics requested");
+  logger.info("Performance metrics requested");
     res.json(metrics);
   } catch (error) {
-    logError("Error getting performance metrics", { error: error.message });
+  logger.error({ error: error.message }, "Error getting performance metrics");
     res.status(500).json({
       error: "Failed to get performance metrics",
       message: error.message,

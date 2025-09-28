@@ -1,6 +1,6 @@
 // Performance optimization and caching middleware
 import compression from "compression";
-import { logInfo, logWarn, logError } from "./logger.js";
+import { logger } from "../utils/logger.js";
 
 // In-memory cache for small-scale applications
 const memoryCache = new Map();
@@ -49,7 +49,7 @@ export const cacheMiddleware = (duration = 300) => {
       const cached = memoryCache.get(cacheKey);
 
       if (cached && cached.expires > now) {
-        logInfo("Memory cache hit", { url: req.originalUrl });
+  logger.info({ url: req.originalUrl }, "Memory cache hit");
         res.setHeader("X-Cache", "HIT");
         res.setHeader("X-Cache-Type", "Memory");
         return res.json(cached.data);
@@ -68,13 +68,13 @@ export const cacheMiddleware = (duration = 300) => {
 
         res.setHeader("X-Cache", "MISS");
         res.setHeader("X-Cache-Type", "Memory");
-        logInfo("Memory cache miss", { url: req.originalUrl });
+  logger.info({ url: req.originalUrl }, "Memory cache miss");
         return originalJson.call(this, data);
       };
 
       next();
     } catch (error) {
-      logWarn("Cache middleware error", { error: error.message });
+  logger.warn({ error: error.message }, "Cache middleware error");
       next();
     }
   };
@@ -91,10 +91,10 @@ export const invalidateCache = async (pattern) => {
       }
     }
     if (removed > 0) {
-      logInfo("Memory cache invalidated", { pattern, keysRemoved: removed });
+  logger.info({ pattern, keysRemoved: removed }, "Memory cache invalidated");
     }
   } catch (error) {
-    logWarn("Cache invalidation failed", { error: error.message });
+  logger.warn({ error: error.message }, "Cache invalidation failed");
   }
 };
 
@@ -112,13 +112,13 @@ export const performanceMiddleware = (req, res, next) => {
     const slowThreshold = isPaymentEndpoint ? 2000 : 1000; // 2s for payments, 1s for others
     
     if (duration > slowThreshold) {
-      logWarn("Slow API request detected", {
+      logger.warn({
         method: req.method,
         url: req.originalUrl,
         duration: `${duration}ms`,
         threshold: `${slowThreshold}ms`,
         userAgent: req.get("user-agent"),
-      });
+      }, "Slow API request detected");
     }
 
     // Add response time header for debugging

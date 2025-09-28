@@ -133,7 +133,7 @@ class ApiKeyManager {
     const keyData = this.keys.get(apiKey);
     if (keyData) {
       keyData.isActive = false;
-      logWarn("API key deactivated", { keyId: keyData.keyId });
+  logger.warn({ keyId: keyData.keyId }, "API key deactivated");
       return true;
     }
     return false;
@@ -154,11 +154,11 @@ class ApiKeyManager {
 
     this.keys.set(apiKey, keyData);
 
-    logInfo("New API key created", {
+    logger.info({
       keyId: keyData.keyId,
       name: keyData.name,
       permissions: keyData.permissions,
-    });
+    }, "New API key created");
 
     return apiKey;
   }
