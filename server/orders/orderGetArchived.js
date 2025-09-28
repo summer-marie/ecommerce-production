@@ -1,10 +1,12 @@
 import orderModel from "./orderModel.js";
+import { getLog } from "../utils/logger.js";
 
 // TODO: Add month/year filter and pagination for archived orders in the admin frontend for easier navigation and record-keeping. Keep at least 1 year of archived orders for tax purposes.
 
 const orderGetArchived = async (req, res) => {
   try {
-    console.log("Fetching archived orders...");
+  const log = getLog(req, { event: 'order.getArchived' });
+  log.debug('fetch archived start');
     
     const pipeline = [
       { $match: { status: "archived" } },
@@ -16,10 +18,11 @@ const orderGetArchived = async (req, res) => {
       allowDiskUse: true,
     });
 
-    console.log("Archived orders found:", getOrders.length);
+  log.debug({ count: getOrders.length }, 'archived orders fetched');
     res.status(200).json({ success: true, orders: getOrders });
   } catch (error) {
-    console.error("Error fetching archived orders:", error);
+    const log = getLog(req, { event: 'order.getArchived.error' });
+    log.error({ err: error.message }, 'fetch archived failed');
     res.status(500).json({ success: false, error: error.message });
   }
 };

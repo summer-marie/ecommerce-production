@@ -50,7 +50,7 @@ const AdminInbox = () => {
   // handle delete selected messages
   const handleDeleteSelected = async () => {
     setIsDeleting(true);
-    
+
     try {
       // Delete each selected message
       await Promise.all(
@@ -86,7 +86,9 @@ const AdminInbox = () => {
       {toast && (
         <div
           className={`fixed top-4 right-4 z-[60] w-[22rem] max-w-sm transform transition-all duration-300 ${
-            toast.show ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+            toast.show
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 -translate-y-2"
           }`}
           role="status"
           aria-live="polite"
@@ -94,7 +96,12 @@ const AdminInbox = () => {
           <div className="relative overflow-hidden rounded-xl bg-slate-900/90 text-slate-50 shadow-xl ring-1 ring-sky-400/30 backdrop-blur-md">
             <div className="flex items-start gap-3 p-3">
               <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/30">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm-1.293 12.293-2.5-2.5 1.414-1.414L10.707 11.5l4.672-4.672 1.414 1.414-6.086 6.05Z" />
                 </svg>
               </span>
@@ -108,7 +115,12 @@ const AdminInbox = () => {
                 className="-m-1 rounded-md p-1 text-slate-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-sky-400/50"
                 aria-label="Dismiss notification"
               >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M6.225 4.811 4.811 6.225 10.586 12l-5.775 5.775 1.414 1.414L12 13.414l5.775 5.775 1.414-1.414L13.414 12l5.775-5.775-1.414-1.414L12 10.586 6.225 4.811Z" />
                 </svg>
               </button>
@@ -124,15 +136,31 @@ const AdminInbox = () => {
         {/* Message Policy Header */}
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 mt-4">
           <div className="flex items-start">
-            <svg className="w-5 h-5 text-slate-600 mt-0.5 mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            <svg
+              className="w-5 h-5 text-slate-600 mt-0.5 mr-3 flex-shrink-0"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
             </svg>
             <div>
-              <h3 className="text-sm font-semibold text-slate-800 mb-1">Message Retention Policy</h3>
+              <h3 className="text-sm font-semibold text-slate-800 mb-1">
+                Message Retention Policy
+              </h3>
               <div className="text-xs text-slate-600 space-y-1">
-                <p>• <strong>Automatic cleanup:</strong> Messages older than 30 days are automatically deleted from this dashboard</p>
-                <p>• <strong>Storage limit:</strong> Maximum 100 messages stored (oldest removed when limit reached)</p>
-                <p>• <strong>Email backup:</strong> All original emails remain permanently in your Gmail inbox</p>
+                <p>
+                  • <strong>Automatic cleanup:</strong> Messages older than 30
+                  days are automatically deleted from this dashboard
+                </p>
+                <p>
+                  • <strong>Storage limit:</strong> Maximum 100 messages stored
+                  (oldest removed when limit reached)
+                </p>
+                <p>
+                  • <strong>Email backup:</strong> All original emails remain
+                  permanently in your Gmail inbox
+                </p>
               </div>
             </div>
           </div>
@@ -208,12 +236,18 @@ const AdminInbox = () => {
             {/* Info note about delete behavior */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
               <div className="flex items-start">
-                <svg className="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                <svg
+                  className="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
                 </svg>
                 <div className="text-xs text-blue-800">
-                  <strong>Note:</strong> Removing messages here only clears them from this dashboard. 
-                  Original emails remain safely stored in your Gmail inbox for permanent reference.
+                  <strong>Note:</strong> Removing messages here only clears them
+                  from this dashboard. Original emails remain safely stored in
+                  your Gmail inbox for permanent reference.
                 </div>
               </div>
             </div>

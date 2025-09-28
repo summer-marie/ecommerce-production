@@ -10,7 +10,7 @@ const aboutService = {
     return data.about;
   },
   async update(payload) {
-  const headers = { "Content-Type": "application/json" };
+    const headers = { "Content-Type": "application/json" };
 
     const res = await fetch(`${API_BASE}/about`, {
       method: "PUT",

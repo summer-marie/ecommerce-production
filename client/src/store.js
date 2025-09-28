@@ -36,8 +36,8 @@ export const store = configureStore({
     cart: persistedCartReducer,
     message: messageReducer,
     payment: paymentReducer,
-  operating: operatingReducer,
-  about: aboutReducer,
+    operating: operatingReducer,
+    about: aboutReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

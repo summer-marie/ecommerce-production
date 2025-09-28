@@ -1,4 +1,5 @@
 import { cleanupArchivedOrders, getCleanupPreview } from "../scripts/cleanupArchivedOrders.js";
+import { getLog } from "../utils/logger.js";
 
 /**
  * Manual cleanup endpoint for admin use
@@ -6,7 +7,8 @@ import { cleanupArchivedOrders, getCleanupPreview } from "../scripts/cleanupArch
  */
 const orderCleanupArchived = async (req, res) => {
   try {
-    console.log("🗑️  Manual cleanup of archived orders initiated by admin");
+  const log = getLog(req, { event: 'order.cleanup.manual' });
+  log.info('manual archived cleanup initiated');
     
     const result = await cleanupArchivedOrders();
     
@@ -25,7 +27,8 @@ const orderCleanupArchived = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Error in manual cleanup endpoint:", error);
+    const log = getLog(req, { event: 'order.cleanup.manual.error' });
+    log.error({ err: error.message }, 'manual cleanup failed');
     res.status(500).json({
       success: false,
       message: "Internal server error during cleanup",
@@ -54,7 +57,8 @@ const orderGetCleanupPreview = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Error getting cleanup preview:", error);
+    const log = getLog(req, { event: 'order.cleanup.preview.error' });
+    log.error({ err: error.message }, 'cleanup preview failed');
     res.status(500).json({
       success: false,
       message: "Internal server error",

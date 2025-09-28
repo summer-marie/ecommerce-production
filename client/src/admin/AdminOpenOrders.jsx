@@ -8,9 +8,6 @@ import {
   orderArchiveOne,
 } from "../redux/orderSlice";
 
-// TODO: implement order search and filtering
-// TODO: add pagination for order list
-
 const AdminOpenOrders = () => {
   const { orders } = useSelector((state) => state.order);
   const dispatch = useDispatch();
@@ -126,8 +123,8 @@ const AdminOpenOrders = () => {
     setUpdatingOrderId(id);
 
     // Log current counts before update
-  const beforeCounts = getStatusCounts();
-  logger.debug("Counts BEFORE update", beforeCounts);
+    const beforeCounts = getStatusCounts();
+    logger.debug("Counts BEFORE update", beforeCounts);
 
     try {
       const result = await dispatch(
@@ -137,7 +134,7 @@ const AdminOpenOrders = () => {
         })
       ).unwrap();
 
-  logger.debug("Server returned orders count", result.orders?.length);
+      logger.debug("Server returned orders count", result.orders?.length);
 
       // Log counts after update
       setTimeout(() => {
@@ -191,7 +188,10 @@ const AdminOpenOrders = () => {
 
       if (bulkArchiveData) {
         // Handle bulk archiving
-        logger.info("Bulk archiving orders", { count: bulkArchiveData.count, status: bulkArchiveData.status });
+        logger.info("Bulk archiving orders", {
+          count: bulkArchiveData.count,
+          status: bulkArchiveData.status,
+        });
 
         // Archive all orders in the bulk selection
         for (const order of bulkArchiveData.orders) {

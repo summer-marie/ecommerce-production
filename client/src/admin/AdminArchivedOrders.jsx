@@ -335,7 +335,9 @@ const AdminArchivedOrders = () => {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <AlertBlack
             alertMsg="Delete Old Archived Orders?"
-            alertDescription={`This will permanently delete ${cleanup?.preview?.eligibleForDeletion || 0} archived orders older than 30 days. This action cannot be undone and is recommended for database maintenance.`}
+            alertDescription={`This will permanently delete ${
+              cleanup?.preview?.eligibleForDeletion || 0
+            } archived orders older than 30 days. This action cannot be undone and is recommended for database maintenance.`}
             handleConfirm={handleCleanupConfirm}
             handleCancel={handleCleanupCancel}
           />

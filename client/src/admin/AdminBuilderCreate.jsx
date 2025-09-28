@@ -124,7 +124,7 @@ const AdminBuilderCreate = () => {
   const [newPizza, setNewPizza] = useState({
     pizzaName: "",
     pizzaPrice: "", // manual entry by admin
-  crust: "Brick Oven Crust",
+    crust: "Brick Oven Crust",
     cheeses: ["", "", ""], // up to 3 cheeses
     cheeseAmounts: ["1", "1", "1"], // default Regular amounts
     sauce: "Signature Red Sauce",
@@ -155,13 +155,17 @@ const AdminBuilderCreate = () => {
   useEffect(() => {
     // Build crust options from current ingredients
     const baseOptions = ingredients.filter((i) => i.itemType === "Base");
-    const crustOptions = baseOptions.filter((i) => /crust/i.test(i?.name || ""));
+    const crustOptions = baseOptions.filter((i) =>
+      /crust/i.test(i?.name || "")
+    );
     if (!crustOptions.length) return;
 
     setNewPizza((prev) => {
       const hasCurrent = crustOptions.some((c) => c?.name === prev.crust);
       if (hasCurrent) return prev;
-      const preferred = crustOptions.find((c) => /brick\s*oven\s*crust/i.test(c?.name || ""));
+      const preferred = crustOptions.find((c) =>
+        /brick\s*oven\s*crust/i.test(c?.name || "")
+      );
       const next = preferred || crustOptions[0];
       return next?.name ? { ...prev, crust: next.name } : prev;
     });

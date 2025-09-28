@@ -35,9 +35,14 @@ export default function AdminBootstrap() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data?.message || data?.error || `Request failed (${res.status})`);
+        throw new Error(
+          data?.message || data?.error || `Request failed (${res.status})`
+        );
       }
-      setResult({ ok: true, message: "Admin created successfully. Secure this route ASAP." });
+      setResult({
+        ok: true,
+        message: "Admin created successfully. Secure this route ASAP.",
+      });
     } catch (err) {
       setResult({ ok: false, message: err.message });
     } finally {
@@ -47,9 +52,12 @@ export default function AdminBootstrap() {
 
   return (
     <div className="max-w-md mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-2">Admin Bootstrap (Temporary)</h1>
+      <h1 className="text-2xl font-semibold mb-2">
+        Admin Bootstrap (Temporary)
+      </h1>
       <p className="text-sm text-red-600 mb-4">
-        This page lets you create an initial admin. Remove or lock it down after use.
+        This page lets you create an initial admin. Remove or lock it down after
+        use.
       </p>
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
@@ -130,7 +138,11 @@ export default function AdminBootstrap() {
         </button>
       </form>
       {result && (
-        <div className={`mt-4 text-sm ${result.ok ? "text-green-700" : "text-red-700"}`}>
+        <div
+          className={`mt-4 text-sm ${
+            result.ok ? "text-green-700" : "text-red-700"
+          }`}
+        >
           {result.message}
         </div>
       )}

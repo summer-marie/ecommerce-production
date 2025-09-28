@@ -45,8 +45,8 @@ export default defineConfig(({ mode }) => {
     // Secondary stripping via esbuild (affects dependencies or if terser disabled)
     esbuild: {
       drop:
-        mode === 'production' && env.VITE_KEEP_CONSOLE !== 'true'
-          ? ['console', 'debugger']
+        mode === "production" && env.VITE_KEEP_CONSOLE !== "true"
+          ? ["console", "debugger"]
           : [],
     },
     // Asset optimization

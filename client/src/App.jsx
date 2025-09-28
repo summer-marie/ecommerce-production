@@ -9,7 +9,6 @@ import "./App.css";
 // Immediately needed components (above the fold)
 import CustomerLayout from "./customer/CustomerLayout";
 import AdminLayout from "./admin/AdminLayout";
-import TestingALert from "./TestingALert";
 import InstallConsentModal from "./components/InstallConsentModal";
 
 // Lazy load components for better code splitting
@@ -73,8 +72,6 @@ function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        <Route path="/testing" element={<TestingALert />} />
-
         {/* Public/customer routes */}
         <Route element={<CustomerLayout />}>
           <Route
@@ -245,7 +242,7 @@ function App() {
             </Suspense>
           }
         />
-  {/** Bootstrap route removed after initial admin creation for security */}
+        {/** Bootstrap route removed after initial admin creation for security */}
         <Route
           path="*"
           element={
@@ -256,8 +253,8 @@ function App() {
         />
       </Routes>
 
-  {/* Performance monitoring in development */}
-  <InstallConsentModal />
+      {/* Performance monitoring in development */}
+      <InstallConsentModal />
     </Suspense>
   );
 }

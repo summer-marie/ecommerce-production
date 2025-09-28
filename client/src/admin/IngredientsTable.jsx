@@ -45,7 +45,7 @@ const IngredientModal = ({ isOpen, onClose, setShowModal }) => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-  logger.debug("Submitting new ingredient");
+    logger.debug("Submitting new ingredient");
     const newIngredient = {
       ...formData,
       price: formData.price === "" ? 0 : parseFloat(formData.price),
@@ -220,7 +220,14 @@ const IngredientsTable = () => {
   // State to track the clicked ingredient
   const [alertIngredient, setAlertIngredient] = useState(null);
 
-  const itemTypesArray = ["Base", "Sauce", "Meat Topping", "Veggie Topping", "Herbs", "Other"];
+  const itemTypesArray = [
+    "Base",
+    "Sauce",
+    "Meat Topping",
+    "Veggie Topping",
+    "Herbs",
+    "Other",
+  ];
 
   const dispatch = useDispatch();
 
@@ -632,13 +639,16 @@ const IngredientsTable = () => {
         <>
           {/* Background overlay */}
           <div className="fixed inset-0 bg-black/60 z-40"></div>
-          
+
           {/* Alert positioned relative to clicked button */}
           <div
             className="absolute z-50 min-w-sm"
             style={{
               top: `${alertPosition.top - 50}px`, // Adjusted to center vertically
-              left: `${Math.min(alertPosition.left, window.innerWidth - 800)}px`, // Prevent overflow
+              left: `${Math.min(
+                alertPosition.left,
+                window.innerWidth - 800
+              )}px`, // Prevent overflow
             }}
           >
             <AlertBlack

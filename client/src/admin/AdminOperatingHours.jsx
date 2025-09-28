@@ -48,7 +48,7 @@ export default function AdminOperatingHours() {
 
   // Debug logging
   useEffect(() => {
-  logger.debug("Operating hours state", { config, loading, saving, error });
+    logger.debug("Operating hours state", { config, loading, saving, error });
   }, [config, loading, saving, error]);
 
   // Weekly hours management functions
@@ -127,7 +127,7 @@ export default function AdminOperatingHours() {
       // Save configuration via Redux thunk
       await dispatch(updateOperatingConfig(payload)).unwrap();
     } catch (e) {
-  logger.error(e);
+      logger.error(e);
       setFormError("Failed to save changes. Please try again.");
     }
   };

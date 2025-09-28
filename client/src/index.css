@@ -81,7 +81,8 @@
   background-color: var(--scroll-track);
   background-image: var(--metal-highlight);
   background-blend-mode: overlay;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), inset 0 -1px 1px rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.08);
 }
 
 /* Track for horizontal scrollbars */
@@ -97,33 +98,33 @@
 ::-webkit-scrollbar-thumb {
   border-radius: 8px;
   border: 1px solid var(--scroll-border);
-  background-image:
-    var(--metal-highlight),
-  linear-gradient(180deg, #f9fbff 0%, var(--scroll-thumb) 55%, #aebbd4 100%);
+  background-image: var(--metal-highlight),
+    linear-gradient(180deg, #f9fbff 0%, var(--scroll-thumb) 55%, #aebbd4 100%);
   background-blend-mode: overlay, normal;
-  box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.28),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.18);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.28),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.18);
   background-clip: padding-box;
 }
 
 /* Horizontal thumb */
 ::-webkit-scrollbar-thumb:horizontal {
-  background-image:
-    var(--metal-highlight),
-  linear-gradient(90deg, #f9fbff 0%, var(--scroll-thumb) 55%, #aebbd4 100%);
+  background-image: var(--metal-highlight),
+    linear-gradient(90deg, #f9fbff 0%, var(--scroll-thumb) 55%, #aebbd4 100%);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-image:
-    linear-gradient(
+  background-image: linear-gradient(
       115deg,
       rgba(255, 255, 255, 0.6) 0%,
       rgba(255, 255, 255, 0.16) 42%,
       rgba(255, 255, 255, 0) 60%
     ),
-  linear-gradient(180deg, #f5f9ff 0%, var(--scroll-thumb-hover) 55%, #9fb2cf 100%);
+    linear-gradient(
+      180deg,
+      #f5f9ff 0%,
+      var(--scroll-thumb-hover) 55%,
+      #9fb2cf 100%
+    );
 }
 
 /* Firefox (unified neutral colors) */
@@ -402,18 +403,23 @@ select option:disabled {
 /* Metallic glass banner (emerald) */
 .banner-metal-green {
   /* Opaque metallic emerald gradient (similar vibe to admin sidebar) */
-  background-image:
-    var(--metal-highlight), /* diagonal highlight sweep for metallic sheen */
-    linear-gradient(150deg, #064a32 0%, #0c6f47 40%, #118558 60%, #064a32 100%);
+  background-image: var(--metal-highlight),
+    /* diagonal highlight sweep for metallic sheen */
+      linear-gradient(
+        150deg,
+        #064a32 0%,
+        #0c6f47 40%,
+        #118558 60%,
+        #064a32 100%
+      );
   background-blend-mode: overlay, normal;
   /* Solid background base */
   background-color: #064a32;
   /* Border and bevel (ring + inset top highlight like the sidenav) */
   border: 1px solid rgba(16, 185, 129, 0.35);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06), /* subtle top inner highlight */
-    0 2px 10px rgba(6, 95, 70, 0.25),       /* outer depth */
-    0 0 0 1px rgba(5, 150, 105, 0.18);      /* faint ring */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    /* subtle top inner highlight */ 0 2px 10px rgba(6, 95, 70, 0.25),
+    /* outer depth */ 0 0 0 1px rgba(5, 150, 105, 0.18); /* faint ring */
   color: #eafff5; /* soft white-green for readability */
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
@@ -434,7 +440,8 @@ select option:disabled {
 }
 
 @keyframes wave-bounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) scale(1);
   }
   20% {

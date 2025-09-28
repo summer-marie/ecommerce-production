@@ -19,6 +19,7 @@ import {
   getOrderByPaymentId,
 } from "../orders/orderPaymentHelpers.js";
 import { sendPaymentReceiptEmail } from "../utils/receiptService.js";
+import { getLog, logger } from "../utils/logger.js";
 
 // Helper: sanitize objects for JSON (convert BigInt recursively)
 function toJsonSafe(value) {
@@ -34,12 +35,9 @@ function toJsonSafe(value) {
 
 // Initialize Square client
 if (process.env.NODE_ENV !== "production") {
-  console.log("Square module keys:", Object.keys(Square));
-  console.log("Resolved ClientCtor type:", typeof ClientCtor);
-  console.log(
-    "Resolved EnvironmentEnum keys:",
-    EnvironmentEnum ? Object.keys(EnvironmentEnum) : "undefined"
-  );
+  logger.debug({ keys: Object.keys(Square) }, 'square module keys');
+  logger.debug({ ctorType: typeof ClientCtor }, 'square client ctor type');
+  logger.debug({ envKeys: EnvironmentEnum ? Object.keys(EnvironmentEnum) : [] }, 'square env keys');
 }
 if (!ClientCtor) {
   throw new Error(
@@ -56,47 +54,37 @@ const squareClient = new ClientCtor({
 
 // Debug: Check if Square client is properly initialized
 if (process.env.NODE_ENV !== "production") {
-  console.log("Square client initialized:", !!squareClient);
-  console.log("Square client keys:", Object.keys(squareClient));
+  logger.debug({ initialized: !!squareClient }, 'square client init');
+  logger.debug({ clientKeys: Object.keys(squareClient) }, 'square client keys');
   if (squareClient.paymentsApi) {
-    console.log(
-      "paymentsApi methods:",
-      Object.getOwnPropertyNames(squareClient.paymentsApi)
-    );
-  } else {
-    console.log("paymentsApi not found, checking alternatives...");
-    if (squareClient.payments) {
-      console.log("Found payments property:", typeof squareClient.payments);
-    }
+    logger.debug({ paymentApiMethods: Object.getOwnPropertyNames(squareClient.paymentsApi) }, 'payments api methods');
+  } else if (squareClient.payments) {
+    logger.debug({ hasPayments: typeof squareClient.payments }, 'payments property present');
   }
-  console.log("Environment:", process.env.SQUARE_ENVIRONMENT);
-  console.log("Access Token exists:", !!process.env.SQUARE_ACCESS_TOKEN);
+  logger.debug({ env: process.env.SQUARE_ENVIRONMENT, hasAccessToken: !!process.env.SQUARE_ACCESS_TOKEN }, 'square env');
 }
 
 // Extra introspection for payments API shape
 if (process.env.NODE_ENV !== "production") {
   try {
     const p = squareClient.payments;
-    console.log("payments typeof:", typeof p);
+  logger.debug({ type: typeof p }, 'payments typeof');
     if (p) {
-      console.log("payments own keys:", Object.getOwnPropertyNames(p));
+  logger.debug({ keys: Object.getOwnPropertyNames(p) }, 'payments own keys');
       const proto = Object.getPrototypeOf(p);
       if (proto)
-        console.log("payments proto keys:", Object.getOwnPropertyNames(proto));
+  logger.debug({ protoKeys: Object.getOwnPropertyNames(proto) }, 'payments proto keys');
     }
     const pa = squareClient.paymentsApi;
-    console.log("paymentsApi typeof:", typeof pa);
+  logger.debug({ type: typeof pa }, 'paymentsApi typeof');
     if (pa) {
-      console.log("paymentsApi own keys:", Object.getOwnPropertyNames(pa));
+  logger.debug({ keys: Object.getOwnPropertyNames(pa) }, 'paymentsApi own keys');
       const protoA = Object.getPrototypeOf(pa);
       if (protoA)
-        console.log(
-          "paymentsApi proto keys:",
-          Object.getOwnPropertyNames(protoA)
-        );
+        logger.debug({ protoKeys: Object.getOwnPropertyNames(protoA) }, 'paymentsApi proto keys');
     }
   } catch (e) {
-    console.log("payments introspection error:", e?.message);
+    logger.warn({ err: e?.message }, 'payments introspection error');
   }
 }
 
@@ -162,17 +150,9 @@ export const createSquarePayment = async (req, res) => {
       req.body;
 
     // Debug: log sanitized incoming request
+    const log = getLog(req, { event: 'square.createPayment' });
     if (process.env.NODE_ENV !== "production") {
-      const safeLog = {
-        hasSourceId: !!sourceId,
-        sourceIdPrefix:
-          typeof sourceId === "string" ? sourceId.slice(0, 6) : null,
-        amountType: typeof amount,
-        amountValue: amount,
-        orderId,
-        orderNumber,
-      };
-      console.log("[Square] Incoming create payment request", safeLog);
+      log.debug({ hasSourceId: !!sourceId, sourceIdPrefix: typeof sourceId === 'string' ? sourceId.slice(0,6) : null, amountType: typeof amount, amountValue: amount, orderId, orderNumber }, 'incoming create payment');
     }
 
     // Prefer orderNumber; fall back to orderId for backward compatibility
@@ -243,12 +223,7 @@ export const createSquarePayment = async (req, res) => {
     };
 
     if (process.env.NODE_ENV !== "production") {
-      console.log("[Square] Creating payment", {
-        orderRef: referenceId,
-        amountInCents,
-        location: process.env.SQUARE_LOCATION_ID,
-        hasToken: !!process.env.SQUARE_ACCESS_TOKEN,
-      });
+      log.debug({ orderRef: referenceId, amountInCents, location: process.env.SQUARE_LOCATION_ID, hasToken: !!process.env.SQUARE_ACCESS_TOKEN }, 'creating payment');
     }
 
     const paymentsApi = resolvePaymentsApi(squareClient);
@@ -258,10 +233,7 @@ export const createSquarePayment = async (req, res) => {
 
     const createFn = selectCreatePaymentFn(paymentsApi);
     if (!createFn) {
-      console.log(
-        "Available payments keys:",
-        Object.getOwnPropertyNames(paymentsApi)
-      );
+      log.debug({ paymentKeys: Object.getOwnPropertyNames(paymentsApi) }, 'available payment keys');
       throw new Error(
         "Square SDK createPayment method not found on payments API"
       );
@@ -272,7 +244,7 @@ export const createSquarePayment = async (req, res) => {
     try {
       resp = await createFn(paymentRequest);
     } catch (sdkErr) {
-      console.error("[Square] SDK createPayment error raw:", sdkErr);
+  log.error({ err: sdkErr, errors: sdkErr?.errors }, 'sdk createPayment error');
       if (sdkErr?.errors) {
         return res.status(400).json({
           error: "Payment failed",
@@ -287,11 +259,7 @@ export const createSquarePayment = async (req, res) => {
     const result = resp.result ?? resp;
 
     if (process.env.NODE_ENV !== "production") {
-      console.log("[Square] Payment success", {
-        paymentId: result.payment?.id,
-        status: result.payment?.status,
-        receipt: result.payment?.receiptNumber,
-      });
+      log.debug({ paymentId: result.payment?.id, status: result.payment?.status, receipt: result.payment?.receiptNumber }, 'payment success');
     }
 
     // Try to update order, but don't fail payment response if not found
@@ -317,16 +285,14 @@ export const createSquarePayment = async (req, res) => {
           const orderModel = (await import("../orders/orderModel.js")).default;
           customerOrder = await orderModel.findOne({ orderNumber: orderRefNumber });
         } catch (orderFetchError) {
-          console.warn("Could not fetch order for email receipt:", orderFetchError.message);
+          log.warn({ err: orderFetchError.message }, 'order fetch for receipt failed');
         }
       } else {
-        console.warn(
-          `Order reference '${referenceId}' is not numeric; skipped DB update.`
-        );
+        log.warn({ referenceId }, 'non-numeric order reference skipped update');
         orderUpdate = { updated: false, reason: "non_numeric_reference" };
       }
     } catch (e) {
-      console.error(`Order update failed for ref ${referenceId}:`, e?.message);
+  log.error({ referenceId, err: e?.message }, 'order update failed');
       orderUpdate = { updated: false, error: e?.message };
     }
 
@@ -342,9 +308,9 @@ export const createSquarePayment = async (req, res) => {
         };
         
         const emailResult = await sendPaymentReceiptEmail(receiptData, customerOrder.email);
-        console.log("Payment receipt email result:", emailResult);
+  log.info({ emailResult }, 'payment receipt email sent');
       } catch (emailError) {
-        console.warn("Failed to send payment receipt email:", emailError.message);
+  log.warn({ err: emailError.message }, 'payment receipt email failed');
         // Don't fail payment response if email fails
       }
     }
@@ -358,7 +324,8 @@ export const createSquarePayment = async (req, res) => {
       orderUpdate,
     });
   } catch (error) {
-    console.error("[Square] Payment controller failure:", error);
+    const log = getLog(req, { event: 'square.createPayment.error' });
+    log.error({ err: error.message, stack: error.stack }, 'payment controller failure');
 
     // Handle Square-specific errors
     if (error.errors) {
@@ -404,7 +371,8 @@ export const getPaymentStatus = async (req, res) => {
       receiptNumber: result.payment.receiptNumber,
     });
   } catch (error) {
-    console.error("Failed to get payment status:", error);
+    const log = getLog(req, { event: 'square.getPaymentStatus.error' });
+    log.error({ err: error.message }, 'get payment status failed');
     res.status(500).json({ error: "Failed to retrieve payment status" });
   }
 };
@@ -422,12 +390,12 @@ export const handleSquareWebhook = async (req, res) => {
       .digest("base64");
 
     if (signature !== hash) {
-      console.error("Webhook signature verification failed");
+  logger.warn('webhook signature verification failed');
       return res.status(401).send("Unauthorized");
     }
 
     const event = req.body;
-    console.log("Square webhook received:", event.type);
+  logger.debug({ event: event.type }, 'square webhook received');
 
     if (event.type === "payment.updated") {
       const payment = event.data.object.payment;
@@ -435,14 +403,10 @@ export const handleSquareWebhook = async (req, res) => {
       const numericRef = Number(referenceIdRaw);
       const orderRefNumber = Number.isFinite(numericRef) ? numericRef : null;
 
-      console.log(
-        `Payment ${payment.id} updated to status: ${payment.status} (ref: ${referenceIdRaw})`
-      );
+      logger.debug({ paymentId: payment.id, status: payment.status, ref: referenceIdRaw }, 'payment updated');
 
       if (orderRefNumber == null) {
-        console.warn(
-          `Webhook reference_id '${referenceIdRaw}' is not numeric; skipping order update.`
-        );
+        logger.warn({ referenceId: referenceIdRaw }, 'webhook non-numeric reference');
       } else {
         // Update order status based on payment status
         if (payment.status === "COMPLETED") {
@@ -466,7 +430,7 @@ export const handleSquareWebhook = async (req, res) => {
 
     res.json({ received: true });
   } catch (error) {
-    console.error("Webhook processing failed:", error);
+  logger.error({ err: error.message }, 'webhook processing failed');
     res.status(500).json({ error: "Webhook processing failed" });
   }
 };
@@ -557,7 +521,8 @@ export const testSquareConnection = async (req, res) => {
       "No suitable Square API method found for test (payments or locations)"
     );
   } catch (error) {
-    console.error("Square connection test failed:", error);
+    const log = getLog(req, { event: 'square.testConnection.error' });
+    log.error({ err: error.message }, 'square connection test failed');
     res
       .status(500)
       .json({ error: "Square connection failed", details: error.message });

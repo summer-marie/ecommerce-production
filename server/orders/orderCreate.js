@@ -1,6 +1,7 @@
 import orderModel from "./orderModel.js";
 import { sendOrderConfirmationEmail } from "../utils/receiptService.js";
 import { sendAdminNewOrderEmail } from "../utils/orderAlertService.js";
+import { getLog } from "../utils/logger.js";
 
 const orderCreate = async (req, res) => {
   try {
@@ -101,29 +102,27 @@ const orderCreate = async (req, res) => {
       date: formattedDate,
     };
 
-    console.log("newOrder", formattedOrder);
+  const log = getLog(req, { event: 'order.create', orderNumber });
+  log.info({ order: { orderNumber, total: orderTotal, status } }, 'order created');
 
     // Fire-and-forget admin alert (don't block response)
     try {
       sendAdminNewOrderEmail(newOrder).catch((e) =>
-        console.warn("Admin new-order alert failed:", e.message)
+        log.warn({ err: e.message }, 'admin new-order alert failed')
       );
     } catch (e) {
-      console.warn("Admin new-order alert scheduling failed:", e.message);
+      log.warn({ err: e.message }, 'admin new-order alert scheduling failed');
     }
 
     // Send order confirmation email if email provided
     if (email) {
       try {
-        console.log("🐛 DEBUG - About to send email with data:");
-        console.log("newOrder keys:", Object.keys(newOrder.toObject ? newOrder.toObject() : newOrder));
-        console.log("payment:", payment);
+        log.debug({ keys: Object.keys(newOrder.toObject ? newOrder.toObject() : newOrder) }, 'sending order confirmation email');
         
         const emailResult = await sendOrderConfirmationEmail(newOrder, payment);
-        console.log("Order confirmation email result:", emailResult);
+        log.info({ emailResult }, 'order confirmation email sent');
       } catch (emailError) {
-        console.error("Failed to send order confirmation email:", emailError.message);
-        console.error("Full email error:", emailError);
+        log.warn({ err: emailError.message }, 'order confirmation email failed');
         // Don't fail the order creation if email fails
       }
     }
@@ -134,7 +133,8 @@ const orderCreate = async (req, res) => {
       order: formattedOrder,
     });
   } catch (error) {
-    console.error("Order creation failed:", error);
+    const log = getLog(req, { event: 'order.create.error' });
+    log.error({ err: error.message, stack: error.stack }, 'order creation failed');
     res.status(500).json({
       success: false,
       message: "Order creation failed",

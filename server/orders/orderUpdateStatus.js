@@ -1,11 +1,12 @@
 import orderModel from "./orderModel.js";
+import { getLog } from "../utils/logger.js";
 
 const orderUpdateStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  console.log("=== SERVER STATUS UPDATE START ===");
-  console.log("SERVER: Updating order ID:", id, "to status:", status);
+  const log = getLog(req, { event: 'order.updateStatus', orderId: id });
+  log.debug({ newStatus: status }, 'status update start');
   
   try {
     // First, get counts before update
@@ -13,7 +14,7 @@ const orderUpdateStatus = async (req, res) => {
       { $match: { status: { $ne: "archived" } } },
       { $group: { _id: "$status", count: { $sum: 1 } } }
     ]);
-    console.log("SERVER: Counts BEFORE update:", beforeCounts);
+  log.debug({ beforeCounts }, 'counts before update');
     
     const order = await orderModel.findOneAndUpdate(
       { _id: id },
@@ -24,7 +25,7 @@ const orderUpdateStatus = async (req, res) => {
     );
 
     if (!order) {
-      console.log("SERVER: Order not found with ID:", id);
+      log.warn({ orderId: id }, 'order not found');
       return res.status(404).json({ error: "Order not found" });
     }
 
@@ -43,13 +44,11 @@ const orderUpdateStatus = async (req, res) => {
       { $match: { status: { $ne: "archived" } } },
       { $group: { _id: "$status", count: { $sum: 1 } } }
     ]);
-    console.log("SERVER: Counts AFTER update:", afterCounts);
-  console.log("SERVER: Returning", getOrders.length, "total orders");
-    console.log("=== SERVER STATUS UPDATE END ===");
+    log.debug({ afterCounts, total: getOrders.length }, 'status update complete');
 
     res.status(200).json({ orders: getOrders });
   } catch (error) {
-    console.error("SERVER: Error updating order", error);
+    log.error({ err: error.message, stack: error.stack }, 'status update failure');
     res
       .status(500)
       .json({ error: "An error occurred while updating the order" });

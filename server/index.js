@@ -1,5 +1,6 @@
 // Environment and Core Node Modules
 import dotenv from "dotenv";
+import { logger } from "./utils/logger.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -12,48 +13,35 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 
 // Verify critical environment variables are loaded
 if (!process.env.JWT_SECRET) {
-  console.error("❌ JWT_SECRET environment variable is required");
-  console.error("Please check your .env file and ensure JWT_SECRET is set");
-  console.error(
-    "Current JWT_SECRET value:",
-    process.env.JWT_SECRET ? "[SET]" : "[MISSING]"
-  );
+  logger.fatal("JWT_SECRET environment variable is required", { present: !!process.env.JWT_SECRET });
+  logger.fatal("Please check your .env file and ensure JWT_SECRET is set");
   process.exit(1);
 }
 
 if (!process.env.MONGODB_ATLAS_URL) {
-  console.error("❌ MONGODB_ATLAS_URL environment variable is required");
+  logger.fatal("MONGODB_ATLAS_URL environment variable is required");
   process.exit(1);
 }
-
-console.log("✅ Environment variables loaded successfully");
+logger.info("Environment variables loaded successfully");
 
 // Add global error handlers to catch unhandled errors
 process.on("uncaughtException", (error) => {
-  console.error("❌ Uncaught Exception:", {
-    message: error.message,
-    stack: error.stack,
-    name: error.name,
-  });
+  logger.fatal({ err: { message: error.message, stack: error.stack, name: error.name } }, "uncaughtException");
   process.exit(1);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("❌ Unhandled Rejection:", {
-    reason: reason,
-    promise: promise,
-    stack: reason?.stack,
-  });
+  logger.fatal({ reason, promise, stack: reason?.stack }, "unhandledRejection");
   process.exit(1);
 });
 
 process.on("SIGTERM", () => {
-  console.log("❌ SIGTERM received, shutting down gracefully");
+  logger.warn("SIGTERM received, shutting down gracefully");
   process.exit(0);
 });
 
 process.on("SIGINT", () => {
-  console.log("❌ SIGINT received, shutting down gracefully");
+  logger.warn("SIGINT received, shutting down gracefully");
   process.exit(0);
 });
 
@@ -69,11 +57,7 @@ const transport = (
   process.env.EMAIL_TRANSPORT ||
   (process.env.SENDGRID_API_KEY ? "sendgrid" : "none")
 ).toLowerCase();
-console.log(
-  `📧 Admin alerts: ${
-    emailAlertsEnabled ? "ENABLED" : "DISABLED"
-  } | transport: ${transport} | recipients: configured in DB`
-);
+logger.info("Admin email alerts configuration", { enabled: emailAlertsEnabled, transport });
 
 // Express and Middleware
 import express from "express";
@@ -82,6 +66,7 @@ import session from "express-session";
 import MongoStore from "connect-mongo";
 import cookieParser from "cookie-parser";
 import fs from "fs";
+import { requestContext } from "./middleware/requestContext.js";
 // Database
 import mongoose from "mongoose";
 // Authentication
@@ -172,7 +157,7 @@ try {
       }
       favPath = target;
     } catch (writeErr) {
-      console.warn("Failed to write default favicon:", writeErr.message);
+  logger.warn({ err: writeErr.message }, "Failed to write default favicon");
     }
   }
   if (favPath) {
@@ -182,7 +167,7 @@ try {
   }
 } catch (err) {
   // Non-fatal — just skip favicon serving if anything goes wrong
-  console.warn("Favicon route setup skipped:", err.message);
+  logger.warn({ err: err.message }, "Favicon route setup skipped");
 }
 
 // Core security middleware - apply before any request processing
@@ -260,11 +245,7 @@ try {
     );
   }
 
-  console.log(
-    `🔌 Connecting to MongoDB (${
-      process.env.NODE_ENV === "production" ? "Atlas Cloud" : "Local/Atlas"
-    })...`
-  );
+  logger.info("Connecting to MongoDB", { target: process.env.NODE_ENV === "production" ? "Atlas Cloud" : "Local/Atlas" });
 
   // Connect to MongoDB with better error handling
   await mongoose.connect(mongoURL, {
@@ -281,7 +262,7 @@ try {
     environment: process.env.NODE_ENV || "development",
   });
 
-  console.log("🔧 Setting up MongoDB session store...");
+  logger.info("Setting up MongoDB session store");
 
   // Configure session store after MongoDB connection is established
   try {
@@ -305,12 +286,12 @@ try {
         name: "sessionId",
       })
     );
-    console.log("✅ MongoDB session store configured successfully");
+  logger.info("MongoDB session store configured successfully");
 
     // Initialize passport & session support AFTER express-session
     app.use(passport.initialize());
     app.use(passport.session());
-    console.log("✅ Passport initialized with session support");
+  logger.info("Passport initialized with session support");
 
     // API route registration with appropriate security and caching middleware
     // Apply auth rate limit only to the login endpoint to avoid throttling other auth actions
@@ -364,7 +345,7 @@ try {
     // Global error handling middleware (must remain last after routes)
     app.use(errorLogger);
   } catch (sessionError) {
-    console.error("❌ Failed to setup session store:", sessionError);
+  logger.error({ err: sessionError }, "Failed to setup session store");
     throw sessionError;
   }
 
@@ -383,10 +364,10 @@ try {
     logWarn("Collection count check failed", { error: verifyErr.message });
   }
 
-  console.log("🚀 Starting server...");
+  logger.info("Starting server");
 
   app.listen(port, "0.0.0.0", () => {
-    console.log("✅ Server is now listening for connections");
+  logger.info("Server is now listening for connections");
     logInfo(`🚀 Pizza app server started`, {
       port,
       host: "0.0.0.0",
@@ -401,7 +382,7 @@ try {
     initializeScheduledTasks();
   });
 } catch (err) {
-  console.error("❌ Startup error:", err);
+  logger.fatal({ err }, "Startup error");
   logError("❌ Database connection failed", { error: err.message });
   process.exit(1); // Exit process if database connection fails
 }

@@ -37,7 +37,7 @@ const AdminSidenav = () => {
       });
       navigate("/");
     } catch (error) {
-  logger.error("Logout failed outer", error?.message);
+      logger.error("Logout failed outer", error?.message);
       setLoading(false);
     }
   };

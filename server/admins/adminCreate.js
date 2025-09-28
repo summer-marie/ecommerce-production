@@ -65,6 +65,18 @@ const adminCreate = async (req, res) => {
       token: [],
     });
 
+    // Structured log (avoid logging password)
+    if (req.log) {
+      req.log.info({
+        event: 'admin.create',
+        adminId: created._id,
+        role: created.role,
+        status: created.status,
+        email: created.email,
+        bootstrap: adminCount < 2,
+      }, 'admin account created');
+    }
+
     return res.status(201).json({
       success: true,
       message: "Admin created successfully",
@@ -73,7 +85,9 @@ const adminCreate = async (req, res) => {
       status: created.status,
     });
   } catch (err) {
-    console.error("adminCreate error:", err);
+    if (req.log) {
+      req.log.error({ event: 'admin.create.error', err: { message: err.message, name: err.name } }, 'admin create failed');
+    }
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };

@@ -19,9 +19,9 @@ const ToppingDropdown = ({ label, value, onChange, options, type }) => (
       value={value || ""}
       onChange={onChange}
       className={`text-sm rounded-lg block w-full p-2.5 shadow-sm-light border-2 text-white placeholder-gray-400 ${
-        type === 'meat' 
-          ? 'border-red-950 bg-red-800 focus:bg-red-950 focus:ring-red-500 focus:border-red-500'
-          : 'border-green-800 bg-emerald-500 focus:bg-emerald-800 focus:ring-emerald-100 focus:border-emerald-200'
+        type === "meat"
+          ? "border-red-950 bg-red-800 focus:bg-red-950 focus:ring-red-500 focus:border-red-500"
+          : "border-green-800 bg-emerald-500 focus:bg-emerald-800 focus:ring-emerald-100 focus:border-emerald-200"
       }`}
     >
       <option value="">- None -</option>
@@ -52,7 +52,10 @@ const BaseIngredientDisplay = ({ value }) => (
 // Base helpers (styled like create page)
 const BaseDropdown = ({ id, label, value, onChange, options, placeholder }) => (
   <div className="mb-5">
-    <label htmlFor={id} className="block mb-2 text-sm font-medium text-gray-900">
+    <label
+      htmlFor={id}
+      className="block mb-2 text-sm font-medium text-gray-900"
+    >
       {label}
     </label>
     <select
@@ -73,9 +76,18 @@ const BaseDropdown = ({ id, label, value, onChange, options, placeholder }) => (
   </div>
 );
 
-const CheeseAmountDropdown = ({ id, label = "Cheese Amount", value, onChange, disabled = false }) => (
+const CheeseAmountDropdown = ({
+  id,
+  label = "Cheese Amount",
+  value,
+  onChange,
+  disabled = false,
+}) => (
   <div className="mb-2">
-    <label htmlFor={id} className="block mb-2 text-sm font-medium text-gray-900">
+    <label
+      htmlFor={id}
+      className="block mb-2 text-sm font-medium text-gray-900"
+    >
       {label}
     </label>
     <select
@@ -112,7 +124,9 @@ const AdminUpdateOne = () => {
   );
   const baseOptions = ingredients.filter((i) => i.itemType === "Base");
   const crustOptions = baseOptions.filter((i) => /crust/i.test(i?.name || ""));
-  const cheeseOptionsOnly = baseOptions.filter((i) => !/crust/i.test(i?.name || ""));
+  const cheeseOptionsOnly = baseOptions.filter(
+    (i) => !/crust/i.test(i?.name || "")
+  );
 
   // Initialize pizzaForm with builder data
   useEffect(() => {
@@ -142,10 +156,14 @@ const AdminUpdateOne = () => {
 
       // Prefill base selections
       const crust = builder?.base?.crust?.name || "";
-      const cheesesSrc = Array.isArray(builder?.base?.cheeses) ? builder.base.cheeses : [];
+      const cheesesSrc = Array.isArray(builder?.base?.cheeses)
+        ? builder.base.cheeses
+        : [];
       const cheeses = [0, 1, 2].map((i) => cheesesSrc[i]?.name || "");
       const cheeseAmounts = [0, 1, 2].map((i) =>
-        String(typeof cheesesSrc[i]?.amount === "number" ? cheesesSrc[i].amount : 1)
+        String(
+          typeof cheesesSrc[i]?.amount === "number" ? cheesesSrc[i].amount : 1
+        )
       );
 
       setPizzaForm({
@@ -218,7 +236,9 @@ const AdminUpdateOne = () => {
       const imageData = pizzaForm.image;
 
       // Build base from selections
-      const crustObj = crustOptions.find((c) => c.name === (pizzaForm.crust || ""));
+      const crustObj = crustOptions.find(
+        (c) => c.name === (pizzaForm.crust || "")
+      );
       if (!crustObj) {
         alert("Please select a valid crust.");
         return;
@@ -245,7 +265,7 @@ const AdminUpdateOne = () => {
         image: imageData,
       };
 
-  logger.info("Submitting pizza update payload", payload);
+      logger.info("Submitting pizza update payload", payload);
 
       await dispatch(builderUpdateOne(payload)).unwrap();
       setShowSuccessAlert(true);
@@ -303,14 +323,21 @@ const AdminUpdateOne = () => {
         <div className="max-w-5xl mx-auto px-2 sm:px-4">
           <div className="rounded-2xl bg-white/90 shadow-xl ring-1 ring-slate-200 overflow-hidden mb-10">
             <div className="px-6 py-5 bg-gradient-to-r from-rose-700 via-red-600 to-rose-500 text-white">
-              <h3 className="text-xl md:text-2xl font-semibold">Update Pizza</h3>
-              <p className="text-white/90 text-sm mt-1">Modify base, sauces, and toppings for this pizza.</p>
+              <h3 className="text-xl md:text-2xl font-semibold">
+                Update Pizza
+              </h3>
+              <p className="text-white/90 text-sm mt-1">
+                Modify base, sauces, and toppings for this pizza.
+              </p>
             </div>
             <form onSubmit={handleSubmit} className="p-5 sm:p-6 md:p-8">
               <div className="flex flex-col sm:flex-row gap-4 mb-5">
                 {/* Pizza Name Input */}
                 <div className="w-full sm:w-1/2">
-                  <label htmlFor="pizza-name" className="block mb-2 text-sm font-medium text-gray-900">
+                  <label
+                    htmlFor="pizza-name"
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                  >
                     Pizza Name
                   </label>
                   <input
@@ -326,7 +353,10 @@ const AdminUpdateOne = () => {
                 </div>
                 {/* Pizza Price Input */}
                 <div className="w-full sm:w-1/2">
-                  <label htmlFor="pizzaPrice" className="block mb-2 text-sm font-medium text-gray-900">
+                  <label
+                    htmlFor="pizzaPrice"
+                    className="block mb-2 text-sm font-medium text-gray-900"
+                  >
                     Update Pizza Price $
                   </label>
                   <input
@@ -347,7 +377,10 @@ const AdminUpdateOne = () => {
               <div id="imgUploader" className="max-w-xl mb-6">
                 <div className="flex items-center gap-4">
                   <div className="flex-1">
-                    <label className="block mb-2 text-sm font-medium pl-2 text-gray-900 capitalize" htmlFor="pizza_photo">
+                    <label
+                      className="block mb-2 text-sm font-medium pl-2 text-gray-900 capitalize"
+                      htmlFor="pizza_photo"
+                    >
                       Upload New photo
                     </label>
                     <input
@@ -358,19 +391,29 @@ const AdminUpdateOne = () => {
                       accept="image/*"
                       onChange={handleFileChange}
                     />
-                    <div className="mt-1 text-sm text-gray-500" id="pizza_photo_help">
+                    <div
+                      className="mt-1 text-sm text-gray-500"
+                      id="pizza_photo_help"
+                    >
                       Add picture of desired pizza
                     </div>
                   </div>
-                  {pizzaForm?.image?.data && typeof pizzaForm.image.data === "string" && (
-                    <div className="flex-shrink-0 w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
-                      <img src={pizzaForm.image.data} alt="Current Pizza" className="w-full h-full object-cover" />
-                    </div>
-                  )}
+                  {pizzaForm?.image?.data &&
+                    typeof pizzaForm.image.data === "string" && (
+                      <div className="flex-shrink-0 w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
+                        <img
+                          src={pizzaForm.image.data}
+                          alt="Current Pizza"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
                 </div>
               </div>
 
-              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">Pizza Base</h1>
+              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
+                Pizza Base
+              </h1>
               <hr className="mb-5" />
               <div className="mb-5">
                 {/* Crust Selection */}
@@ -378,13 +421,17 @@ const AdminUpdateOne = () => {
                   id="crust"
                   label="Select Crust"
                   value={pizzaForm.crust}
-                  onChange={(e) => setPizzaForm({ ...pizzaForm, crust: e.target.value })}
+                  onChange={(e) =>
+                    setPizzaForm({ ...pizzaForm, crust: e.target.value })
+                  }
                   options={crustOptions}
                   placeholder="- - Select Crust - -"
                 />
 
                 {/* Cheese Selections */}
-                <h3 className="block mb-2 text-sm font-medium text-gray-900">Select Cheese(s)</h3>
+                <h3 className="block mb-2 text-sm font-medium text-gray-900">
+                  Select Cheese(s)
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
                   {[0, 1, 2].map((index) => (
                     <div key={`cheese-slot-${index}`}>
@@ -393,7 +440,9 @@ const AdminUpdateOne = () => {
                         label={`Select Cheese #${index + 1}`}
                         value={pizzaForm.cheeses?.[index] || ""}
                         onChange={(e) => {
-                          const cheeses = [...(pizzaForm.cheeses || ["", "", ""])];
+                          const cheeses = [
+                            ...(pizzaForm.cheeses || ["", "", ""]),
+                          ];
                           cheeses[index] = e.target.value;
                           setPizzaForm({ ...pizzaForm, cheeses });
                         }}
@@ -405,7 +454,9 @@ const AdminUpdateOne = () => {
                         label="Cheese Amount"
                         value={pizzaForm.cheeseAmounts?.[index] || "1"}
                         onChange={(e) => {
-                          const cheeseAmounts = [...(pizzaForm.cheeseAmounts || ["1", "1", "1"])];
+                          const cheeseAmounts = [
+                            ...(pizzaForm.cheeseAmounts || ["1", "1", "1"]),
+                          ];
                           cheeseAmounts[index] = e.target.value;
                           setPizzaForm({ ...pizzaForm, cheeseAmounts });
                         }}
@@ -417,12 +468,17 @@ const AdminUpdateOne = () => {
               </div>
 
               <div className="mb-5">
-                <label htmlFor="sauce" className="block mb-2 text-sm font-medium text-gray-900">
+                <label
+                  htmlFor="sauce"
+                  className="block mb-2 text-sm font-medium text-gray-900"
+                >
                   Update Sauce Type
                 </label>
                 <select
                   value={pizzaForm.sauce || ""}
-                  onChange={(e) => setPizzaForm({ ...pizzaForm, sauce: e.target.value })}
+                  onChange={(e) =>
+                    setPizzaForm({ ...pizzaForm, sauce: e.target.value })
+                  }
                   id="sauce"
                   className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2 text-black placeholder-gray-500 border-slate-500 bg-gray-200 focus:bg-gray-300 focus:ring-white focus:border-sky-500"
                 >
@@ -435,7 +491,9 @@ const AdminUpdateOne = () => {
                 </select>
               </div>
 
-              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">Meat Options</h1>
+              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
+                Meat Options
+              </h1>
               <hr className="mb-5" />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
                 {[0, 1, 2, 3, 4, 5].map((index) => (
@@ -446,7 +504,10 @@ const AdminUpdateOne = () => {
                     onChange={(e) => {
                       const updatedMeatTopping = [...pizzaForm.meatTopping];
                       updatedMeatTopping[index] = e.target.value;
-                      setPizzaForm({ ...pizzaForm, meatTopping: updatedMeatTopping });
+                      setPizzaForm({
+                        ...pizzaForm,
+                        meatTopping: updatedMeatTopping,
+                      });
                     }}
                     options={meatOptions}
                     type="meat"
@@ -454,7 +515,9 @@ const AdminUpdateOne = () => {
                 ))}
               </div>
 
-              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">Veggie Options</h1>
+              <h1 className="block mb-2 text-lg font-medium text-gray-900 text-center">
+                Veggie Options
+              </h1>
               <hr className="mb-5" />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
                 {[0, 1, 2, 3, 4, 5].map((index) => (
@@ -465,7 +528,10 @@ const AdminUpdateOne = () => {
                     onChange={(e) => {
                       const updatedVeggieTopping = [...pizzaForm.veggieTopping];
                       updatedVeggieTopping[index] = e.target.value;
-                      setPizzaForm({ ...pizzaForm, veggieTopping: updatedVeggieTopping });
+                      setPizzaForm({
+                        ...pizzaForm,
+                        veggieTopping: updatedVeggieTopping,
+                      });
                     }}
                     options={veggieOptions}
                     type="veggie"

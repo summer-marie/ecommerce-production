@@ -9,7 +9,6 @@ import SquarePayment from "../components/SquarePayment";
 import squarePaymentService from "../redux/squarePaymentService";
 import { useSelector as useReduxSelector } from "react-redux";
 
-
 const alertMsg = "Are you sure you want to delete this order?";
 const alertDescription = "Click to confirm and redirect back to menu";
 
@@ -199,11 +198,11 @@ const Checkout = () => {
         orderTotal: calculateTotal(),
         paymentMethod: "Cash on Pickup",
       };
-  // Navigate immediately without showing a transient success alert
-  dispatch(clearCart());
-  navigate("/order-success", { state: { orderData: successData } });
+      // Navigate immediately without showing a transient success alert
+      dispatch(clearCart());
+      navigate("/order-success", { state: { orderData: successData } });
     } catch (error) {
-  logger.error("Cash order creation failed", error);
+      logger.error("Cash order creation failed", error);
       setPaymentError("Failed to create order. Please try again.");
     } finally {
       setIsPaymentProcessing(false);
@@ -263,9 +262,9 @@ const Checkout = () => {
           paymentId: paymentResult.paymentId,
           status: paymentResult.status,
         };
-  // Navigate immediately without showing a transient success alert
-  dispatch(clearCart());
-  navigate("/order-success", { state: { orderData: successData } });
+        // Navigate immediately without showing a transient success alert
+        dispatch(clearCart());
+        navigate("/order-success", { state: { orderData: successData } });
       } catch {
         setPaymentError(
           "Payment completed but there was an app error. Please contact support."
@@ -332,7 +331,8 @@ const Checkout = () => {
           </h1>
           {isOpen === false && (
             <div className="mb-6 rounded-lg bg-amber-100 text-amber-800 border border-amber-300 px-4 py-3 text-sm text-center">
-              We’re closed right now and not accepting orders. Please check back later.
+              We’re closed right now and not accepting orders. Please check back
+              later.
             </div>
           )}
 
@@ -434,7 +434,9 @@ const Checkout = () => {
                             disabled={isOpen === false}
                             aria-disabled={isOpen === false}
                             className={`btn-metal btn-metal-green w-full ${
-                              isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
+                              isOpen === false
+                                ? "btn-metal-disabled cursor-not-allowed"
+                                : ""
                             }`}
                           >
                             Cash on Pickup
@@ -445,7 +447,9 @@ const Checkout = () => {
                             disabled={isOpen === false}
                             aria-disabled={isOpen === false}
                             className={`btn-metal btn-metal-blue w-full ${
-                              isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
+                              isOpen === false
+                                ? "btn-metal-disabled cursor-not-allowed"
+                                : ""
                             }`}
                           >
                             Card
@@ -505,122 +509,135 @@ const Checkout = () => {
                       </div>
                     )}
 
-                    {showCardForm && paymentMethod === "square" && isOpen !== false && (
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-gray-800">
-                            {paymentInstrument === "googlePay"
-                              ? "Google Pay"
-                              : "Card Payment"}
-                          </h3>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPaymentMethod(null);
-                              setShowCardForm(false);
-                              setPaymentError("");
-                              setPaymentInstrument("card");
-                            }}
-                            className="text-sm font-medium text-blue-600 hover:text-blue-800"
-                          >
-                            Change Payment Method
-                          </button>
-                        </div>
-                        {/* Instrument selector (always show Google Pay, disabled if unsupported) */}
-                        <div className="flex gap-3 flex-wrap">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPaymentInstrument("card");
-                              setPaymentHandler(null);
-                            }}
-                            disabled={isOpen === false}
-                            aria-disabled={isOpen === false}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition btn-metal btn-metal-blue flex items-center gap-2 ${
-                              paymentInstrument === "card"
-                                ? "ring-2 ring-blue-300"
-                                : ""
-                            } ${isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""}`}
-                          >
-                            Card
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (!walletSupport.googlePaySupported) {
-                                setPaymentError(
-                                  "Google Pay not supported on this browser"
-                                );
-                                return;
-                              }
-                              setPaymentInstrument("googlePay");
-                              setPaymentHandler(null);
-                            }}
-                            disabled={!walletSupport.googlePaySupported || isOpen === false}
-                            aria-disabled={!walletSupport.googlePaySupported || isOpen === false}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 border ${
-                              paymentInstrument === "googlePay"
-                                ? "ring-2 ring-blue-300"
-                                : ""
-                            } ${
-                              walletSupport.googlePaySupported && isOpen !== false
-                                ? "bg-black text-white shadow-inner border-gray-700"
-                                : "bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300"
-                            }`}
-                            title={
-                              walletSupport.googlePaySupported
+                    {showCardForm &&
+                      paymentMethod === "square" &&
+                      isOpen !== false && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-gray-800">
+                              {paymentInstrument === "googlePay"
                                 ? "Google Pay"
-                                : "Google Pay not available"
-                            }
-                          >
-                            <svg
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
+                                : "Card Payment"}
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPaymentMethod(null);
+                                setShowCardForm(false);
+                                setPaymentError("");
+                                setPaymentInstrument("card");
+                              }}
+                              className="text-sm font-medium text-blue-600 hover:text-blue-800"
                             >
-                              <path
-                                d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z"
-                                fill="#4285F4"
-                              />
-                              <path
-                                d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z"
-                                fill="#34A853"
-                              />
-                              <path
-                                d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z"
-                                fill="#FBBC05"
-                              />
-                              <path
-                                d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z"
-                                fill="#EA4335"
-                              />
-                            </svg>
-                            <span className="font-semibold tracking-wide">
-                              Google Pay
-                            </span>
-                          </button>
-                          {!walletSupport.googlePaySupported && (
-                            <span className="text-xs text-gray-500 basis-full">
-                              Google Pay unavailable on this browser
-                            </span>
+                              Change Payment Method
+                            </button>
+                          </div>
+                          {/* Instrument selector (always show Google Pay, disabled if unsupported) */}
+                          <div className="flex gap-3 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPaymentInstrument("card");
+                                setPaymentHandler(null);
+                              }}
+                              disabled={isOpen === false}
+                              aria-disabled={isOpen === false}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition btn-metal btn-metal-blue flex items-center gap-2 ${
+                                paymentInstrument === "card"
+                                  ? "ring-2 ring-blue-300"
+                                  : ""
+                              } ${
+                                isOpen === false
+                                  ? "btn-metal-disabled cursor-not-allowed"
+                                  : ""
+                              }`}
+                            >
+                              Card
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!walletSupport.googlePaySupported) {
+                                  setPaymentError(
+                                    "Google Pay not supported on this browser"
+                                  );
+                                  return;
+                                }
+                                setPaymentInstrument("googlePay");
+                                setPaymentHandler(null);
+                              }}
+                              disabled={
+                                !walletSupport.googlePaySupported ||
+                                isOpen === false
+                              }
+                              aria-disabled={
+                                !walletSupport.googlePaySupported ||
+                                isOpen === false
+                              }
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 border ${
+                                paymentInstrument === "googlePay"
+                                  ? "ring-2 ring-blue-300"
+                                  : ""
+                              } ${
+                                walletSupport.googlePaySupported &&
+                                isOpen !== false
+                                  ? "bg-black text-white shadow-inner border-gray-700"
+                                  : "bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300"
+                              }`}
+                              title={
+                                walletSupport.googlePaySupported
+                                  ? "Google Pay"
+                                  : "Google Pay not available"
+                              }
+                            >
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M23.04 12.2615C23.04 11.4459 22.9669 10.6615 22.8309 9.90924H12V14.3579H18.1891C17.9225 15.7959 17.111 17.0003 15.8766 17.8268V20.7139H19.44C21.7172 18.6203 23.04 15.712 23.04 12.2615Z"
+                                  fill="#4285F4"
+                                />
+                                <path
+                                  d="M12 23.4998C15.24 23.4998 17.9563 22.4262 19.44 20.7138L15.8766 17.8267C15.0829 18.3567 14.0629 18.6662 12.96 18.6662C9.83232 18.6662 7.18801 16.5534 6.2417 13.7163H2.55334V16.6944C4.02667 20.3629 7.70167 23.4998 12 23.4998Z"
+                                  fill="#34A853"
+                                />
+                                <path
+                                  d="M6.24167 13.7163C6.00001 13.1864 5.83334 12.613 5.83334 12.0001C5.83334 11.3872 6.00001 10.8139 6.24167 10.2839V7.30591H2.55334C1.84334 8.82941 1.44 10.4711 1.44 12.0001C1.44 13.5292 1.84334 15.1709 2.55334 16.6944L6.24167 13.7163Z"
+                                  fill="#FBBC05"
+                                />
+                                <path
+                                  d="M12 5.33359C13.2545 5.33359 14.3891 5.76673 15.3034 6.62674L19.5034 2.42673C17.95 1.00023 15.24 0.5 12 0.5C7.70167 0.5 4.02667 3.63691 2.55334 7.30541L6.24167 10.2835C7.18801 7.44641 9.83232 5.33359 12 5.33359Z"
+                                  fill="#EA4335"
+                                />
+                              </svg>
+                              <span className="font-semibold tracking-wide">
+                                Google Pay
+                              </span>
+                            </button>
+                            {!walletSupport.googlePaySupported && (
+                              <span className="text-xs text-gray-500 basis-full">
+                                Google Pay unavailable on this browser
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Square Payment Component */}
+                          {isOpen !== false && (
+                            <SquarePayment
+                              orderTotal={calculateTotal()}
+                              onPaymentSuccess={handlePaymentSuccess}
+                              onPaymentError={handlePaymentError}
+                              onPaymentReady={handlePaymentReady}
+                              onWalletSupport={setWalletSupport}
+                              paymentInstrument={paymentInstrument}
+                            />
                           )}
                         </div>
-
-                        {/* Square Payment Component */}
-                        {isOpen !== false && (
-                          <SquarePayment
-                          orderTotal={calculateTotal()}
-                          onPaymentSuccess={handlePaymentSuccess}
-                          onPaymentError={handlePaymentError}
-                          onPaymentReady={handlePaymentReady}
-                          onWalletSupport={setWalletSupport}
-                          paymentInstrument={paymentInstrument}
-                          />
-                        )}
-                      </div>
-                    )}
+                      )}
 
                     {paymentMethod === "cash" && !showCardForm && (
                       <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 space-y-2">
@@ -660,9 +677,13 @@ const Checkout = () => {
                         <button
                           type="submit"
                           disabled={isPaymentProcessing || isOpen === false}
-                          aria-disabled={isPaymentProcessing || isOpen === false}
+                          aria-disabled={
+                            isPaymentProcessing || isOpen === false
+                          }
                           className={`btn-metal btn-metal-green flex-1 ${
-                            isPaymentProcessing || isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
+                            isPaymentProcessing || isOpen === false
+                              ? "btn-metal-disabled cursor-not-allowed"
+                              : ""
                           }`}
                         >
                           {isOpen === false
@@ -675,10 +696,20 @@ const Checkout = () => {
                       {paymentMethod === "square" && showCardForm && (
                         <button
                           type="submit"
-                          disabled={isPaymentProcessing || !paymentHandler || isOpen === false}
-                          aria-disabled={isPaymentProcessing || !paymentHandler || isOpen === false}
+                          disabled={
+                            isPaymentProcessing ||
+                            !paymentHandler ||
+                            isOpen === false
+                          }
+                          aria-disabled={
+                            isPaymentProcessing ||
+                            !paymentHandler ||
+                            isOpen === false
+                          }
                           className={`btn-metal btn-metal-blue flex-1 ${
-                            isPaymentProcessing || !paymentHandler || isOpen === false
+                            isPaymentProcessing ||
+                            !paymentHandler ||
+                            isOpen === false
                               ? "btn-metal-disabled cursor-not-allowed"
                               : ""
                           }`}
@@ -695,9 +726,20 @@ const Checkout = () => {
                     </div>
                     <p className="mt-2 text-xs text-gray-600">
                       By placing your order, you agree to our {""}
-                      <a href="/terms" className="text-green-700 underline hover:text-green-800">Terms</a>
-                      {" "}and{" "}
-                      <a href="/privacy-policy" className="text-green-700 underline hover:text-green-800">Privacy Policy</a>.
+                      <a
+                        href="/terms"
+                        className="text-green-700 underline hover:text-green-800"
+                      >
+                        Terms
+                      </a>{" "}
+                      and{" "}
+                      <a
+                        href="/privacy-policy"
+                        className="text-green-700 underline hover:text-green-800"
+                      >
+                        Privacy Policy
+                      </a>
+                      .
                     </p>
                   </div>
                 </div>
@@ -851,7 +893,9 @@ const Checkout = () => {
                         disabled={isOpen === false}
                         aria-disabled={isOpen === false}
                         className={`btn-metal btn-metal-green ${
-                          isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
+                          isOpen === false
+                            ? "btn-metal-disabled cursor-not-allowed"
+                            : ""
                         }`}
                       >
                         Cash On-Site
@@ -862,7 +906,9 @@ const Checkout = () => {
                         disabled={isOpen === false}
                         aria-disabled={isOpen === false}
                         className={`btn-metal btn-metal-blue ${
-                          isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
+                          isOpen === false
+                            ? "btn-metal-disabled cursor-not-allowed"
+                            : ""
                         }`}
                       >
                         Card
@@ -1042,7 +1088,9 @@ const Checkout = () => {
                       disabled={isPaymentProcessing || isOpen === false}
                       aria-disabled={isPaymentProcessing || isOpen === false}
                       className={`btn-metal btn-metal-green w-full sm:w-auto flex-1 ${
-                        isPaymentProcessing || isOpen === false ? "btn-metal-disabled cursor-not-allowed" : ""
+                        isPaymentProcessing || isOpen === false
+                          ? "btn-metal-disabled cursor-not-allowed"
+                          : ""
                       }`}
                     >
                       {isOpen === false
@@ -1055,10 +1103,20 @@ const Checkout = () => {
                   {paymentMethod === "square" && showCardForm && (
                     <button
                       type="submit"
-                      disabled={isPaymentProcessing || !paymentHandler || isOpen === false}
-                      aria-disabled={isPaymentProcessing || !paymentHandler || isOpen === false}
+                      disabled={
+                        isPaymentProcessing ||
+                        !paymentHandler ||
+                        isOpen === false
+                      }
+                      aria-disabled={
+                        isPaymentProcessing ||
+                        !paymentHandler ||
+                        isOpen === false
+                      }
                       className={`btn-metal btn-metal-blue w-full sm:w-auto flex-1 ${
-                        isPaymentProcessing || !paymentHandler || isOpen === false
+                        isPaymentProcessing ||
+                        !paymentHandler ||
+                        isOpen === false
                           ? "btn-metal-disabled cursor-not-allowed"
                           : ""
                       }`}
@@ -1075,9 +1133,20 @@ const Checkout = () => {
                 </div>
                 <p className="mt-2 text-xs text-gray-600">
                   By placing your order, you agree to our {""}
-                  <a href="/terms" className="text-green-700 underline hover:text-green-800">Terms</a>
-                  {" "}and{" "}
-                  <a href="/privacy-policy" className="text-green-700 underline hover:text-green-800">Privacy Policy</a>.
+                  <a
+                    href="/terms"
+                    className="text-green-700 underline hover:text-green-800"
+                  >
+                    Terms
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    href="/privacy-policy"
+                    className="text-green-700 underline hover:text-green-800"
+                  >
+                    Privacy Policy
+                  </a>
+                  .
                 </p>
               </div>
             </div>
