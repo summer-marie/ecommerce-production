@@ -350,21 +350,10 @@ const AdminBuilderCreate = () => {
                   <input
                     value={newPizza.pizzaName}
                     onChange={(e) => {
-                      const raw = e.target.value;
-                      // Convert every word to Title Case (handles multiple spaces gracefully)
-                      const titleCased = raw
-                        .toLowerCase()
-                        .replace(/\s+/g, ' ') // collapse consecutive spaces
-                        .trimStart() // allow user to keep trailing space while typing
-                        .split(' ')
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(' ');
-                      // Preserve a trailing space if user is still typing
-                      const endsWithSpace = /\s$/.test(raw);
-                      setNewPizza({
-                        ...newPizza,
-                        pizzaName: endsWithSpace ? titleCased + ' ' : titleCased,
-                      });
+                      const { value } = e.target;
+                      // Capitalize first letter of every word (matches ingredient modal behavior)
+                      const capitalized = value.replace(/\b\w/g, (char) => char.toUpperCase());
+                      setNewPizza((prev) => ({ ...prev, pizzaName: capitalized }));
                     }}
                     type="text"
                     id="pizza-name"
