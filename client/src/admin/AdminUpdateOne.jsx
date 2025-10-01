@@ -517,6 +517,7 @@ const AdminUpdateOne = () => {
                 options={meatOptions}
                 slots={6}
                 variant="meat"
+                preventDuplicates={true}
                 onChange={(idx, val) => {
                   const updated = [...pizzaForm.meatTopping];
                   updated[idx] = val;
@@ -531,6 +532,7 @@ const AdminUpdateOne = () => {
                 options={veggieOptions}
                 slots={6}
                 variant="veggie"
+                preventDuplicates={true}
                 onChange={(idx, val) => {
                   const updated = [...pizzaForm.veggieTopping];
                   updated[idx] = val;
@@ -545,6 +547,7 @@ const AdminUpdateOne = () => {
                 options={herbOptions}
                 slots={3}
                 variant="neutral"
+                preventDuplicates={true}
                 onChange={(idx, val) => {
                   const updated = [...(pizzaForm.herbs || ['', '', ''])];
                   updated[idx] = val;
@@ -559,6 +562,7 @@ const AdminUpdateOne = () => {
                 options={otherAdditionsOptions}
                 slots={3}
                 variant="neutral"
+                preventDuplicates={true}
                 onChange={(idx, val) => {
                   const updated = [...(pizzaForm.otherAdditions || ['', '', ''])];
                   updated[idx] = val;

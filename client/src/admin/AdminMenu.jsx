@@ -14,6 +14,10 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import AlertBlack from "../components/AlertBlack";
 
+// TODO: Implement pagination or infinite scroll if the list grows large
+// TODO: make buttons small like new ones but make them consistant colors
+// TODO: need update page for menu items
+
 const alertMsg = "Delete item from Menu";
 const alertDescription =
   "This action cannot be undone. The item will be permanently removed from the customer menu.";

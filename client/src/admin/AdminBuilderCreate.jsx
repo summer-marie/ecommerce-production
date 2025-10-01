@@ -467,6 +467,7 @@ const AdminBuilderCreate = () => {
                 options={meatOptions}
                 slots={6}
                 variant="meat"
+                preventDuplicates={true}
                 onChange={(idx, val) => {
                   const updated = [...newPizza.meatTopping];
                   updated[idx] = val;
@@ -481,6 +482,7 @@ const AdminBuilderCreate = () => {
                 options={veggieOptions}
                 slots={6}
                 variant="veggie"
+                preventDuplicates={true}
                 onChange={(idx, val) => {
                   const updated = [...newPizza.veggieTopping];
                   updated[idx] = val;
@@ -496,6 +498,7 @@ const AdminBuilderCreate = () => {
                 options={herbOptions}
                 slots={3}
                 variant="neutral"
+                preventDuplicates={true}
                 onChange={(idx, val) => {
                   const updated = [...newPizza.herbs];
                   updated[idx] = val;
@@ -511,6 +514,7 @@ const AdminBuilderCreate = () => {
                 options={otherAdditionsOptions}
                 slots={3}
                 variant="neutral"
+                preventDuplicates={true}
                 onChange={(idx, val) => {
                   const updated = [...newPizza.otherAdditions];
                   updated[idx] = val;
