@@ -13,13 +13,13 @@ const successDescription = "navigating you to the admin menu....";
 
 // Menu item types
 const MENU_ITEM_TYPES = [
-  "Calzone", 
+  "Calzone",
   "Pizza Sticks",
   "Appetizer",
   "Side",
-  "Dessert", 
+  "Dessert",
   "Beverage",
-  "Other"
+  "Other",
 ];
 
 // Reusable base ingredient display component
@@ -176,16 +176,19 @@ const AdminMenuItemCreate = () => {
       if (newMenuItem.sauce) {
         sauceObj = sauceOptions.find((s) => s.name === newMenuItem.sauce);
       }
-      
+
       // Build base object
       const baseObj = {};
-      
+
       // Add crust if selected and item type could use it
       const crustObj = crustOptions.find((c) => c.name === newMenuItem.crust);
-      if (crustObj && ["Calzone", "Pizza Sticks"].includes(newMenuItem.itemType)) {
+      if (
+        crustObj &&
+        ["Calzone", "Pizza Sticks"].includes(newMenuItem.itemType)
+      ) {
         baseObj.crust = crustObj;
       }
-      
+
       // Add cheeses if selected
       const selectedCheeses = newMenuItem.cheeses
         .map((ch, i) => {
@@ -196,7 +199,7 @@ const AdminMenuItemCreate = () => {
           return { ...baseCheese, amount: Number.isFinite(amt) ? amt : 1 };
         })
         .filter(Boolean);
-      
+
       if (selectedCheeses.length > 0) {
         baseObj.cheeses = selectedCheeses;
       }
@@ -300,7 +303,9 @@ const AdminMenuItemCreate = () => {
   };
 
   // Determine if current item type should show ingredient sections
-  const showIngredients = ["Calzone", "Pizza Sticks", "Appetizer"].includes(newMenuItem.itemType);
+  const showIngredients = ["Calzone", "Pizza Sticks", "Appetizer"].includes(
+    newMenuItem.itemType
+  );
   const showCrust = ["Calzone", "Pizza Sticks"].includes(newMenuItem.itemType);
 
   return (
@@ -398,7 +403,10 @@ const AdminMenuItemCreate = () => {
                     id="itemType"
                     value={newMenuItem.itemType}
                     onChange={(e) =>
-                      setNewMenuItem({ ...newMenuItem, itemType: e.target.value })
+                      setNewMenuItem({
+                        ...newMenuItem,
+                        itemType: e.target.value,
+                      })
                     }
                     className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
                       text-black 
@@ -417,7 +425,7 @@ const AdminMenuItemCreate = () => {
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="w-full sm:w-1/2">
                   <label
                     htmlFor="description"
@@ -429,7 +437,10 @@ const AdminMenuItemCreate = () => {
                     id="description"
                     value={newMenuItem.description}
                     onChange={(e) =>
-                      setNewMenuItem({ ...newMenuItem, description: e.target.value })
+                      setNewMenuItem({
+                        ...newMenuItem,
+                        description: e.target.value,
+                      })
                     }
                     rows="3"
                     className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light
@@ -452,26 +463,38 @@ const AdminMenuItemCreate = () => {
                     type="checkbox"
                     checked={newMenuItem.isAvailable}
                     onChange={(e) =>
-                      setNewMenuItem({ ...newMenuItem, isAvailable: e.target.checked })
+                      setNewMenuItem({
+                        ...newMenuItem,
+                        isAvailable: e.target.checked,
+                      })
                     }
                     className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <label htmlFor="isAvailable" className="ml-2 text-sm font-medium text-gray-900">
+                  <label
+                    htmlFor="isAvailable"
+                    className="ml-2 text-sm font-medium text-gray-900"
+                  >
                     Available for ordering
                   </label>
                 </div>
-                
+
                 <div className="flex items-center">
                   <input
                     id="isFeatured"
                     type="checkbox"
                     checked={newMenuItem.isFeatured}
                     onChange={(e) =>
-                      setNewMenuItem({ ...newMenuItem, isFeatured: e.target.checked })
+                      setNewMenuItem({
+                        ...newMenuItem,
+                        isFeatured: e.target.checked,
+                      })
                     }
                     className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <label htmlFor="isFeatured" className="ml-2 text-sm font-medium text-gray-900">
+                  <label
+                    htmlFor="isFeatured"
+                    className="ml-2 text-sm font-medium text-gray-900"
+                  >
                     Featured item
                   </label>
                 </div>
@@ -488,7 +511,10 @@ const AdminMenuItemCreate = () => {
                     type="number"
                     value={newMenuItem.sortOrder}
                     onChange={(e) =>
-                      setNewMenuItem({ ...newMenuItem, sortOrder: e.target.value })
+                      setNewMenuItem({
+                        ...newMenuItem,
+                        sortOrder: e.target.value,
+                      })
                     }
                     className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light
                           text-black 
@@ -550,7 +576,7 @@ const AdminMenuItemCreate = () => {
                     Ingredients
                   </h1>
                   <hr className="mb-5" />
-                  
+
                   {/* Crust Selection - Only for pizza-like items */}
                   {showCrust && (
                     <BaseDropdown
@@ -558,7 +584,10 @@ const AdminMenuItemCreate = () => {
                       label="Select Crust"
                       value={newMenuItem.crust}
                       onChange={(e) =>
-                        setNewMenuItem({ ...newMenuItem, crust: e.target.value })
+                        setNewMenuItem({
+                          ...newMenuItem,
+                          crust: e.target.value,
+                        })
                       }
                       options={crustOptions}
                       placeholder="- - Select Crust - -"
@@ -576,7 +605,10 @@ const AdminMenuItemCreate = () => {
                     <select
                       value={newMenuItem.sauce}
                       onChange={(e) =>
-                        setNewMenuItem({ ...newMenuItem, sauce: e.target.value })
+                        setNewMenuItem({
+                          ...newMenuItem,
+                          sauce: e.target.value,
+                        })
                       }
                       id="sauce"
                       className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
@@ -607,8 +639,12 @@ const AdminMenuItemCreate = () => {
                       cheeses[idx] = val;
                       // If cheese cleared, reset amount to default '1'
                       const cheeseAmounts = [...newMenuItem.cheeseAmounts];
-                      if (!val) cheeseAmounts[idx] = '1';
-                      setNewMenuItem({ ...newMenuItem, cheeses, cheeseAmounts });
+                      if (!val) cheeseAmounts[idx] = "1";
+                      setNewMenuItem({
+                        ...newMenuItem,
+                        cheeses,
+                        cheeseAmounts,
+                      });
                     }}
                     onChangeAmount={(idx, val) => {
                       const cheeseAmounts = [...newMenuItem.cheeseAmounts];
@@ -642,7 +678,10 @@ const AdminMenuItemCreate = () => {
                     onChange={(idx, val) => {
                       const updated = [...newMenuItem.veggieTopping];
                       updated[idx] = val;
-                      setNewMenuItem({ ...newMenuItem, veggieTopping: updated });
+                      setNewMenuItem({
+                        ...newMenuItem,
+                        veggieTopping: updated,
+                      });
                     }}
                   />
 
@@ -672,7 +711,10 @@ const AdminMenuItemCreate = () => {
                     onChange={(idx, val) => {
                       const updated = [...newMenuItem.otherAdditions];
                       updated[idx] = val;
-                      setNewMenuItem({ ...newMenuItem, otherAdditions: updated });
+                      setNewMenuItem({
+                        ...newMenuItem,
+                        otherAdditions: updated,
+                      });
                     }}
                   />
                 </>

@@ -11,21 +11,7 @@ import CheeseGroup from "./components/CheeseGroup";
 const successMsg = "Pizza was updated successfully";
 const successDescription = "Navigating you back to the admin menu....";
 
-
-// Reusable base ingredient display component
-const BaseIngredientDisplay = ({ value }) => (
-  <div
-    className="shadow-sm border-2 text-sm rounded-lg block w-full p-2.5 shadow-sm-light cursor-not-allowed
-    text-black 
-    placeholder-gray-500 
-    border-slate-500
-    bg-gray-400 
-    focus:bg-sky-200 
-    focus:border-sky-700"
-  >
-    {value}
-  </div>
-);
+// Update for pizza items ONLY
 
 // Base helpers (styled like create page)
 const BaseDropdown = ({ id, label, value, onChange, options, placeholder }) => (
@@ -50,36 +36,6 @@ const BaseDropdown = ({ id, label, value, onChange, options, placeholder }) => (
           {opt.name}
         </option>
       ))}
-    </select>
-  </div>
-);
-
-const CheeseAmountDropdown = ({
-  id,
-  label = "Cheese Amount",
-  value,
-  onChange,
-  disabled = false,
-}) => (
-  <div className="mb-2">
-    <label
-      htmlFor={id}
-      className="block mb-2 text-sm font-medium text-gray-900"
-    >
-      {label}
-    </label>
-    <select
-      id={id}
-      value={value}
-      onChange={onChange}
-      disabled={disabled}
-      className="text-sm rounded-lg block w-full p-2.5  shadow-sm-light border-2
-        text-black placeholder-gray-500 border-slate-500 bg-gray-200
-        focus:bg-gray-300 focus:ring-white focus:border-sky-500"
-    >
-      <option value="0.5">Light</option>
-      <option value="1">Regular</option>
-      <option value="2">Extra</option>
     </select>
   </div>
 );
@@ -192,10 +148,6 @@ const AdminUpdateOne = () => {
     }
     setPizzaForm({ ...pizzaForm, pizzaPrice: num.toFixed(2) });
   };
-
-  // const handleFileChange = (e) => {
-  //   setSelectedFile(e.target.files[0]);
-  // };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];

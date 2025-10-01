@@ -36,11 +36,15 @@ const menuItemService = {
   menuItemCreate: async (menuItemData) => {
     try {
       logger.debug("menuItemService.menuItemCreate", menuItemData?.itemName);
-      const response = await axios.post(`${API_BASE}/menu-items`, menuItemData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.post(
+        `${API_BASE}/menu-items`,
+        menuItemData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       logger.debug(
         "menuItemService.menuItemCreate response",
         response?.data?.menuItem?.id || response?.data?.menuItem?._id
@@ -58,11 +62,15 @@ const menuItemService = {
   // Update menu item
   menuItemUpdate: async (formData) => {
     logger.debug("menuItemService.menuItemUpdate start", formData);
-    const response = await axios.put(`${API_BASE}/menu-items/${formData.id}`, formData, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await axios.put(
+      `${API_BASE}/menu-items/${formData.id}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     logger.debug("menuItemService.menuItemUpdate response", response);
     return response;
   },
