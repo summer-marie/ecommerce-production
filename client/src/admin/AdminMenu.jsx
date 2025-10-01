@@ -198,11 +198,11 @@ const AdminMenu = () => {
 
         {/* Pizzas Section */}
         {active.length > 0 && (
-          <div className="mb-10 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
+          <div className="mb-2 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-2">
               Pizzas
             </h3>
-          <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4 mb-10 pb-12">
+          <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4">
             {/* Active Pizza Cards */}
             {active.length === 0 ? (
               <p>No active pizzas found.</p>
@@ -297,7 +297,7 @@ const AdminMenu = () => {
                         type="button"
                         disabled={togglingId === (builder.id || builder._id)}
                         className={`absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center bg-gradient-to-t focus:ring-4 focus:outline-none whitespace-nowrap transform origin-top-left transition-all sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
-                            shadow-orange-800/80 text-white from-orange-950 via-orange-500 to-orange-600 focus:ring-orange-800
+                            shadow-gray-800/80 text-white from-gray-950 via-gray-500 to-gray-600 focus:ring-gray-800
                             ${
                               togglingId === (builder.id || builder._id)
                                 ? "opacity-60 cursor-not-allowed"
@@ -369,11 +369,11 @@ const AdminMenu = () => {
 
         {/* Other Menu Items Sections */}
         {Object.entries(groupedMenuItems).map(([itemType, items]) => (
-          <div key={itemType} className="mb-10 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
+          <div key={itemType} className="mt-2 mb-2 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-2">
               {itemType}
             </h3>
-            <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4 mb-10 pb-12">
+            <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4">
               {items.map((menuItem, index) => {
                 const imageSrc = menuItem?.image && typeof menuItem.image.data === "string"
                   ? menuItem.image.data
@@ -400,18 +400,50 @@ const AdminMenu = () => {
                       </div>
                       <button
                         onClick={() => {
+                          // TODO: Add update menu item navigation when page is created
+                          console.log('Update menu item:', menuItem?.itemName);
+                        }}
+                        type="button"
+                        className="absolute top-1 right-1 sm:top-2 sm:right-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-top-right transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                          shadow-green-800/80 
+                          text-white 
+                          from-green-950
+                          via-green-500 
+                          to-green-600
+                          focus:ring-green-800"
+                      >
+                        Update Item
+                      </button>
+                      {/* Deactivate positioned at top-left */}
+                      <button
+                        onClick={() => {
                           const id = menuItem?.id || menuItem?._id;
                           if (id) handleMenuItemToggleStatus(menuItem);
                         }}
+                        type="button"
                         disabled={togglingMenuItemId === (menuItem?.id || menuItem?._id)}
-                        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded text-sm disabled:opacity-50"
+                        className={`absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center bg-gradient-to-t focus:ring-4 focus:outline-none whitespace-nowrap transform origin-top-left transition-all sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                            shadow-gray-800/80 text-white from-gray-950 via-gray-500 to-gray-600 focus:ring-gray-800
+                            ${
+                              togglingMenuItemId === (menuItem?.id || menuItem?._id)
+                                ? "opacity-60 cursor-not-allowed"
+                                : "hover:bg-gradient-to-br cursor-pointer"
+                            }`}
                       >
                         {togglingMenuItemId === (menuItem?.id || menuItem?._id) 
-                          ? "..." : "Deactivate"}
+                          ? "Updating..." : "Deactivate"}
                       </button>
+                      {/* Delete moved to bottom-left */}
                       <button
                         onClick={() => handleMenuItemDeleteClick(menuItem)}
-                        className="absolute top-2 left-2 bg-gray-800 hover:bg-gray-900 text-white font-bold py-1 px-2 rounded text-sm"
+                        type="button"
+                        className="absolute z-10 bottom-1 left-1 sm:bottom-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-bottom-left transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                            shadow-red-800/80 
+                            text-white 
+                            from-black
+                            via-red-500 
+                            to-red-600
+                            focus:ring-red-800"
                       >
                         Delete
                       </button>
@@ -488,12 +520,12 @@ const AdminMenu = () => {
 
         {/* Deactivated Items Section */}
         {(inactive.length > 0 || inactiveMenuItems.length > 0) && (
-          <div className="mb-10 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
+          <div className="mt-2 mb-2 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
             <hr className="my-6 sm:mx-auto lg:my-8 border-gray-700" />
-            <h3 className="text-xl font-bold text-gray-600 mb-4">
+            <h3 className="text-xl font-bold text-gray-600 mb-2">
               Deactivated Menu Items
             </h3>
-            <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4 mb-10 pb-12 opacity-75">
+            <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4 opacity-75">
               {/* Deactivated Pizzas */}
               {inactive.map((builder, index) => {
                 // Same normalization logic as active pizzas
@@ -663,18 +695,50 @@ const AdminMenu = () => {
                       </div>
                       <button
                         onClick={() => {
+                          // TODO: Add update menu item navigation when page is created
+                          console.log('Update menu item:', menuItem?.itemName);
+                        }}
+                        type="button"
+                        className="absolute top-1 right-1 sm:top-2 sm:right-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-top-right transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                          shadow-green-800/80 
+                          text-white 
+                          from-green-950
+                          via-green-500 
+                          to-green-600
+                          focus:ring-green-800"
+                      >
+                        Update Item
+                      </button>
+                      {/* Activate positioned at top-left */}
+                      <button
+                        onClick={() => {
                           const id = menuItem?.id || menuItem?._id;
                           if (id) handleMenuItemToggleStatus(menuItem);
                         }}
+                        type="button"
                         disabled={togglingMenuItemId === (menuItem?.id || menuItem?._id)}
-                        className="absolute top-2 right-2 bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded text-sm disabled:opacity-50"
+                        className={`absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center bg-gradient-to-t focus:ring-4 focus:outline-none whitespace-nowrap transform origin-top-left transition-all sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                            shadow-green-800/80 text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800
+                            ${
+                              togglingMenuItemId === (menuItem?.id || menuItem?._id)
+                                ? "opacity-60 cursor-not-allowed"
+                                : "hover:bg-gradient-to-br cursor-pointer"
+                            }`}
                       >
                         {togglingMenuItemId === (menuItem?.id || menuItem?._id) 
-                          ? "..." : "Activate"}
+                          ? "Updating..." : "Activate"}
                       </button>
+                      {/* Delete moved to bottom-left */}
                       <button
                         onClick={() => handleMenuItemDeleteClick(menuItem)}
-                        className="absolute top-2 left-2 bg-gray-800 hover:bg-gray-900 text-white font-bold py-1 px-2 rounded text-sm"
+                        type="button"
+                        className="absolute z-10 bottom-1 left-1 sm:bottom-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-bottom-left transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                            shadow-red-800/80 
+                            text-white 
+                            from-black
+                            via-red-500 
+                            to-red-600
+                            focus:ring-red-800"
                       >
                         Delete
                       </button>
