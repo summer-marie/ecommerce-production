@@ -137,6 +137,7 @@ import orderIndex from "./orders/orderIndex.js";
 import ingredientsIndex from "./ingredients/ingredientsIndex.js";
 import builderIndex from "./builders/builderIndex.js";
 import msgIndex from "./messages/msgIndex.js";
+import menuItemIndex from "./menuItems/menuItemIndex.js";
 import monitoringRouter from "./monitoring/index.js";
 import paymentRoutes from "./payments/squareRoutes.js";
 import operatingRoutes from "./operatingHours/operatingRoutes.js";
@@ -347,6 +348,7 @@ try {
     // Removed builders cache (list is small; need immediate freshness after mutations)
     app.use("/builders", builderIndex);
     app.use("/messages", msgIndex);
+    app.use("/menu-items", menuItemIndex);
     app.use("/payments", paymentRoutes);
     app.use("/operating-hours", operatingRoutes);
     app.use("/monitoring", adminRateLimit, monitoringRouter);

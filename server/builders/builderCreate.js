@@ -1,5 +1,4 @@
 import builderModel from "./builderModel.js";
-import { invalidateCache } from "../middleware/performance.js";
 import { getLog } from "../utils/logger.js";
 
 const builderCreate = async (req, res) => {
@@ -60,9 +59,6 @@ const builderCreate = async (req, res) => {
           }
         : null
     }, 'builder created');
-
-    // Invalidate builders cache so new pizza appears immediately
-    await invalidateCache("api:/builders");
 
     res.status(200).json({
       success: true,

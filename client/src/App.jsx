@@ -30,6 +30,7 @@ const AdminUpdateOne = lazy(() => import("./admin/AdminUpdateOne"));
 const AdminInbox = lazy(() => import("./admin/AdminInbox"));
 const IngredientsTable = lazy(() => import("./admin/IngredientsTable"));
 const AdminBuilderCreate = lazy(() => import("./admin/AdminBuilderCreate"));
+const AdminMenuItemCreate = lazy(() => import("./admin/AdminMenuItemCreate"));
 const AdminAboutSettings = lazy(() => import("./admin/AdminAboutSettings"));
 const AdminChangePassword = lazy(() => import("./admin/AdminChangePassword"));
 const AdminAddAdmin = lazy(() => import("./admin/AdminAddAdmin"));
@@ -148,6 +149,14 @@ function App() {
               element={
                 <Suspense fallback={<LoadingFallback />}>
                   <AdminBuilderCreate />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/menu-item-builder"
+              element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <AdminMenuItemCreate />
                 </Suspense>
               }
             />

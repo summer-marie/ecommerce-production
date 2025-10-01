@@ -19,6 +19,7 @@ import messageReducer from "./redux/messageSlice";
 import paymentReducer from "./redux/paymentSlice";
 import operatingReducer from "./redux/operatingSlice";
 import aboutReducer from "./redux/aboutSlice";
+import menuItemReducer from "./redux/menuItemSlice";
 
 const persistConfig = {
   key: "root",
@@ -38,6 +39,7 @@ export const store = configureStore({
     payment: paymentReducer,
     operating: operatingReducer,
     about: aboutReducer,
+    menuItem: menuItemReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

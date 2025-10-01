@@ -6,19 +6,28 @@ import {
   builderDeleteOneAlt,
   builderToggleStatus,
 } from "../redux/builderSlice";
+import {
+  menuItemGetAll,
+  menuItemDelete,
+  menuItemUpdate,
+} from "../redux/menuItemSlice";
 import { useSelector, useDispatch } from "react-redux";
 import AlertBlack from "../components/AlertBlack";
 
-const alertMsg = "Delete Pizza from Menu";
+const alertMsg = "Delete item from Menu";
 const alertDescription =
-  "This action cannot be undone. The pizza will be permanently removed from the customer menu.";
+  "This action cannot be undone. The item will be permanently removed from the customer menu.";
 
 const AdminMenu = () => {
   const [showAlert, setShowAlert] = useState(false);
   const { builders } = useSelector((state) => state.builder);
+  const { menuItems } = useSelector((state) => state.menuItem);
   const [togglingId, setTogglingId] = useState(null);
+  const [togglingMenuItemId, setTogglingMenuItemId] = useState(null);
   // State to track the pizza being deleted
   const [alertPizza, setAlertPizza] = useState(null);
+  // State to track the menu item being deleted
+  const [alertMenuItem, setAlertMenuItem] = useState(null);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -26,6 +35,7 @@ const AdminMenu = () => {
   // Initial load
   useEffect(() => {
     dispatch(builderGetMany());
+    dispatch(menuItemGetAll());
   }, [dispatch]);
 
   // No local mirror now; rely directly on redux updates (pattern like orders slice refreshes list atomically)
@@ -38,23 +48,96 @@ const AdminMenu = () => {
     return { active, inactive };
   }, [builders]);
 
+  const getSeparatedMenuItems = useCallback(() => {
+    const list = Array.isArray(menuItems) ? menuItems : [];
+    const active = list.filter((item) => item?.isAvailable === true);
+    const inactive = list.filter((item) => item?.isAvailable === false);
+    
+    // Group active items by type
+    const groupedActive = active.reduce((acc, item) => {
+      const type = item.itemType || 'Other';
+      if (!acc[type]) acc[type] = [];
+      acc[type].push(item);
+      return acc;
+    }, {});
+    
+    return { groupedActive, inactive };
+  }, [menuItems]);
+
+  // Get organized data
+  const { active, inactive } = getSeparatedBuilders();
+  const { groupedActive: groupedMenuItems, inactive: inactiveMenuItems } = getSeparatedMenuItems();
+
   const handleDeleteClick = (builder) => {
     setAlertPizza(builder);
+    setAlertMenuItem(null);
     setShowAlert(true);
+  };
+
+  const handleMenuItemDeleteClick = (menuItem) => {
+    setAlertMenuItem(menuItem);
+    setAlertPizza(null);
+    setShowAlert(true);
+  };
+
+  const handleMenuItemToggleStatus = async (menuItem) => {
+    const id = menuItem?.id || menuItem?._id;
+    if (!id) return;
+    
+    setTogglingMenuItemId(id);
+    try {
+      await dispatch(menuItemUpdate({
+        id,
+        isAvailable: !menuItem.isAvailable,
+        itemName: menuItem.itemName,
+        itemType: menuItem.itemType,
+        itemPrice: menuItem.itemPrice,
+        description: menuItem.description,
+        base: menuItem.base,
+        sauce: menuItem.sauce,
+        meatTopping: menuItem.meatTopping,
+        veggieTopping: menuItem.veggieTopping,
+        herbs: menuItem.herbs,
+        otherAdditions: menuItem.otherAdditions,
+        image: menuItem.image,
+        isFeatured: menuItem.isFeatured,
+        sortOrder: menuItem.sortOrder,
+      })).unwrap();
+    } catch (error) {
+      logger.error("Failed to toggle menu item status", error);
+    } finally {
+      setTogglingMenuItemId(null);
+    }
   };
 
   const handleConfirm = async () => {
     setShowAlert(false);
-    const id = alertPizza?.id;
-    if (!id) {
-      logger.error("No pizza id set for deletion");
-      return;
+    
+    if (alertPizza) {
+      const id = alertPizza?.id;
+      if (!id) {
+        logger.error("No pizza id set for deletion");
+        return;
+      }
+      await dispatch(builderDeleteOneAlt(id)).unwrap();
+      // Refresh the builders list after deletion
+      await dispatch(builderGetMany()).unwrap();
+      setAlertPizza(null);
+      logger.info("Pizza deleted", { id });
     }
-    await dispatch(builderDeleteOneAlt(id)).unwrap();
-    // Refresh the builders list after deletion
-    await dispatch(builderGetMany()).unwrap();
-    setAlertPizza(null);
-    logger.info("Pizza deleted", { id });
+    
+    if (alertMenuItem) {
+      const id = alertMenuItem?.id || alertMenuItem?._id;
+      if (!id) {
+        logger.error("No menu item id set for deletion");
+        return;
+      }
+      await dispatch(menuItemDelete(id)).unwrap();
+      // Refresh the menu items list after deletion
+      await dispatch(menuItemGetAll()).unwrap();
+      setAlertMenuItem(null);
+      logger.info("Menu item deleted", { id });
+    }
   };
 
   const handleCancel = () => {
@@ -94,9 +177,7 @@ const AdminMenu = () => {
     alertMsg
   );
 
-  // Separate using helper (mirroring grouping pattern of AdminOpenOrders)
-  const { active: activePizzas, inactive: inactivePizzas } =
-    getSeparatedBuilders();
+
 
   return (
     <>
@@ -111,17 +192,18 @@ const AdminMenu = () => {
         </p>
         <hr className="my-6 sm:mx-auto lg:my-8 border-gray-700 " />
 
-        {/* Active Pizzas Section */}
-        <div className="mb-10 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">
-            Active Menu Items
-          </h3>
+        {/* Pizzas Section */}
+        {active.length > 0 && (
+          <div className="mb-10 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">
+              Pizzas
+            </h3>
           <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4 mb-10 pb-12">
-            {/* Active Cards */}
-            {activePizzas.length === 0 ? (
+            {/* Active Pizza Cards */}
+            {active.length === 0 ? (
               <p>No active pizzas found.</p>
             ) : (
-              activePizzas.map((builder, index) => {
+              active.map((builder, index) => {
                 // Defensive normalizations to avoid rendering raw objects
                 const safeBase =
                   builder?.base && typeof builder.base === "object"
@@ -276,19 +358,140 @@ const AdminMenu = () => {
                 );
               })
             )}
-            {/* End of card */}
+            {/* End of pizza cards */}
           </div>
-        </div>
+          </div>
+        )}
 
-        {/* Deactivated Pizzas Section */}
-        {inactivePizzas.length > 0 && (
+        {/* Other Menu Items Sections */}
+        {Object.entries(groupedMenuItems).map(([itemType, items]) => (
+          <div key={itemType} className="mb-10 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">
+              {itemType}
+            </h3>
+            <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4 mb-10 pb-12">
+              {items.map((menuItem, index) => {
+                const imageSrc = menuItem?.image && typeof menuItem.image.data === "string"
+                  ? menuItem.image.data
+                  : new URL("../assets/basePizza.jpg", import.meta.url).href;
+                
+                return (
+                  <div
+                    key={menuItem?.id || menuItem?._id || index}
+                    className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-zinc-300 border border-gray-200 shadow-green-600 relative flex flex-col"
+                  >
+                    <div className="relative">
+                      <div className="relative w-full aspect-[4/3]">
+                        <img
+                          className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
+                          src={imageSrc}
+                          alt={menuItem?.itemName || "Menu Item"}
+                          onError={(e) => {
+                            e.currentTarget.src = new URL(
+                              "../assets/basePizza.jpg",
+                              import.meta.url
+                            ).href;
+                          }}
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const id = menuItem?.id || menuItem?._id;
+                          if (id) handleMenuItemToggleStatus(menuItem);
+                        }}
+                        disabled={togglingMenuItemId === (menuItem?.id || menuItem?._id)}
+                        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded text-sm disabled:opacity-50"
+                      >
+                        {togglingMenuItemId === (menuItem?.id || menuItem?._id) 
+                          ? "..." : "Deactivate"}
+                      </button>
+                      <button
+                        onClick={() => handleMenuItemDeleteClick(menuItem)}
+                        className="absolute top-2 left-2 bg-gray-800 hover:bg-gray-900 text-white font-bold py-1 px-2 rounded text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                    <div className="flex flex-col flex-grow p-5">
+                      <h2 className="font-bold text-xl text-gray-800 mb-2">
+                        {menuItem?.itemName || "Unnamed Item"}
+                      </h2>
+                      {menuItem?.description && (
+                        <p className="text-gray-600 mb-3 text-sm">
+                          {menuItem.description}
+                        </p>
+                      )}
+                      <div className="space-y-2 mb-4 text-sm">
+                        {menuItem?.base && (
+                          <div className="flex">
+                            <strong>Base:</strong>
+                            <span className="ml-2">
+                              {(() => {
+                                if (typeof menuItem.base === 'string') return menuItem.base;
+                                const baseItems = [];
+                                if (menuItem.base?.crust?.name) baseItems.push(menuItem.base.crust.name);
+                                if (menuItem.base?.cheeses?.length > 0) {
+                                  const cheeses = menuItem.base.cheeses.map(c => c?.name || c).filter(Boolean);
+                                  baseItems.push(...cheeses);
+                                }
+                                return baseItems.length > 0 ? baseItems.join(', ') : '-';
+                              })()}
+                            </span>
+                          </div>
+                        )}
+                        {menuItem?.sauce && (
+                          <div className="flex">
+                            <strong>Sauce:</strong>
+                            <span className="ml-2">{typeof menuItem.sauce === 'string' ? menuItem.sauce : (menuItem.sauce?.name || JSON.stringify(menuItem.sauce))}</span>
+                          </div>
+                        )}
+                        {(menuItem?.meatTopping?.length > 0 || menuItem?.veggieTopping?.length > 0) && (
+                          <div className="flex">
+                            <strong>Toppings:</strong>
+                            <span className="ml-2">
+                              {[
+                                ...(menuItem.meatTopping?.map(item => typeof item === 'string' ? item : item?.name) || []),
+                                ...(menuItem.veggieTopping?.map(item => typeof item === 'string' ? item : item?.name) || [])
+                              ].filter(Boolean).join(", ") || "-"}
+                            </span>
+                          </div>
+                        )}
+                        {(menuItem?.herbs?.length > 0 || menuItem?.otherAdditions?.length > 0) && (
+                          <div className="flex">
+                            <strong>Other:</strong>
+                            <span className="ml-2">
+                              {[
+                                ...(menuItem.herbs?.map(item => typeof item === 'string' ? item : item?.name) || []),
+                                ...(menuItem.otherAdditions?.map(item => typeof item === 'string' ? item : item?.name) || [])
+                              ].filter(Boolean).join(", ") || "-"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <h2 className="font-bold text-lg text-gray-700 mt-auto pt-2">
+                        Price ${" "}
+                        {menuItem?.itemPrice
+                          ? Number(menuItem.itemPrice).toFixed(2)
+                          : "0.00"}
+                      </h2>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        {/* Deactivated Items Section */}
+        {(inactive.length > 0 || inactiveMenuItems.length > 0) && (
           <div className="mb-10 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
             <hr className="my-6 sm:mx-auto lg:my-8 border-gray-700" />
             <h3 className="text-xl font-bold text-gray-600 mb-4">
-              Deactivated Pizzas
+              Deactivated Menu Items
             </h3>
             <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4 mb-10 pb-12 opacity-75">
-              {inactivePizzas.map((builder, index) => {
+              {/* Deactivated Pizzas */}
+              {inactive.map((builder, index) => {
                 // Same normalization logic as active pizzas
                 const safeBase =
                   builder?.base && typeof builder.base === "object"
@@ -422,6 +625,70 @@ const AdminMenu = () => {
                         Price ${" "}
                         {builder?.pizzaPrice
                           ? Number(builder.pizzaPrice).toFixed(2)
+                          : "0.00"}
+                      </h2>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {/* Deactivated Menu Items */}
+              {inactiveMenuItems.map((menuItem, index) => {
+                const imageSrc = menuItem?.image && typeof menuItem.image.data === "string"
+                  ? menuItem.image.data
+                  : new URL("../assets/basePizza.jpg", import.meta.url).href;
+                
+                return (
+                  <div
+                    key={`inactive-${menuItem?.id || menuItem?._id || index}`}
+                    className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-zinc-300 border border-gray-200 shadow-green-600 relative flex flex-col"
+                  >
+                    <div className="relative">
+                      <div className="relative w-full aspect-[4/3]">
+                        <img
+                          className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
+                          src={imageSrc}
+                          alt={menuItem?.itemName || "Menu Item"}
+                          onError={(e) => {
+                            e.currentTarget.src = new URL(
+                              "../assets/basePizza.jpg",
+                              import.meta.url
+                            ).href;
+                          }}
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const id = menuItem?.id || menuItem?._id;
+                          if (id) handleMenuItemToggleStatus(menuItem);
+                        }}
+                        disabled={togglingMenuItemId === (menuItem?.id || menuItem?._id)}
+                        className="absolute top-2 right-2 bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded text-sm disabled:opacity-50"
+                      >
+                        {togglingMenuItemId === (menuItem?.id || menuItem?._id) 
+                          ? "..." : "Activate"}
+                      </button>
+                      <button
+                        onClick={() => handleMenuItemDeleteClick(menuItem)}
+                        className="absolute top-2 left-2 bg-gray-800 hover:bg-gray-900 text-white font-bold py-1 px-2 rounded text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                    <div className="flex flex-col flex-grow p-5">
+                      <h2 className="font-bold text-xl text-gray-800 mb-2">
+                        {menuItem?.itemName || "Unnamed Item"}
+                      </h2>
+                      <p className="text-gray-500 text-sm mb-2">Type: {menuItem?.itemType || "Unknown"}</p>
+                      {menuItem?.description && (
+                        <p className="text-gray-600 mb-3 text-sm">
+                          {menuItem.description}
+                        </p>
+                      )}
+                      <h2 className="font-bold text-lg text-gray-700 mt-auto pt-2">
+                        Price ${" "}
+                        {menuItem?.itemPrice
+                          ? Number(menuItem.itemPrice).toFixed(2)
                           : "0.00"}
                       </h2>
                     </div>

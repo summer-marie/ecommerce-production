@@ -245,6 +245,46 @@ const AdminSidenav = () => {
 
             <li>
               <Link
+                to="/menu-item-builder"
+                className={`flex items-center p-2 rounded-lg group transition-colors duration-150 ring-1 
+                  ${
+                    location.pathname === "/menu-item-builder"
+                      ? "bg-sky-400/15 ring-sky-400/30 text-sky-50"
+                      : "hover:bg-white/5 hover:ring-sky-400/20 text-slate-200 ring-transparent"
+                  }
+                 `}
+                title={isCollapsed ? "Add Menu Item" : ""}
+              >
+                <svg
+                  className={`w-6 h-6 transition duration-75 group-hover:text-sky-200 ${
+                    location.pathname === "/menu-item-builder"
+                      ? "text-sky-300"
+                      : "text-slate-400 "
+                  }`}
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 2v20M2 12h20"
+                  />
+                </svg>
+
+                {!isCollapsed && (
+                  <span className="flex-1 ms-3 whitespace-nowrap">
+                    Add Menu Item
+                  </span>
+                )}
+              </Link>
+            </li>
+
+            <li>
+              <Link
                 to="/admin-menu"
                 className={`flex items-center p-2 rounded-lg group transition-colors duration-150 ring-1 
                   ${
