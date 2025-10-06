@@ -133,6 +133,12 @@ const OrderMenu = () => {
   const hasActiveMenuItems = Object.keys(organizedMenuItems).length > 0;
   const hasActivePizzas = Array.isArray(builders) && builders.length > 0;
 
+  // Helper to format section headings from itemType (adds 's' if not already plural)
+  const formatTypeLabel = useCallback((t) => {
+    const x = (t || "").trim();
+    return x.endsWith("s") ? x : `${x}s`;
+  }, []);
+
   // Enhanced callback for adding to cart (handles both pizzas and menu items)
   const handleAddToCart = useCallback(
     (item, qty = 1, itemType = "pizza") => {
@@ -458,13 +464,13 @@ const OrderMenu = () => {
                     <div className="w-full md:w-auto md:flex md:flex-col md:items-center md:justify-center mb-4 md:mb-0">
                       <div className="md:hidden text-center">
                         <h3 className="berkshireSwashFont text-2xl sm:text-3xl font-bold text-purple-700 mb-2">
-                          {itemType}s
+                          {formatTypeLabel(itemType)}
                         </h3>
                         <div className="h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent mx-auto w-32"></div>
                       </div>
                       <div className="hidden md:flex flex-col items-center">
                         <span className="berkshireSwashFont text-3xl font-bold text-purple-700 [writing-mode:vertical-rl] [text-orientation:upright] tracking-wider">
-                          {itemType}s
+                          {formatTypeLabel(itemType)}
                         </span>
                         <span className="mt-4 mb-2 h-24 w-1 rounded-full bg-gradient-to-b from-transparent via-purple-400 to-transparent"></span>
                       </div>
