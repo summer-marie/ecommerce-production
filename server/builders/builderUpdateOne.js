@@ -1,6 +1,7 @@
 import builderModel from "./builderModel.js";
 import { invalidateCache } from "../middleware/performance.js";
 import { getLog } from "../utils/logger.js";
+import { normalizeBase64Image } from "../utils/imageHelpers.js";
 
 const pizzaUpdateOne = async (req, res) => {
   try {
@@ -28,20 +29,22 @@ const pizzaUpdateOne = async (req, res) => {
         });
     }
 
+    const normalizedImage = image ? normalizeBase64Image(image) : undefined;
+
     const updateFields = {
       pizzaName,
       pizzaPrice, // Use admin-entered price
       sauce,
       meatTopping,
       veggieTopping,
-  base,
-  herbs: Array.isArray(herbs) ? herbs : [],
-  otherAdditions: Array.isArray(otherAdditions) ? otherAdditions : [],
+      base,
+      herbs: Array.isArray(herbs) ? herbs : [],
+      otherAdditions: Array.isArray(otherAdditions) ? otherAdditions : [],
     };
 
     // Only update image if provided
-    if (image) {
-      updateFields.image = image;
+    if (normalizedImage) {
+      updateFields.image = normalizedImage;
     }
 
     const updatedPizza = await builderModel.findOneAndUpdate(

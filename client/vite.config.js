@@ -10,6 +10,12 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
+    test: {
+      environment: "jsdom",
+      setupFiles: "./vitest.setup.js",
+      globals: true,
+      css: true,
+    },
     server: {
       port: 3005,
       hmr: {

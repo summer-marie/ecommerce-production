@@ -1,5 +1,6 @@
 import menuItemModel from "./menuItemModel.js";
 import { getLog } from "../utils/logger.js";
+import { normalizeBase64Image } from "../utils/imageHelpers.js";
 
 const menuItemCreate = async (req, res) => {
   try {
@@ -51,6 +52,8 @@ const menuItemCreate = async (req, res) => {
       });
     }
 
+    const normalizedImage = normalizeBase64Image(image);
+
     const newMenuItem = await menuItemModel.create({
       itemName,
       itemType,
@@ -62,7 +65,7 @@ const menuItemCreate = async (req, res) => {
       veggieTopping: Array.isArray(veggieTopping) ? veggieTopping : [],
       herbs: Array.isArray(herbs) ? herbs : [],
       otherAdditions: Array.isArray(otherAdditions) ? otherAdditions : [],
-      image: image || null,
+      image: normalizedImage,
       isAvailable: isAvailable !== undefined ? isAvailable : true,
       isFeatured: isFeatured !== undefined ? isFeatured : false,
       sortOrder: sortOrder || 0,

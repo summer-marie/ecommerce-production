@@ -1,13 +1,25 @@
 import builderModel from "./builderModel.js";
 import { getLog } from "../utils/logger.js";
+import { normalizeBase64Image } from "../utils/imageHelpers.js";
 
 const builderCreate = async (req, res) => {
   try {
-  const log = getLog(req, { event: 'builder.create' });
-  log.debug({ bodyKeys: Object.keys(req.body || {}) }, 'create builder request body');
+    const log = getLog(req, { event: "builder.create" });
+    log.debug(
+      { bodyKeys: Object.keys(req.body || {}) },
+      "create builder request body"
+    );
 
-    const { pizzaName, base, sauce, meatTopping, veggieTopping, herbs, otherAdditions, image } =
-      req.body;
+    const {
+      pizzaName,
+      base,
+      sauce,
+      meatTopping,
+      veggieTopping,
+      herbs,
+      otherAdditions,
+      image,
+    } = req.body;
 
     // Validation
     if (!pizzaName || pizzaName === "") {
@@ -32,33 +44,38 @@ const builderCreate = async (req, res) => {
       });
     }
 
+    const normalizedImage = normalizeBase64Image(image);
+
     const newPizza = await builderModel.create({
       pizzaName,
       pizzaPrice, // Use admin-entered price
-  base,
-  sauce,
-  meatTopping,
-  veggieTopping,
-  herbs: Array.isArray(herbs) ? herbs : [],
-  otherAdditions: Array.isArray(otherAdditions) ? otherAdditions : [],
-      image: image || null, // Firebase Storage image data
+      base,
+      sauce,
+      meatTopping,
+      veggieTopping,
+      herbs: Array.isArray(herbs) ? herbs : [],
+      otherAdditions: Array.isArray(otherAdditions) ? otherAdditions : [],
+      image: normalizedImage,
     });
 
-    log.info({
-      id: newPizza._id,
-      pizzaName: newPizza.pizzaName,
-      price: newPizza.pizzaPrice,
-      hasImage: !!newPizza.image,
-      imageMeta: newPizza.image
-        ? {
-            filename: newPizza.image.filename,
-            mimetype: newPizza.image.mimetype,
-            dataSize: newPizza.image.data
-              ? `${(newPizza.image.data.length / 1024).toFixed(2)} KB`
-              : '0 KB'
-          }
-        : null
-    }, 'builder created');
+    log.info(
+      {
+        id: newPizza._id,
+        pizzaName: newPizza.pizzaName,
+        price: newPizza.pizzaPrice,
+        hasImage: !!newPizza.image,
+        imageMeta: newPizza.image
+          ? {
+              filename: newPizza.image.filename,
+              mimetype: newPizza.image.mimetype,
+              dataSize: newPizza.image.data
+                ? `${(newPizza.image.data.length / 1024).toFixed(2)} KB`
+                : "0 KB",
+            }
+          : null,
+      },
+      "builder created"
+    );
 
     res.status(200).json({
       success: true,
@@ -66,8 +83,8 @@ const builderCreate = async (req, res) => {
       pizza: newPizza,
     });
   } catch (err) {
-  const log = getLog(req, { event: 'builder.create.error' });
-  log.error({ err: err?.message }, 'builder create error');
+    const log = getLog(req, { event: "builder.create.error" });
+    log.error({ err: err?.message }, "builder create error");
     res.status(500).json({
       success: false,
       message: "Server error while creating pizza",

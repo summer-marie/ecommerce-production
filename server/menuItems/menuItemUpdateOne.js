@@ -1,6 +1,7 @@
 import menuItemModel from "./menuItemModel.js";
 import { invalidateCache } from "../middleware/performance.js";
 import { getLog } from "../utils/logger.js";
+import { normalizeBase64Image } from "../utils/imageHelpers.js";
 
 const menuItemUpdateOne = async (req, res) => {
   try {
@@ -60,7 +61,7 @@ const menuItemUpdateOne = async (req, res) => {
     if (veggieTopping !== undefined) updateData.veggieTopping = Array.isArray(veggieTopping) ? veggieTopping : [];
     if (herbs !== undefined) updateData.herbs = Array.isArray(herbs) ? herbs : [];
     if (otherAdditions !== undefined) updateData.otherAdditions = Array.isArray(otherAdditions) ? otherAdditions : [];
-    if (image !== undefined) updateData.image = image;
+  if (image !== undefined) updateData.image = normalizeBase64Image(image);
     if (isAvailable !== undefined) updateData.isAvailable = isAvailable;
     if (isFeatured !== undefined) updateData.isFeatured = isFeatured;
     if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
