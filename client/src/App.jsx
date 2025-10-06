@@ -261,9 +261,6 @@ function App() {
           }
         />
       </Routes>
-
-      {/* Performance monitoring in development */}
-      <InstallConsentModal />
     </Suspense>
   );
 }

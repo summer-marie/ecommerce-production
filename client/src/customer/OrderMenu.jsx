@@ -6,7 +6,7 @@ import { addToCart } from "../redux/cartSlice";
 import { LazyImage } from "../utils/perfComponents.jsx";
 import { fetchOperatingStatus } from "../redux/operatingSlice";
 import WaveText from "../components/WaveText.jsx";
-
+// Removed all icon imports
 const MenuItemCard = ({
   menuItem,
   imageSrc,
@@ -19,9 +19,7 @@ const MenuItemCard = ({
   onAdd,
 }) => {
   return (
-    <div
-      className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-purple-700 rounded-lg flex flex-col overflow-hidden h-[30rem] sm:h-[32rem] lg:h-[34rem] relative"
-    >
+    <div className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-purple-700 rounded-lg flex flex-col overflow-hidden h-[30rem] sm:h-[32rem] lg:h-[34rem] relative">
       {!isOpen && (
         <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px] z-10 flex items-center justify-center">
           <span className="text-white text-sm sm:text-base font-semibold bg-black/40 px-3 py-1 rounded-md ring-1 ring-white/30">
@@ -262,240 +260,249 @@ const OrderMenu = () => {
 
             {/* Pizzas Section */}
             {hasActivePizzas && (
-              <>
-                {/* Pizzas Header */}
-                <div className="w-full text-center mb-4">
-                  <h3 className="berkshireSwashFont text-2xl sm:text-3xl font-bold text-red-700 mb-2">
-                    🍕 Pizzas
-                  </h3>
-                  <div className="h-0.5 bg-gradient-to-r from-transparent via-red-400 to-transparent mx-auto w-32"></div>
+              <div className="w-full flex flex-col md:flex-row md:items-stretch md:gap-6">
+                {/* Vertical header (md+) and horizontal fallback (sm) */}
+                <div className="w-full md:w-auto md:flex md:flex-col md:items-center md:justify-center mb-4 md:mb-0">
+                  <div className="md:hidden text-center">
+                    <h3 className="berkshireSwashFont text-2xl sm:text-3xl font-bold text-red-700 mb-2">
+                      Pizzas
+                    </h3>
+                    <div className="h-0.5 bg-gradient-to-r from-transparent via-red-400 to-transparent mx-auto w-32"></div>
+                  </div>
+                  <div className="hidden md:flex flex-col items-center">
+                    <span className="berkshireSwashFont text-3xl font-bold text-red-700 [writing-mode:vertical-rl] [text-orientation:upright] tracking-wider">
+                      Pizzas
+                    </span>
+                    <span className="mt-4 mb-2 h-24 w-1 rounded-full bg-gradient-to-b from-transparent via-red-400 to-transparent"></span>
+                  </div>
                 </div>
 
                 {/* Pizza Cards */}
-                {builders.map((builder, index) => {
-                  const imageSrc =
-                    builder?.image && typeof builder.image.data === "string"
-                      ? builder.image.data
-                      : fallbackImage;
-                  const cardId = builder.id ?? builder._id ?? index;
-                  const baseNames =
-                    builder?.base && typeof builder.base === "object"
-                      ? [
-                          builder.base?.crust?.name,
-                          ...(Array.isArray(builder.base?.cheeses)
-                            ? builder.base.cheeses
-                                .map((c) => c?.name)
-                                .filter(Boolean)
-                            : []),
-                        ]
-                          .filter(Boolean)
-                          .join(", ")
+                <div className="flex flex-wrap justify-center items-start gap-4 sm:gap-6 flex-1">
+                  {builders.map((builder, index) => {
+                    const imageSrc =
+                      builder?.image && typeof builder.image.data === "string"
+                        ? builder.image.data
+                        : fallbackImage;
+                    const cardId = builder.id ?? builder._id ?? index;
+                    const baseNames =
+                      builder?.base && typeof builder.base === "object"
+                        ? [
+                            builder.base?.crust?.name,
+                            ...(Array.isArray(builder.base?.cheeses)
+                              ? builder.base.cheeses
+                                  .map((c) => c?.name)
+                                  .filter(Boolean)
+                              : []),
+                          ]
+                            .filter(Boolean)
+                            .join(", ")
+                        : "";
+                    const sauceName = builder?.sauce
+                      ? typeof builder.sauce === "string"
+                        ? builder.sauce
+                        : builder.sauce.name || ""
                       : "";
-                  const sauceName = builder?.sauce
-                    ? typeof builder.sauce === "string"
-                      ? builder.sauce
-                      : builder.sauce.name || ""
-                    : "";
-                  const meatNames = Array.isArray(builder?.meatTopping)
-                    ? builder.meatTopping
-                        .map((m) =>
-                          typeof m === "string"
-                            ? m
-                            : m && typeof m === "object"
-                            ? m.name
-                            : null
-                        )
-                        .filter(Boolean)
-                    : [];
-                  const veggieNames = Array.isArray(builder?.veggieTopping)
-                    ? builder.veggieTopping
-                        .map((v) =>
-                          typeof v === "string"
-                            ? v
-                            : v && typeof v === "object"
-                            ? v.name
-                            : null
-                        )
-                        .filter(Boolean)
-                    : [];
-                  const herbNames = Array.isArray(builder?.herbs)
-                    ? builder.herbs
-                        .map((h) =>
-                          typeof h === "string"
-                            ? h
-                            : h && typeof h === "object"
-                            ? h.name
-                            : null
-                        )
-                        .filter(Boolean)
-                    : [];
-                  const otherAdditionNames = Array.isArray(
-                    builder?.otherAdditions
-                  )
-                    ? builder.otherAdditions
-                        .map((o) =>
-                          typeof o === "string"
-                            ? o
-                            : o && typeof o === "object"
-                            ? o.name
-                            : null
-                        )
-                        .filter(Boolean)
-                    : [];
-                  const allToppings = [
-                    ...meatNames,
-                    ...veggieNames,
-                    ...herbNames,
-                    ...otherAdditionNames,
-                  ].join(", ");
+                    const meatNames = Array.isArray(builder?.meatTopping)
+                      ? builder.meatTopping
+                          .map((m) =>
+                            typeof m === "string"
+                              ? m
+                              : m && typeof m === "object"
+                              ? m.name
+                              : null
+                          )
+                          .filter(Boolean)
+                      : [];
+                    const veggieNames = Array.isArray(builder?.veggieTopping)
+                      ? builder.veggieTopping
+                          .map((v) =>
+                            typeof v === "string"
+                              ? v
+                              : v && typeof v === "object"
+                              ? v.name
+                              : null
+                          )
+                          .filter(Boolean)
+                      : [];
+                    const herbNames = Array.isArray(builder?.herbs)
+                      ? builder.herbs
+                          .map((h) =>
+                            typeof h === "string"
+                              ? h
+                              : h && typeof h === "object"
+                              ? h.name
+                              : null
+                          )
+                          .filter(Boolean)
+                      : [];
+                    const otherAdditionNames = Array.isArray(
+                      builder?.otherAdditions
+                    )
+                      ? builder.otherAdditions
+                          .map((o) =>
+                            typeof o === "string"
+                              ? o
+                              : o && typeof o === "object"
+                              ? o.name
+                              : null
+                          )
+                          .filter(Boolean)
+                      : [];
+                    const allToppings = [
+                      ...meatNames,
+                      ...veggieNames,
+                      ...herbNames,
+                      ...otherAdditionNames,
+                    ].join(", ");
 
-                  return (
-                    <div
-                      key={builder.id || index}
-                      className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col overflow-hidden h-[30rem] sm:h-[32rem] lg:h-[34rem] relative"
-                    >
-                      {!isOpen && (
-                        <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px] z-10 flex items-center justify-center">
-                          <span className="text-white text-sm sm:text-base font-semibold bg-black/40 px-3 py-1 rounded-md ring-1 ring-white/30">
-                            Ordering unavailable
-                          </span>
+                    return (
+                      <div
+                        key={builder.id || index}
+                        className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] xl:w-[calc(25%-1rem)] bg-gray-300 border border-gray-200 shadow-2xl shadow-red-700 rounded-lg flex flex-col overflow-hidden h-[30rem] sm:h-[32rem] lg:h-[34rem] relative"
+                      >
+                        {!isOpen && (
+                          <div className="absolute inset-0 bg-black/35 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                            <span className="text-white text-sm sm:text-base font-semibold bg-black/40 px-3 py-1 rounded-md ring-1 ring-white/30">
+                              Ordering unavailable
+                            </span>
+                          </div>
+                        )}
+                        <div className="relative w-full h-48 sm:h-56 lg:h-60 xl:h-64">
+                          <LazyImage
+                            className="absolute inset-0 w-full h-full object-cover rounded-t-lg"
+                            src={imageSrc}
+                            fallbackSrc={fallbackImage}
+                            alt={builder.pizzaName || "Pizza"}
+                          />
                         </div>
-                      )}
-                      <div className="relative w-full h-48 sm:h-56 lg:h-60 xl:h-64">
-                        <LazyImage
-                          className="absolute inset-0 w-full h-full object-cover rounded-t-lg"
-                          src={imageSrc}
-                          fallbackSrc={fallbackImage}
-                          alt={builder.pizzaName || "Pizza"}
-                        />
-                      </div>
-                      <div className="flex flex-col flex-1 px-4 sm:px-5 pt-4 pb-5">
-                        <h5 className="font-semibold tracking-tight text-gray-900 mb-3 text-xl sm:text-2xl">
-                          {builder.pizzaName}
-                        </h5>
-                        <div className="space-y-2 mb-4 flex-1 min-h-[5rem] sm:min-h-[6rem]">
-                          <div className="text-sm sm:text-base leading-snug">
-                            <div className="mb-2 break-words">
-                              <strong>Pizza Base:</strong> {baseNames || "-"}
-                              {baseNames && sauceName ? ", " : ""}
-                              {sauceName || ""}
+                        <div className="flex flex-col flex-1 px-4 sm:px-5 pt-4 pb-5">
+                          <h5 className="font-semibold tracking-tight text-gray-900 mb-3 text-xl sm:text-2xl">
+                            {builder.pizzaName}
+                          </h5>
+                          <div className="space-y-2 mb-4 flex-1 min-h-[5rem] sm:min-h-[6rem]">
+                            <div className="text-sm sm:text-base leading-snug">
+                              <div className="mb-2 break-words">
+                                <strong>Pizza Base:</strong> {baseNames || "-"}
+                                {baseNames && sauceName ? ", " : ""}
+                                {sauceName || ""}
+                              </div>
+                              <div className="break-words">
+                                <strong>Toppings:</strong> {allToppings || "-"}
+                              </div>
                             </div>
-                            <div className="break-words">
-                              <strong>Toppings:</strong> {allToppings || "-"}
+                          </div>
+                          <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                            <span className="text-xl sm:text-2xl font-bold text-gray-900 shrink-0">
+                              $ {Number(builder.pizzaPrice).toFixed(2)}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <div className="inline-flex items-center bg-white/80 rounded-lg ring-1 ring-sky-300/30 shadow-sm">
+                                <button
+                                  type="button"
+                                  onClick={() => dec(cardId)}
+                                  aria-label="Decrease quantity"
+                                  className="px-2 py-1 text-slate-700 hover:text-slate-900"
+                                >
+                                  −
+                                </button>
+                                <span className="w-8 text-center font-semibold text-slate-800 select-none">
+                                  {getQty(cardId)}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => inc(cardId)}
+                                  aria-label="Increase quantity"
+                                  className="px-2 py-1 text-slate-700 hover:text-slate-900"
+                                >
+                                  +
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const qty = getQty(cardId);
+                                  if (qty > 0) {
+                                    handleAddToCart(builder, qty, "pizza");
+                                    setQuantities((q) => ({
+                                      ...q,
+                                      [cardId]: 0,
+                                    }));
+                                  }
+                                }}
+                                type="button"
+                                disabled={getQty(cardId) === 0 || !isOpen}
+                                className="font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 text-center shadow-lg hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-green-800/80 hover:text-black text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800 transition-all duration-200"
+                              >
+                                {isOpen ? "Add" : "Closed"}
+                              </button>
                             </div>
                           </div>
                         </div>
-                        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-                          <span className="text-xl sm:text-2xl font-bold text-gray-900 shrink-0">
-                            $ {Number(builder.pizzaPrice).toFixed(2)}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <div className="inline-flex items-center bg-white/80 rounded-lg ring-1 ring-sky-300/30 shadow-sm">
-                              <button
-                                type="button"
-                                onClick={() => dec(cardId)}
-                                aria-label="Decrease quantity"
-                                className="px-2 py-1 text-slate-700 hover:text-slate-900"
-                              >
-                                −
-                              </button>
-                              <span className="w-8 text-center font-semibold text-slate-800 select-none">
-                                {getQty(cardId)}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => inc(cardId)}
-                                aria-label="Increase quantity"
-                                className="px-2 py-1 text-slate-700 hover:text-slate-900"
-                              >
-                                +
-                              </button>
-                            </div>
-                            <button
-                              onClick={() => {
-                                const qty = getQty(cardId);
-                                if (qty > 0) {
-                                  handleAddToCart(builder, qty, "pizza");
-                                  setQuantities((q) => ({ ...q, [cardId]: 0 }));
-                                }
-                              }}
-                              type="button"
-                              disabled={getQty(cardId) === 0 || !isOpen}
-                              className="font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 text-center shadow-lg hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-green-800/80 hover:text-black text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800 transition-all duration-200"
-                            >
-                              {isOpen ? "Add" : "Closed"}
-                            </button>
-                          </div>
-                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </>
+                    );
+                  })}
+                </div>
+              </div>
             )}
 
             {/* Other Menu Items Sections */}
             {hasActiveMenuItems &&
-              Object.entries(organizedMenuItems).map(([itemType, items]) => (
-                <div key={itemType} className="w-full">
-                  {/* Section Header */}
+              Object.entries(organizedMenuItems).map(([itemType, items]) => {
+                return (
                   <div
-                    className={`w-full text-center ${
+                    key={itemType}
+                    className={`w-full flex flex-col md:flex-row md:items-stretch md:gap-6 ${
                       hasActivePizzas ? "mt-12" : ""
-                    } mb-4`}
+                    }`}
                   >
-                    <h3 className="berkshireSwashFont text-2xl sm:text-3xl font-bold text-purple-700 mb-2">
-                      {itemType === "Pizza Sticks" && "🥖"}
-                      {itemType === "Calzone" && "🥟"}
-                      {itemType === "Appetizer" && "🍤"}
-                      {itemType === "Side" && "🥗"}
-                      {itemType === "Dessert" && "🍰"}
-                      {itemType === "Beverage" && "🥤"}
-                      {![
-                        "Pizza Sticks",
-                        "Calzone",
-                        "Appetizer",
-                        "Side",
-                        "Dessert",
-                        "Beverage",
-                      ].includes(itemType) && "🍽️"}{" "}
-                      {itemType}s
-                    </h3>
-                    <div className="h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent mx-auto w-32"></div>
-                  </div>
+                    <div className="w-full md:w-auto md:flex md:flex-col md:items-center md:justify-center mb-4 md:mb-0">
+                      <div className="md:hidden text-center">
+                        <h3 className="berkshireSwashFont text-2xl sm:text-3xl font-bold text-purple-700 mb-2">
+                          {itemType}s
+                        </h3>
+                        <div className="h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent mx-auto w-32"></div>
+                      </div>
+                      <div className="hidden md:flex flex-col items-center">
+                        <span className="berkshireSwashFont text-3xl font-bold text-purple-700 [writing-mode:vertical-rl] [text-orientation:upright] tracking-wider">
+                          {itemType}s
+                        </span>
+                        <span className="mt-4 mb-2 h-24 w-1 rounded-full bg-gradient-to-b from-transparent via-purple-400 to-transparent"></span>
+                      </div>
+                    </div>
 
-                  {/* Menu Item Cards */}
-                  <div className="flex flex-wrap justify-center items-start gap-4 sm:gap-6">
-                    {items.map((menuItem, index) => {
-                      const cardId = menuItem.id ?? index;
-                      const imageSrc =
-                        menuItem?.image && typeof menuItem.image.data === "string"
-                          ? menuItem.image.data
-                          : fallbackImage;
-                      const ingredients = getMenuItemIngredients(menuItem);
-                      const quantity = getQty(cardId);
+                    <div className="flex flex-wrap justify-center items-start gap-4 sm:gap-6 flex-1">
+                      {items.map((menuItem, index) => {
+                        const cardId = menuItem.id ?? index;
+                        const imageSrc =
+                          menuItem?.image &&
+                          typeof menuItem.image.data === "string"
+                            ? menuItem.image.data
+                            : fallbackImage;
+                        const ingredients = getMenuItemIngredients(menuItem);
+                        const quantity = getQty(cardId);
 
-                      return (
-                        <MenuItemCard
-                          key={menuItem.id || index}
-                          menuItem={menuItem}
-                          imageSrc={imageSrc}
-                          fallbackImage={fallbackImage}
-                          ingredients={ingredients}
-                          isOpen={isOpen}
-                          quantity={quantity}
-                          onIncrement={() => inc(cardId)}
-                          onDecrement={() => dec(cardId)}
-                          onAdd={(qty) => {
-                            handleAddToCart(menuItem, qty, "menuItem");
-                            setQuantities((q) => ({ ...q, [cardId]: 0 }));
-                          }}
-                        />
-                      );
-                    })}
+                        return (
+                          <MenuItemCard
+                            key={menuItem.id || index}
+                            menuItem={menuItem}
+                            imageSrc={imageSrc}
+                            fallbackImage={fallbackImage}
+                            ingredients={ingredients}
+                            isOpen={isOpen}
+                            quantity={quantity}
+                            onIncrement={() => inc(cardId)}
+                            onDecrement={() => dec(cardId)}
+                            onAdd={(qty) => {
+                              handleAddToCart(menuItem, qty, "menuItem");
+                              setQuantities((q) => ({ ...q, [cardId]: 0 }));
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
             {/* Post-grid wave message - only show if we have any content */}
             {(hasActivePizzas || hasActiveMenuItems) && (

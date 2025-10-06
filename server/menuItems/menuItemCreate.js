@@ -4,23 +4,26 @@ import { normalizeBase64Image } from "../utils/imageHelpers.js";
 
 const menuItemCreate = async (req, res) => {
   try {
-    const log = getLog(req, { event: 'menuItem.create' });
-    log.debug({ bodyKeys: Object.keys(req.body || {}) }, 'create menu item request body');
+    const log = getLog(req, { event: "menuItem.create" });
+    log.debug(
+      { bodyKeys: Object.keys(req.body || {}) },
+      "create menu item request body"
+    );
 
-    const { 
-      itemName, 
-      itemType, 
+    const {
+      itemName,
+      itemType,
       description,
-      base, 
-      sauce, 
-      meatTopping, 
-      veggieTopping, 
-      herbs, 
-      otherAdditions, 
+      base,
+      sauce,
+      meatTopping,
+      veggieTopping,
+      herbs,
+      otherAdditions,
       image,
       isAvailable,
       isFeatured,
-      sortOrder
+      sortOrder,
     } = req.body;
 
     // Validation
@@ -71,22 +74,25 @@ const menuItemCreate = async (req, res) => {
       sortOrder: sortOrder || 0,
     });
 
-    log.info({
-      id: newMenuItem._id,
-      itemName: newMenuItem.itemName,
-      itemType: newMenuItem.itemType,
-      price: newMenuItem.itemPrice,
-      hasImage: !!newMenuItem.image,
-      imageMeta: newMenuItem.image
-        ? {
-            filename: newMenuItem.image.filename,
-            mimetype: newMenuItem.image.mimetype,
-            dataSize: newMenuItem.image.data
-              ? `${(newMenuItem.image.data.length / 1024).toFixed(2)} KB`
-              : '0 KB'
-          }
-        : null
-    }, 'menu item created');
+    log.info(
+      {
+        id: newMenuItem._id,
+        itemName: newMenuItem.itemName,
+        itemType: newMenuItem.itemType,
+        price: newMenuItem.itemPrice,
+        hasImage: !!newMenuItem.image,
+        imageMeta: newMenuItem.image
+          ? {
+              filename: newMenuItem.image.filename,
+              mimetype: newMenuItem.image.mimetype,
+              dataSize: newMenuItem.image.data
+                ? `${(newMenuItem.image.data.length / 1024).toFixed(2)} KB`
+                : "0 KB",
+            }
+          : null,
+      },
+      "menu item created"
+    );
 
     res.status(200).json({
       success: true,
@@ -94,8 +100,8 @@ const menuItemCreate = async (req, res) => {
       menuItem: newMenuItem,
     });
   } catch (err) {
-    const log = getLog(req, { event: 'menuItem.create.error' });
-    log.error({ err: err?.message }, 'menu item create error');
+    const log = getLog(req, { event: "menuItem.create.error" });
+    log.error({ err: err?.message }, "menu item create error");
     res.status(500).json({
       success: false,
       message: "Server error while creating menu item",
