@@ -14,8 +14,11 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import AlertBlack from "../components/AlertBlack";
 
-// TODO: Implement pagination or infinite scroll if the list grows large
-// TODO: make buttons small like new ones but make them consistant colors
+// Pagination constants
+const PAGE_SIZE = 8; // items per page per section
+
+// Note: Client-side pagination (Load More) implemented for large lists
+
 // TODO: need update page for menu items
 
 const alertMsg = "Delete item from Menu";
@@ -28,6 +31,13 @@ const AdminMenu = () => {
   const { menuItems } = useSelector((state) => state.menuItem);
   const [togglingId, setTogglingId] = useState(null);
   const [togglingMenuItemId, setTogglingMenuItemId] = useState(null);
+  // Pagination state
+  const [visiblePizzas, setVisiblePizzas] = useState(PAGE_SIZE);
+  const [visibleByType, setVisibleByType] = useState({}); // { [itemType]: number }
+  const [visibleDeactivatedPizzas, setVisibleDeactivatedPizzas] =
+    useState(PAGE_SIZE);
+  const [visibleDeactivatedMenu, setVisibleDeactivatedMenu] =
+    useState(PAGE_SIZE);
   // State to track the pizza being deleted
   const [alertPizza, setAlertPizza] = useState(null);
   // State to track the menu item being deleted
@@ -41,6 +51,30 @@ const AdminMenu = () => {
     dispatch(builderGetMany());
     dispatch(menuItemGetAll());
   }, [dispatch]);
+
+  // Initialize/reset pagination when data changes
+  useEffect(() => {
+    setVisiblePizzas(PAGE_SIZE);
+    setVisibleDeactivatedPizzas(PAGE_SIZE);
+    setVisibleDeactivatedMenu(PAGE_SIZE);
+  }, [builders, menuItems]);
+
+  // Keep visibleByType in sync with grouped types
+  useEffect(() => {
+    // Build initial map with PAGE_SIZE per type, preserving existing counts if present
+    const { groupedActive } = getSeparatedMenuItems();
+    const next = {};
+    Object.keys(groupedActive || {}).forEach((type) => {
+      const current = visibleByType[type] ?? PAGE_SIZE;
+      const maxLen = groupedActive[type]?.length || 0;
+      next[type] = Math.min(
+        current,
+        Math.max(PAGE_SIZE, Math.min(maxLen, current))
+      );
+    });
+    setVisibleByType(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuItems]);
 
   // No local mirror now; rely directly on redux updates (pattern like orders slice refreshes list atomically)
 
@@ -56,21 +90,41 @@ const AdminMenu = () => {
     const list = Array.isArray(menuItems) ? menuItems : [];
     const active = list.filter((item) => item?.isAvailable === true);
     const inactive = list.filter((item) => item?.isAvailable === false);
-    
+
     // Group active items by type
     const groupedActive = active.reduce((acc, item) => {
-      const type = item.itemType || 'Other';
+      const type = item.itemType || "Other";
       if (!acc[type]) acc[type] = [];
       acc[type].push(item);
       return acc;
     }, {});
-    
+
     return { groupedActive, inactive };
   }, [menuItems]);
 
   // Get organized data
   const { active, inactive } = getSeparatedBuilders();
-  const { groupedActive: groupedMenuItems, inactive: inactiveMenuItems } = getSeparatedMenuItems();
+  const { groupedActive: groupedMenuItems, inactive: inactiveMenuItems } =
+    getSeparatedMenuItems();
+
+  const loadMorePizzas = () =>
+    setVisiblePizzas((n) => Math.min(active?.length || 0, n + PAGE_SIZE));
+  const loadMoreType = (type) =>
+    setVisibleByType((m) => ({
+      ...m,
+      [type]: Math.min(
+        groupedMenuItems?.[type]?.length || 0,
+        (m[type] ?? PAGE_SIZE) + PAGE_SIZE
+      ),
+    }));
+  const loadMoreInactivePizzas = () =>
+    setVisibleDeactivatedPizzas((n) =>
+      Math.min(inactive?.length || 0, n + PAGE_SIZE)
+    );
+  const loadMoreInactiveMenu = () =>
+    setVisibleDeactivatedMenu((n) =>
+      Math.min(inactiveMenuItems?.length || 0, n + PAGE_SIZE)
+    );
 
   const handleDeleteClick = (builder) => {
     setAlertPizza(builder);
@@ -87,26 +141,28 @@ const AdminMenu = () => {
   const handleMenuItemToggleStatus = async (menuItem) => {
     const id = menuItem?.id || menuItem?._id;
     if (!id) return;
-    
+
     setTogglingMenuItemId(id);
     try {
-      await dispatch(menuItemUpdate({
-        id,
-        isAvailable: !menuItem.isAvailable,
-        itemName: menuItem.itemName,
-        itemType: menuItem.itemType,
-        itemPrice: menuItem.itemPrice,
-        description: menuItem.description,
-        base: menuItem.base,
-        sauce: menuItem.sauce,
-        meatTopping: menuItem.meatTopping,
-        veggieTopping: menuItem.veggieTopping,
-        herbs: menuItem.herbs,
-        otherAdditions: menuItem.otherAdditions,
-        image: menuItem.image,
-        isFeatured: menuItem.isFeatured,
-        sortOrder: menuItem.sortOrder,
-      })).unwrap();
+      await dispatch(
+        menuItemUpdate({
+          id,
+          isAvailable: !menuItem.isAvailable,
+          itemName: menuItem.itemName,
+          itemType: menuItem.itemType,
+          itemPrice: menuItem.itemPrice,
+          description: menuItem.description,
+          base: menuItem.base,
+          sauce: menuItem.sauce,
+          meatTopping: menuItem.meatTopping,
+          veggieTopping: menuItem.veggieTopping,
+          herbs: menuItem.herbs,
+          otherAdditions: menuItem.otherAdditions,
+          image: menuItem.image,
+          isFeatured: menuItem.isFeatured,
+          sortOrder: menuItem.sortOrder,
+        })
+      ).unwrap();
     } catch (error) {
       logger.error("Failed to toggle menu item status", error);
     } finally {
@@ -116,7 +172,7 @@ const AdminMenu = () => {
 
   const handleConfirm = async () => {
     setShowAlert(false);
-    
+
     if (alertPizza) {
       const id = alertPizza?.id;
       if (!id) {
@@ -129,7 +185,7 @@ const AdminMenu = () => {
       setAlertPizza(null);
       logger.info("Pizza deleted", { id });
     }
-    
+
     if (alertMenuItem) {
       const id = alertMenuItem?.id || alertMenuItem?._id;
       if (!id) {
@@ -181,8 +237,6 @@ const AdminMenu = () => {
     alertMsg
   );
 
-
-
   return (
     <>
       <div className="px-4">
@@ -199,15 +253,10 @@ const AdminMenu = () => {
         {/* Pizzas Section */}
         {active.length > 0 && (
           <div className="mb-2 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
-              Pizzas
-            </h3>
-          <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4">
-            {/* Active Pizza Cards */}
-            {active.length === 0 ? (
-              <p>No active pizzas found.</p>
-            ) : (
-              active.map((builder, index) => {
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Pizzas</h3>
+            <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4">
+              {/* Active Pizza Cards with pagination */}
+              {active.slice(0, visiblePizzas).map((builder, index) => {
                 // Defensive normalizations to avoid rendering raw objects
                 const safeBase =
                   builder?.base && typeof builder.base === "object"
@@ -245,7 +294,9 @@ const AdminMenu = () => {
                       .filter(Boolean)
                       .join(", ")
                   : "";
-                const safeOtherAdditions = Array.isArray(builder?.otherAdditions)
+                const safeOtherAdditions = Array.isArray(
+                  builder?.otherAdditions
+                )
                   ? builder.otherAdditions
                       .map((o) => (typeof o === "string" ? o : o?.name))
                       .filter(Boolean)
@@ -360,161 +411,216 @@ const AdminMenu = () => {
                     </div>
                   </div>
                 );
-              })
+              })}
+              {/* End of pizza cards */}
+            </div>
+            {visiblePizzas < active.length && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={loadMorePizzas}
+                  className="px-4 py-2 text-sm font-medium rounded bg-gray-800 text-white hover:bg-gray-700"
+                >
+                  Load more pizzas
+                </button>
+              </div>
             )}
-            {/* End of pizza cards */}
-          </div>
           </div>
         )}
 
         {/* Other Menu Items Sections */}
         {Object.entries(groupedMenuItems).map(([itemType, items]) => (
-          <div key={itemType} className="mt-2 mb-2 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8">
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
-              {itemType}
-            </h3>
+          <div
+            key={itemType}
+            className="mt-2 mb-2 mx-auto w-full px-6 py-2 sm:px-6 lg:max-w-7xl lg:px-8"
+          >
+            <h3 className="text-xl font-bold text-gray-800 mb-2">{itemType}</h3>
             <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4">
-              {items.map((menuItem, index) => {
-                const imageSrc = menuItem?.image && typeof menuItem.image.data === "string"
-                  ? menuItem.image.data
-                  : new URL("../assets/basePizza.jpg", import.meta.url).href;
-                
-                return (
-                  <div
-                    key={menuItem?.id || menuItem?._id || index}
-                    className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-zinc-300 border border-gray-200 shadow-green-600 relative flex flex-col"
-                  >
-                    <div className="relative">
-                      <div className="relative w-full aspect-[4/3]">
-                        <img
-                          className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
-                          src={imageSrc}
-                          alt={menuItem?.itemName || "Menu Item"}
-                          onError={(e) => {
-                            e.currentTarget.src = new URL(
-                              "../assets/basePizza.jpg",
-                              import.meta.url
-                            ).href;
+              {items
+                .slice(0, visibleByType[itemType] ?? PAGE_SIZE)
+                .map((menuItem, index) => {
+                  const imageSrc =
+                    menuItem?.image && typeof menuItem.image.data === "string"
+                      ? menuItem.image.data
+                      : new URL("../assets/basePizza.jpg", import.meta.url)
+                          .href;
+
+                  return (
+                    <div
+                      key={menuItem?.id || menuItem?._id || index}
+                      className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-zinc-300 border border-gray-200 shadow-green-600 relative flex flex-col"
+                    >
+                      <div className="relative">
+                        <div className="relative w-full aspect-[4/3]">
+                          <img
+                            className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
+                            src={imageSrc}
+                            alt={menuItem?.itemName || "Menu Item"}
+                            onError={(e) => {
+                              e.currentTarget.src = new URL(
+                                "../assets/basePizza.jpg",
+                                import.meta.url
+                              ).href;
+                            }}
+                          />
+                        </div>
+                        <button
+                          onClick={() => {
+                            const id = menuItem?.id || menuItem?._id;
+                            if (id) navigate(`/admin-update-menu-item/${id}`);
                           }}
-                        />
-                      </div>
-                      <button
-                        onClick={() => {
-                          // TODO: Add update menu item navigation when page is created
-                          console.log('Update menu item:', menuItem?.itemName);
-                        }}
-                        type="button"
-                        className="absolute top-1 right-1 sm:top-2 sm:right-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-top-right transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                          type="button"
+                          className="absolute top-1 right-1 sm:top-2 sm:right-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-top-right transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
                           shadow-green-800/80 
                           text-white 
                           from-green-950
                           via-green-500 
                           to-green-600
                           focus:ring-green-800"
-                      >
-                        Update Item
-                      </button>
-                      {/* Deactivate positioned at top-left */}
-                      <button
-                        onClick={() => {
-                          const id = menuItem?.id || menuItem?._id;
-                          if (id) handleMenuItemToggleStatus(menuItem);
-                        }}
-                        type="button"
-                        disabled={togglingMenuItemId === (menuItem?.id || menuItem?._id)}
-                        className={`absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center bg-gradient-to-t focus:ring-4 focus:outline-none whitespace-nowrap transform origin-top-left transition-all sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                        >
+                          Update Item
+                        </button>
+                        {/* Deactivate positioned at top-left */}
+                        <button
+                          onClick={() => {
+                            const id = menuItem?.id || menuItem?._id;
+                            if (id) handleMenuItemToggleStatus(menuItem);
+                          }}
+                          type="button"
+                          disabled={
+                            togglingMenuItemId ===
+                            (menuItem?.id || menuItem?._id)
+                          }
+                          className={`absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center bg-gradient-to-t focus:ring-4 focus:outline-none whitespace-nowrap transform origin-top-left transition-all sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
                             shadow-gray-800/80 text-white from-gray-950 via-gray-500 to-gray-600 focus:ring-gray-800
                             ${
-                              togglingMenuItemId === (menuItem?.id || menuItem?._id)
+                              togglingMenuItemId ===
+                              (menuItem?.id || menuItem?._id)
                                 ? "opacity-60 cursor-not-allowed"
                                 : "hover:bg-gradient-to-br cursor-pointer"
                             }`}
-                      >
-                        {togglingMenuItemId === (menuItem?.id || menuItem?._id) 
-                          ? "Updating..." : "Deactivate"}
-                      </button>
-                      {/* Delete moved to bottom-left */}
-                      <button
-                        onClick={() => handleMenuItemDeleteClick(menuItem)}
-                        type="button"
-                        className="absolute z-10 bottom-1 left-1 sm:bottom-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-bottom-left transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                        >
+                          {togglingMenuItemId ===
+                          (menuItem?.id || menuItem?._id)
+                            ? "Updating..."
+                            : "Deactivate"}
+                        </button>
+                        {/* Delete moved to bottom-left */}
+                        <button
+                          onClick={() => handleMenuItemDeleteClick(menuItem)}
+                          type="button"
+                          className="absolute z-10 bottom-1 left-1 sm:bottom-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-bottom-left transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
                             shadow-red-800/80 
                             text-white 
                             from-black
                             via-red-500 
                             to-red-600
                             focus:ring-red-800"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                    <div className="flex flex-col flex-grow p-5">
-                      <h2 className="font-bold text-xl text-gray-800 mb-2">
-                        {menuItem?.itemName || "Unnamed Item"}
-                      </h2>
-                      {menuItem?.description && (
-                        <p className="text-gray-600 mb-3 text-sm">
-                          {menuItem.description}
-                        </p>
-                      )}
-                      <div className="space-y-2 mb-4 text-sm">
-                        {menuItem?.base && (
-                          <div className="flex">
-                            <strong>Base:</strong>
-                            <span className="ml-2">
-                              {(() => {
-                                if (typeof menuItem.base === 'string') return menuItem.base;
-                                const baseItems = [];
-                                if (menuItem.base?.crust?.name) baseItems.push(menuItem.base.crust.name);
-                                if (menuItem.base?.cheeses?.length > 0) {
-                                  const cheeses = menuItem.base.cheeses.map(c => c?.name || c).filter(Boolean);
-                                  baseItems.push(...cheeses);
-                                }
-                                return baseItems.length > 0 ? baseItems.join(', ') : '-';
-                              })()}
-                            </span>
-                          </div>
-                        )}
-                        {menuItem?.sauce && (
-                          <div className="flex">
-                            <strong>Sauce:</strong>
-                            <span className="ml-2">{typeof menuItem.sauce === 'string' ? menuItem.sauce : (menuItem.sauce?.name || JSON.stringify(menuItem.sauce))}</span>
-                          </div>
-                        )}
-                        {(menuItem?.meatTopping?.length > 0 || menuItem?.veggieTopping?.length > 0) && (
-                          <div className="flex">
-                            <strong>Toppings:</strong>
-                            <span className="ml-2">
-                              {[
-                                ...(menuItem.meatTopping?.map(item => typeof item === 'string' ? item : item?.name) || []),
-                                ...(menuItem.veggieTopping?.map(item => typeof item === 'string' ? item : item?.name) || [])
-                              ].filter(Boolean).join(", ") || "-"}
-                            </span>
-                          </div>
-                        )}
-                        {(menuItem?.herbs?.length > 0 || menuItem?.otherAdditions?.length > 0) && (
-                          <div className="flex">
-                            <strong>Other:</strong>
-                            <span className="ml-2">
-                              {[
-                                ...(menuItem.herbs?.map(item => typeof item === 'string' ? item : item?.name) || []),
-                                ...(menuItem.otherAdditions?.map(item => typeof item === 'string' ? item : item?.name) || [])
-                              ].filter(Boolean).join(", ") || "-"}
-                            </span>
-                          </div>
-                        )}
+                        >
+                          Delete
+                        </button>
                       </div>
-                      <h2 className="font-bold text-lg text-gray-700 mt-auto pt-2">
-                        Price ${" "}
-                        {menuItem?.itemPrice
-                          ? Number(menuItem.itemPrice).toFixed(2)
-                          : "0.00"}
-                      </h2>
+                      <div className="flex flex-col flex-grow p-5">
+                        <h2 className="font-bold text-xl text-gray-800 mb-2">
+                          {menuItem?.itemName || "Unnamed Item"}
+                        </h2>
+                        {menuItem?.description && (
+                          <p className="text-gray-600 mb-3 text-sm">
+                            {menuItem.description}
+                          </p>
+                        )}
+                        <div className="space-y-2 mb-4 text-sm">
+                          {menuItem?.base && (
+                            <div className="flex">
+                              <strong>Base:</strong>
+                              <span className="ml-2">
+                                {(() => {
+                                  if (typeof menuItem.base === "string")
+                                    return menuItem.base;
+                                  const baseItems = [];
+                                  if (menuItem.base?.crust?.name)
+                                    baseItems.push(menuItem.base.crust.name);
+                                  if (menuItem.base?.cheeses?.length > 0) {
+                                    const cheeses = menuItem.base.cheeses
+                                      .map((c) => c?.name || c)
+                                      .filter(Boolean);
+                                    baseItems.push(...cheeses);
+                                  }
+                                  return baseItems.length > 0
+                                    ? baseItems.join(", ")
+                                    : "-";
+                                })()}
+                              </span>
+                            </div>
+                          )}
+                          {menuItem?.sauce && (
+                            <div className="flex">
+                              <strong>Sauce:</strong>
+                              <span className="ml-2">
+                                {typeof menuItem.sauce === "string"
+                                  ? menuItem.sauce
+                                  : menuItem.sauce?.name ||
+                                    JSON.stringify(menuItem.sauce)}
+                              </span>
+                            </div>
+                          )}
+                          {(menuItem?.meatTopping?.length > 0 ||
+                            menuItem?.veggieTopping?.length > 0) && (
+                            <div className="flex">
+                              <strong>Toppings:</strong>
+                              <span className="ml-2">
+                                {[
+                                  ...(menuItem.meatTopping?.map((item) =>
+                                    typeof item === "string" ? item : item?.name
+                                  ) || []),
+                                  ...(menuItem.veggieTopping?.map((item) =>
+                                    typeof item === "string" ? item : item?.name
+                                  ) || []),
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ") || "-"}
+                              </span>
+                            </div>
+                          )}
+                          {(menuItem?.herbs?.length > 0 ||
+                            menuItem?.otherAdditions?.length > 0) && (
+                            <div className="flex">
+                              <strong>Other:</strong>
+                              <span className="ml-2">
+                                {[
+                                  ...(menuItem.herbs?.map((item) =>
+                                    typeof item === "string" ? item : item?.name
+                                  ) || []),
+                                  ...(menuItem.otherAdditions?.map((item) =>
+                                    typeof item === "string" ? item : item?.name
+                                  ) || []),
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ") || "-"}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <h2 className="font-bold text-lg text-gray-700 mt-auto pt-2">
+                          Price ${" "}
+                          {menuItem?.itemPrice
+                            ? Number(menuItem.itemPrice).toFixed(2)
+                            : "0.00"}
+                        </h2>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
+            {(visibleByType[itemType] ?? PAGE_SIZE) < items.length && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={() => loadMoreType(itemType)}
+                  className="px-4 py-2 text-sm font-medium rounded bg-gray-800 text-white hover:bg-gray-700"
+                >
+                  Load more {itemType.toLowerCase()}
+                </button>
+              </div>
+            )}
           </div>
         ))}
 
@@ -527,243 +633,286 @@ const AdminMenu = () => {
             </h3>
             <div className="drop-shadow-lg grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-4 opacity-75">
               {/* Deactivated Pizzas */}
-              {inactive.map((builder, index) => {
-                // Same normalization logic as active pizzas
-                const safeBase =
-                  builder?.base && typeof builder.base === "object"
-                    ? [
-                        builder.base?.crust?.name,
-                        ...(Array.isArray(builder.base?.cheeses)
-                          ? builder.base.cheeses
-                              .map((c) => c?.name)
-                              .filter(Boolean)
-                          : []),
-                      ]
+              {inactive
+                .slice(0, visibleDeactivatedPizzas)
+                .map((builder, index) => {
+                  // Same normalization logic as active pizzas
+                  const safeBase =
+                    builder?.base && typeof builder.base === "object"
+                      ? [
+                          builder.base?.crust?.name,
+                          ...(Array.isArray(builder.base?.cheeses)
+                            ? builder.base.cheeses
+                                .map((c) => c?.name)
+                                .filter(Boolean)
+                            : []),
+                        ]
+                          .filter(Boolean)
+                          .join(", ")
+                      : "";
+                  const safeSauce = builder?.sauce
+                    ? typeof builder.sauce === "string"
+                      ? builder.sauce
+                      : builder.sauce.name || ""
+                    : "";
+                  const safeMeats = Array.isArray(builder?.meatTopping)
+                    ? builder.meatTopping
+                        .map((m) => (typeof m === "string" ? m : m?.name))
                         .filter(Boolean)
                         .join(", ")
                     : "";
-                const safeSauce = builder?.sauce
-                  ? typeof builder.sauce === "string"
-                    ? builder.sauce
-                    : builder.sauce.name || ""
-                  : "";
-                const safeMeats = Array.isArray(builder?.meatTopping)
-                  ? builder.meatTopping
-                      .map((m) => (typeof m === "string" ? m : m?.name))
-                      .filter(Boolean)
-                      .join(", ")
-                  : "";
-                const safeVeggies = Array.isArray(builder?.veggieTopping)
-                  ? builder.veggieTopping
-                      .map((v) => (typeof v === "string" ? v : v?.name))
-                      .filter(Boolean)
-                      .join(", ")
-                  : "";
-                const safeHerbs = Array.isArray(builder?.herbs)
-                  ? builder.herbs
-                      .map((h) => (typeof h === "string" ? h : h?.name))
-                      .filter(Boolean)
-                      .join(", ")
-                  : "";
-                const safeOtherAdditions = Array.isArray(builder?.otherAdditions)
-                  ? builder.otherAdditions
-                      .map((o) => (typeof o === "string" ? o : o?.name))
-                      .filter(Boolean)
-                      .join(", ")
-                  : "";
-                const combinedOther = [safeHerbs, safeOtherAdditions]
-                  .filter(Boolean)
-                  .join(", ");
-                const imageSrc =
-                  builder?.image && typeof builder.image.data === "string"
-                    ? builder.image.data
-                    : new URL("../assets/basePizza.jpg", import.meta.url).href;
+                  const safeVeggies = Array.isArray(builder?.veggieTopping)
+                    ? builder.veggieTopping
+                        .map((v) => (typeof v === "string" ? v : v?.name))
+                        .filter(Boolean)
+                        .join(", ")
+                    : "";
+                  const safeHerbs = Array.isArray(builder?.herbs)
+                    ? builder.herbs
+                        .map((h) => (typeof h === "string" ? h : h?.name))
+                        .filter(Boolean)
+                        .join(", ")
+                    : "";
+                  const safeOtherAdditions = Array.isArray(
+                    builder?.otherAdditions
+                  )
+                    ? builder.otherAdditions
+                        .map((o) => (typeof o === "string" ? o : o?.name))
+                        .filter(Boolean)
+                        .join(", ")
+                    : "";
+                  const combinedOther = [safeHerbs, safeOtherAdditions]
+                    .filter(Boolean)
+                    .join(", ");
+                  const imageSrc =
+                    builder?.image && typeof builder.image.data === "string"
+                      ? builder.image.data
+                      : new URL("../assets/basePizza.jpg", import.meta.url)
+                          .href;
 
-                return (
-                  <div
-                    key={builder?.id || index}
-                    className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-gray-200 border border-gray-300 shadow-gray-400 relative flex flex-col"
-                  >
-                    <div className="relative">
-                      <div className="relative w-full aspect-[4/3]">
-                        <img
-                          className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg grayscale"
-                          src={imageSrc}
-                          alt={builder?.pizzaName || "Pizza"}
-                          onError={(e) => {
-                            e.currentTarget.src = new URL(
-                              "../assets/basePizza.jpg",
-                              import.meta.url
-                            ).href;
-                          }}
-                        />
-                      </div>
-                      <button
-                        onClick={() => handleDeleteClick(builder)}
-                        type="button"
-                        className="absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-top-left transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                  return (
+                    <div
+                      key={builder?.id || index}
+                      className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-gray-200 border border-gray-300 shadow-gray-400 relative flex flex-col"
+                    >
+                      <div className="relative">
+                        <div className="relative w-full aspect-[4/3]">
+                          <img
+                            className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg grayscale"
+                            src={imageSrc}
+                            alt={builder?.pizzaName || "Pizza"}
+                            onError={(e) => {
+                              e.currentTarget.src = new URL(
+                                "../assets/basePizza.jpg",
+                                import.meta.url
+                              ).href;
+                            }}
+                          />
+                        </div>
+                        <button
+                          onClick={() => handleDeleteClick(builder)}
+                          type="button"
+                          className="absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-top-left transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
                           shadow-red-800/80 
                           text-white 
                           from-black
                           via-red-500 
                           to-red-600
                           focus:ring-red-800"
-                      >
-                        Delete
-                      </button>
-                      <button
-                        onClick={() => handleToggleStatus(builder)}
-                        type="button"
-                        disabled={togglingId === (builder.id || builder._id)}
-                        className={`absolute z-10 top-1 right-1 sm:top-2 sm:right-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center bg-gradient-to-t focus:ring-4 focus:outline-none whitespace-nowrap transform origin-top-right transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                        >
+                          Delete
+                        </button>
+                        <button
+                          onClick={() => handleToggleStatus(builder)}
+                          type="button"
+                          disabled={togglingId === (builder.id || builder._id)}
+                          className={`absolute z-10 top-1 right-1 sm:top-2 sm:right-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center bg-gradient-to-t focus:ring-4 focus:outline-none whitespace-nowrap transform origin-top-right transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
                           shadow-blue-800/80 text-white from-blue-950 via-blue-500 to-blue-600 focus:ring-blue-800
                           ${
                             togglingId === (builder.id || builder._id)
                               ? "opacity-60 cursor-not-allowed"
                               : "hover:bg-gradient-to-br cursor-pointer"
                           }`}
-                      >
-                        {togglingId === (builder.id || builder._id)
-                          ? "Updating..."
-                          : "Activate"}
-                      </button>
-                    </div>
-                    <div className="p-3 flex-1 flex flex-col">
-                      <p className="text-gray-700">
-                        <strong>Name: {builder?.pizzaName || "Unnamed"}</strong>
-                        <span className="ml-2 text-xs bg-gray-500 text-white px-2 py-1 rounded">
-                          DRAFT
-                        </span>
-                      </p>
-                      <div className="space-y-1 text-gray-600">
-                        <div>
-                          <strong>Pizza Base:</strong>
-                          <span className="ml-2">{safeBase || "-"}</span>
-                        </div>
-                        <div>
-                          <strong>Sauce:</strong>
-                          <span className="ml-2">{safeSauce || "-"}</span>
-                        </div>
-                        <div>
-                          <strong>Meats:</strong>
-                          <span className="ml-2">{safeMeats || "-"}</span>
-                        </div>
-                        <div>
-                          <strong>Veggies:</strong>
-                          <span className="ml-2">{safeVeggies || "-"}</span>
-                        </div>
-                        <div>
-                          <strong>Other:</strong>
-                          <span className="ml-2">{combinedOther || "-"}</span>
-                        </div>
+                        >
+                          {togglingId === (builder.id || builder._id)
+                            ? "Updating..."
+                            : "Activate"}
+                        </button>
                       </div>
-                      <h2 className="font-bold text-lg text-gray-700 mt-auto pt-2">
-                        Price ${" "}
-                        {builder?.pizzaPrice
-                          ? Number(builder.pizzaPrice).toFixed(2)
-                          : "0.00"}
-                      </h2>
+                      <div className="p-3 flex-1 flex flex-col">
+                        <p className="text-gray-700">
+                          <strong>
+                            Name: {builder?.pizzaName || "Unnamed"}
+                          </strong>
+                          <span className="ml-2 text-xs bg-gray-500 text-white px-2 py-1 rounded">
+                            DRAFT
+                          </span>
+                        </p>
+                        <div className="space-y-1 text-gray-600">
+                          <div>
+                            <strong>Pizza Base:</strong>
+                            <span className="ml-2">{safeBase || "-"}</span>
+                          </div>
+                          <div>
+                            <strong>Sauce:</strong>
+                            <span className="ml-2">{safeSauce || "-"}</span>
+                          </div>
+                          <div>
+                            <strong>Meats:</strong>
+                            <span className="ml-2">{safeMeats || "-"}</span>
+                          </div>
+                          <div>
+                            <strong>Veggies:</strong>
+                            <span className="ml-2">{safeVeggies || "-"}</span>
+                          </div>
+                          <div>
+                            <strong>Other:</strong>
+                            <span className="ml-2">{combinedOther || "-"}</span>
+                          </div>
+                        </div>
+                        <h2 className="font-bold text-lg text-gray-700 mt-auto pt-2">
+                          Price ${" "}
+                          {builder?.pizzaPrice
+                            ? Number(builder.pizzaPrice).toFixed(2)
+                            : "0.00"}
+                        </h2>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-              
+                  );
+                })}
+
               {/* Deactivated Menu Items */}
-              {inactiveMenuItems.map((menuItem, index) => {
-                const imageSrc = menuItem?.image && typeof menuItem.image.data === "string"
-                  ? menuItem.image.data
-                  : new URL("../assets/basePizza.jpg", import.meta.url).href;
-                
-                return (
-                  <div
-                    key={`inactive-${menuItem?.id || menuItem?._id || index}`}
-                    className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-zinc-300 border border-gray-200 shadow-green-600 relative flex flex-col"
-                  >
-                    <div className="relative">
-                      <div className="relative w-full aspect-[4/3]">
-                        <img
-                          className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
-                          src={imageSrc}
-                          alt={menuItem?.itemName || "Menu Item"}
-                          onError={(e) => {
-                            e.currentTarget.src = new URL(
-                              "../assets/basePizza.jpg",
-                              import.meta.url
-                            ).href;
+              {inactiveMenuItems
+                .slice(0, visibleDeactivatedMenu)
+                .map((menuItem, index) => {
+                  const imageSrc =
+                    menuItem?.image && typeof menuItem.image.data === "string"
+                      ? menuItem.image.data
+                      : new URL("../assets/basePizza.jpg", import.meta.url)
+                          .href;
+
+                  return (
+                    <div
+                      key={`inactive-${menuItem?.id || menuItem?._id || index}`}
+                      className="max-w-2xl col-1-4 rounded-lg shadow-2xl bg-zinc-300 border border-gray-200 shadow-green-600 relative flex flex-col"
+                    >
+                      <div className="relative">
+                        <div className="relative w-full aspect-[4/3]">
+                          <img
+                            className="absolute inset-0 w-full h-full object-cover rounded-t-lg rounded-s-lg"
+                            src={imageSrc}
+                            alt={menuItem?.itemName || "Menu Item"}
+                            onError={(e) => {
+                              e.currentTarget.src = new URL(
+                                "../assets/basePizza.jpg",
+                                import.meta.url
+                              ).href;
+                            }}
+                          />
+                        </div>
+                        <button
+                          onClick={() => {
+                            // TODO: Add update menu item navigation when page is created
+                            console.log(
+                              "Update menu item:",
+                              menuItem?.itemName
+                            );
                           }}
-                        />
-                      </div>
-                      <button
-                        onClick={() => {
-                          // TODO: Add update menu item navigation when page is created
-                          console.log('Update menu item:', menuItem?.itemName);
-                        }}
-                        type="button"
-                        className="absolute top-1 right-1 sm:top-2 sm:right-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-top-right transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                          type="button"
+                          className="absolute top-1 right-1 sm:top-2 sm:right-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-top-right transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
                           shadow-green-800/80 
                           text-white 
                           from-green-950
                           via-green-500 
                           to-green-600
                           focus:ring-green-800"
-                      >
-                        Update Item
-                      </button>
-                      {/* Activate positioned at top-left */}
-                      <button
-                        onClick={() => {
-                          const id = menuItem?.id || menuItem?._id;
-                          if (id) handleMenuItemToggleStatus(menuItem);
-                        }}
-                        type="button"
-                        disabled={togglingMenuItemId === (menuItem?.id || menuItem?._id)}
-                        className={`absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center bg-gradient-to-t focus:ring-4 focus:outline-none whitespace-nowrap transform origin-top-left transition-all sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                        >
+                          Update Item
+                        </button>
+                        {/* Activate positioned at top-left */}
+                        <button
+                          onClick={() => {
+                            const id = menuItem?.id || menuItem?._id;
+                            if (id) handleMenuItemToggleStatus(menuItem);
+                          }}
+                          type="button"
+                          disabled={
+                            togglingMenuItemId ===
+                            (menuItem?.id || menuItem?._id)
+                          }
+                          className={`absolute z-10 top-1 left-1 sm:top-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center bg-gradient-to-t focus:ring-4 focus:outline-none whitespace-nowrap transform origin-top-left transition-all sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
                             shadow-green-800/80 text-white from-green-950 via-green-500 to-green-600 focus:ring-green-800
                             ${
-                              togglingMenuItemId === (menuItem?.id || menuItem?._id)
+                              togglingMenuItemId ===
+                              (menuItem?.id || menuItem?._id)
                                 ? "opacity-60 cursor-not-allowed"
                                 : "hover:bg-gradient-to-br cursor-pointer"
                             }`}
-                      >
-                        {togglingMenuItemId === (menuItem?.id || menuItem?._id) 
-                          ? "Updating..." : "Activate"}
-                      </button>
-                      {/* Delete moved to bottom-left */}
-                      <button
-                        onClick={() => handleMenuItemDeleteClick(menuItem)}
-                        type="button"
-                        className="absolute z-10 bottom-1 left-1 sm:bottom-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-bottom-left transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
+                        >
+                          {togglingMenuItemId ===
+                          (menuItem?.id || menuItem?._id)
+                            ? "Updating..."
+                            : "Activate"}
+                        </button>
+                        {/* Delete moved to bottom-left */}
+                        <button
+                          onClick={() => handleMenuItemDeleteClick(menuItem)}
+                          type="button"
+                          className="absolute z-10 bottom-1 left-1 sm:bottom-2 sm:left-2 font-medium rounded-lg shadow-lg text-xs px-2 py-1 sm:text-sm sm:px-5 sm:py-2.5 text-center hover:bg-gradient-to-br bg-gradient-to-t focus:ring-4 focus:outline-none cursor-pointer whitespace-nowrap transform origin-bottom-left transition-transform sm:scale-100 max-[640px]:scale-90 max-[420px]:scale-75
                             shadow-red-800/80 
                             text-white 
                             from-black
                             via-red-500 
                             to-red-600
                             focus:ring-red-800"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                    <div className="flex flex-col flex-grow p-5">
-                      <h2 className="font-bold text-xl text-gray-800 mb-2">
-                        {menuItem?.itemName || "Unnamed Item"}
-                      </h2>
-                      <p className="text-gray-500 text-sm mb-2">Type: {menuItem?.itemType || "Unknown"}</p>
-                      {menuItem?.description && (
-                        <p className="text-gray-600 mb-3 text-sm">
-                          {menuItem.description}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                      <div className="flex flex-col flex-grow p-5">
+                        <h2 className="font-bold text-xl text-gray-800 mb-2">
+                          {menuItem?.itemName || "Unnamed Item"}
+                        </h2>
+                        <p className="text-gray-500 text-sm mb-2">
+                          Type: {menuItem?.itemType || "Unknown"}
                         </p>
-                      )}
-                      <h2 className="font-bold text-lg text-gray-700 mt-auto pt-2">
-                        Price ${" "}
-                        {menuItem?.itemPrice
-                          ? Number(menuItem.itemPrice).toFixed(2)
-                          : "0.00"}
-                      </h2>
+                        {menuItem?.description && (
+                          <p className="text-gray-600 mb-3 text-sm">
+                            {menuItem.description}
+                          </p>
+                        )}
+                        <h2 className="font-bold text-lg text-gray-700 mt-auto pt-2">
+                          Price ${" "}
+                          {menuItem?.itemPrice
+                            ? Number(menuItem.itemPrice).toFixed(2)
+                            : "0.00"}
+                        </h2>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
+            {(visibleDeactivatedPizzas < inactive.length ||
+              visibleDeactivatedMenu < inactiveMenuItems.length) && (
+              <div className="flex flex-col items-center gap-2 mt-4">
+                {visibleDeactivatedPizzas < inactive.length && (
+                  <button
+                    onClick={loadMoreInactivePizzas}
+                    className="px-4 py-2 text-sm font-medium rounded bg-gray-700 text-white hover:bg-gray-600"
+                  >
+                    Load more deactivated pizzas
+                  </button>
+                )}
+                {visibleDeactivatedMenu < inactiveMenuItems.length && (
+                  <button
+                    onClick={loadMoreInactiveMenu}
+                    className="px-4 py-2 text-sm font-medium rounded bg-gray-700 text-white hover:bg-gray-600"
+                  >
+                    Load more deactivated items
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
