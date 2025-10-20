@@ -131,7 +131,10 @@ const OrderMenu = () => {
 
   const organizedMenuItems = getOrganizedMenuItems();
   const hasActiveMenuItems = Object.keys(organizedMenuItems).length > 0;
-  const hasActivePizzas = Array.isArray(builders) && builders.length > 0;
+  
+  // Filter builders to only show active ones (status filtering)
+  const activePizzas = Array.isArray(builders) ? builders.filter(builder => builder.active === true) : [];
+  const hasActivePizzas = activePizzas.length > 0;
 
   // Helper to format section headings from itemType (adds 's' if not already plural)
   const formatTypeLabel = useCallback((t) => {
@@ -285,7 +288,7 @@ const OrderMenu = () => {
 
                 {/* Pizza Cards */}
                 <div className="flex flex-wrap justify-center items-start gap-4 sm:gap-6 flex-1">
-                  {builders.map((builder, index) => {
+                  {activePizzas.map((builder, index) => {
                     const imageSrc =
                       builder?.image && typeof builder.image.data === "string"
                         ? builder.image.data
