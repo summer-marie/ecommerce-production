@@ -12,17 +12,11 @@ const ImageSchema = new mongoose.Schema(
 const aboutSchema = new mongoose.Schema(
   {
     // Universal section headings & descriptions
-    topHeading: {
-      type: String,
-      default: "From Hearth to Table: Freshness & Flavor That Set Us Apart",
-    },
+    topHeading: { type: String, default: "About Our Story" },
     topDescription: { type: String, default: "" },
-    centerHeading: { type: String, default: "Our Purpose" },
+    centerHeading: { type: String, default: "Our Mission" },
     centerDescription: { type: String, default: "" },
-    bottomHeading: {
-      type: String,
-      default: "Boston-Bred Classics: Savoring Neighbors Close by",
-    },
+    bottomHeading: { type: String, default: "Our Values" },
     bottomDescription: { type: String, default: "" },
     topImage: { type: ImageSchema, default: () => ({}) },
     centerImage: { type: ImageSchema, default: () => ({}) },
