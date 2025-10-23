@@ -84,6 +84,17 @@ const Navbar = () => {
               </Link>
             </div>
 
+            {/* Newsletter link */}
+            {/* TODO: add QR code in future. prob add it to about page in jumbotron */}
+            {/* <a
+              href="https://otw-pizza.kit.com/07380be14d"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="berkshireSwashFont text-xl px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 shadow-md"
+            >
+              📧 Join Newsletter
+            </a> */}
+
             {/* Cart section */}
             <div className="flex items-center space-x-3">
               <p className="text-stone-300 berkshireSwashFont">Check</p>
@@ -137,6 +148,15 @@ const Navbar = () => {
             >
               Contact
             </Link>
+            <a
+              href="https://otw-pizza.kit.com/07380be14d"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="berkshireSwashFont block px-3 py-2 text-xl rounded-md bg-green-700 text-white hover:bg-green-600"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              📧 Join Newsletter
+            </a>
             <Link
               to="/checkout"
               className="berkshireSwashFont block px-3 py-2 text-xl rounded-md hover:bg-red-700 text-white"
