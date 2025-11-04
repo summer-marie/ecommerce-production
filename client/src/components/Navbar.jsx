@@ -97,7 +97,7 @@ const Navbar = () => {
               aria-label={`Cart: ${cartCount} items, $${cartTotal.toFixed(2)}`}
             >
               <div className="flex items-center space-x-2">
-                <span className="berkshireSwashFont text-lg font-bold leading-none mb-2">
+                <span className="berkshireSwashFont text-lg font-bold leading-none mb-1">
                   {cartCount}
                 </span>
                 <CartSVG count={0} size={22} />

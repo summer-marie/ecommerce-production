@@ -3,33 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { fetchAbout } from "../redux/aboutSlice";
 
-const topImagePlaceholder = (
-  <img
-    className="object-cover object-center w-full rounded-lg h-full min-h-[200px]"
-    src={new URL("../assets/gardenTomato.jpg", import.meta.url).href}
-    alt=""
-    loading="lazy"
-  />
-);
-const centerImagePlaceholder = (
-  <img
-    className="object-cover object-center w-full rounded-lg h-full min-h-[200px]"
-    src={new URL("../assets/dough.jpg", import.meta.url).href}
-    alt=""
-    loading="lazy"
-  />
-);
-
-const bottomImagePlaceholder = (
-  <img
-    className="object-cover object-center w-full rounded-lg h-full min-h-[200px] flex-1"
-    src={new URL("../assets/herbs.jpg", import.meta.url).href}
-    alt=""
-    loading="lazy"
-  />
-);
-
-// Static fallback sections removed — empty space will render when content is not provided
+// Static placeholder images are now inline in the components
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -46,95 +20,165 @@ const Home = () => {
       <div>
         <Jumbotron headline={"OverTheWall"} />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 px-2 sm:px-4 py-4 mb-15 sm:ms-5">
-        <div className="w-full bg-red-900 rounded-xl shadow-2xl shadow-black overflow-hidden">
-          {data?.topImage?.data ? (
-            <img
-              className="object-cover object-center w-full rounded-lg h-full min-h-[200px]"
-              src={data.topImage.data}
-              alt="About top section"
-              loading="lazy"
-            />
-          ) : (
-            topImagePlaceholder
-          )}
-        </div>
-        <div className="w-full bg-green-200 rounded-xl sm:col-span-1 lg:col-span-2 shadow-2xl shadow-green-900">
-          {data?.topHeading || data?.topDescription ? (
-            <div className="cursiveFont text-black text-center p-2 sm:p-3">
-              {data.topHeading && (
-                <>
-                  <h1 className="text-xl sm:text-2xl font-bold text-slate-800 m-2 text-shadow-gray-700 text-shadow-sm">
+      
+      <div className="space-y-16 py-12 bg-gray-50">
+        {/* Section 1 - Our Story */}
+        <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto px-6">
+          <div className="space-y-6">
+            {data?.topHeading || data?.topDescription ? (
+              <>
+                <span className="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium cursiveFont">
+                  Our Story
+                </span>
+                {data.topHeading && (
+                  <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight barriecitoFont">
                     {data.topHeading}
-                  </h1>
-                  <hr className="p-1 border-gray-700" />
-                </>
-              )}
-              <div className="text-sm sm:text-base lg:text-xl leading-relaxed whitespace-pre-line break-words">
-                {data.topDescription}
-              </div>
-            </div>
-          ) : null}
+                  </h2>
+                )}
+                {data.topDescription && (
+                  <p className="text-lg text-gray-600 leading-relaxed cursiveFont whitespace-pre-line">
+                    {data.topDescription}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium cursiveFont">
+                  Our Story
+                </span>
+                <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight barriecitoFont">
+                  Fresh Ingredients, Bold Flavors
+                </h2>
+                <p className="text-lg text-gray-600 leading-relaxed cursiveFont">
+                  Discover the passion behind every pizza we create, from farm-fresh ingredients to time-honored recipes.
+                </p>
+              </>
+            )}
+          </div>
+          <div className="relative">
+            {data?.topImage?.data ? (
+              <img 
+                className="w-full h-96 object-cover rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300"
+                src={data.topImage.data}
+                alt="About top section"
+                loading="lazy"
+              />
+            ) : (
+              <img 
+                className="w-full h-96 object-cover rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300"
+                src={new URL("../assets/gardenTomato.jpg", import.meta.url).href}
+                alt="Fresh garden tomatoes"
+                loading="lazy"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl"></div>
+          </div>
         </div>
 
-        <div className="w-full bg-white shadow-black rounded-xl sm:col-span-1 lg:col-span-2 shadow-2xl order-4 sm:order-3">
-          {data?.centerHeading || data?.centerDescription ? (
-            <div className="cursiveFont font-medium text-black text-center p-2 sm:p-3">
-              {data.centerHeading && (
-                <>
-                  <h1 className="text-xl sm:text-2xl font-bold text-black m-2 p-2 text-shadow-gray-600 text-shadow-sm">
+        {/* Section 2 - Craft & Quality (Reversed) */}
+        <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto px-6">
+          <div className="lg:order-2 space-y-6">
+            {data?.centerHeading || data?.centerDescription ? (
+              <>
+                <span className="inline-block px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium cursiveFont">
+                  Craft & Quality
+                </span>
+                {data.centerHeading && (
+                  <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight barriecitoFont">
                     {data.centerHeading}
-                  </h1>
-                  <hr className="p-1 border-black mb-1" />
-                </>
-              )}
-              <div className="text-sm sm:text-base lg:text-xl leading-relaxed whitespace-pre-line break-words">
-                {data.centerDescription}
-              </div>
-            </div>
-          ) : null}
-        </div>
-        <div className="w-full bg-red-900 rounded-xl shadow-2xl shadow-black overflow-hidden order-3 sm:order-4">
-          {data?.centerImage?.data ? (
-            <img
-              className="object-cover object-center w-full rounded-lg h-full min-h-[200px]"
-              src={data.centerImage.data}
-              alt="About center section"
-              loading="lazy"
-            />
-          ) : (
-            centerImagePlaceholder
-          )}
+                  </h2>
+                )}
+                {data.centerDescription && (
+                  <p className="text-lg text-gray-600 leading-relaxed cursiveFont whitespace-pre-line">
+                    {data.centerDescription}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="inline-block px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium cursiveFont">
+                  Craft & Quality
+                </span>
+                <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight barriecitoFont">
+                  Handcrafted Perfection
+                </h2>
+                <p className="text-lg text-gray-600 leading-relaxed cursiveFont">
+                  Every dough is hand-stretched, every sauce is made fresh daily, and every pizza is a work of art.
+                </p>
+              </>
+            )}
+          </div>
+          <div className="lg:order-1 relative">
+            {data?.centerImage?.data ? (
+              <img 
+                className="w-full h-96 object-cover rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300"
+                src={data.centerImage.data}
+                alt="About center section"
+                loading="lazy"
+              />
+            ) : (
+              <img 
+                className="w-full h-96 object-cover rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300"
+                src={new URL("../assets/dough.jpg", import.meta.url).href}
+                alt="Fresh pizza dough"
+                loading="lazy"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl"></div>
+          </div>
         </div>
 
-        <div className="w-full bg-red-900 rounded-xl shadow-2xl shadow-black overflow-hidden order-5 flex flex-col">
-          {data?.bottomImage?.data ? (
-            <img
-              className="object-cover object-center w-full rounded-lg h-full min-h-[200px] flex-1"
-              src={data.bottomImage.data}
-              alt="About bottom section"
-              loading="lazy"
-            />
-          ) : (
-            bottomImagePlaceholder
-          )}
-        </div>
-        <div className="w-full bg-red-900 rounded-xl sm:col-span-1 lg:col-span-2 shadow-2xl shadow-red-600 order-6 overflow-hidden">
-          {data?.bottomHeading || data?.bottomDescription ? (
-            <div className="cursiveFont text-black text-center p-2 sm:p-3">
-              {data.bottomHeading && (
-                <>
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-black m-2 p-2 text-shadow-gray-800 text-shadow-sm">
+        {/* Section 3 - Community & Tradition */}
+        <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto px-6">
+          <div className="space-y-6">
+            {data?.bottomHeading || data?.bottomDescription ? (
+              <>
+                <span className="inline-block px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium cursiveFont">
+                  Community & Tradition
+                </span>
+                {data.bottomHeading && (
+                  <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight barriecitoFont">
                     {data.bottomHeading}
-                  </h1>
-                  <hr className="border-black mb-1 p-1" />
-                </>
-              )}
-              <div className="text-sm sm:text-base lg:text-xl leading-relaxed whitespace-pre-line break-words">
-                {data.bottomDescription}
-              </div>
-            </div>
-          ) : null}
+                  </h2>
+                )}
+                {data.bottomDescription && (
+                  <p className="text-lg text-gray-600 leading-relaxed cursiveFont whitespace-pre-line">
+                    {data.bottomDescription}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="inline-block px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium cursiveFont">
+                  Community & Tradition
+                </span>
+                <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight barriecitoFont">
+                  Rooted in Tradition
+                </h2>
+                <p className="text-lg text-gray-600 leading-relaxed cursiveFont">
+                  From our herb garden to your table, we're committed to serving our community with authentic flavors and warm hospitality.
+                </p>
+              </>
+            )}
+          </div>
+          <div className="relative">
+            {data?.bottomImage?.data ? (
+              <img 
+                className="w-full h-96 object-cover rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300"
+                src={data.bottomImage.data}
+                alt="About bottom section"
+                loading="lazy"
+              />
+            ) : (
+              <img 
+                className="w-full h-96 object-cover rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300"
+                src={new URL("../assets/herbs.jpg", import.meta.url).href}
+                alt="Fresh herbs"
+                loading="lazy"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl"></div>
+          </div>
         </div>
       </div>
     </>
