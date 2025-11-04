@@ -8,6 +8,12 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const cartCount = useSelector((state) => state.cart.items.length);
+  const cartTotal = useSelector((state) =>
+    state.cart.items.reduce((total, item) => {
+      const price = item.pizzaPrice || item.itemPrice || item.price || 0;
+      return total + (typeof price === "string" ? parseFloat(price) : price);
+    }, 0)
+  );
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -18,13 +24,13 @@ const Navbar = () => {
       <nav className="bg-white border-gray-200 dark:bg-red-900 smokeShadow">
         <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
           <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <img
-              src={new URL("../assets/pizzaLogoMain.png", import.meta.url).href}
-              className="h-15 w-25 rounded-full border-2 border-green-700"
+            {/* <img
+              src={new URL("../assets/LogoBig.jpg", import.meta.url).href}
+              className="h-15 w-28 rounded-full border-2 border-green-700"
               alt="OverTheWall Pizza Logo"
-            />
+            /> */}
             <span className="self-center text-slate-100 text-2xl font-semibold whitespace-nowrap barriecitoFont">
-              OverTheWall
+              OverTheWallPizza
             </span>
           </div>
 
@@ -84,27 +90,22 @@ const Navbar = () => {
               </Link>
             </div>
 
-            {/* Newsletter link */}
-            {/* TODO: add QR code in future. prob add it to about page in jumbotron */}
-            {/* <a
-              href="https://otw-pizza.kit.com/07380be14d"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="berkshireSwashFont text-xl px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 shadow-md"
-            >
-              📧 Join Newsletter
-            </a> */}
-
             {/* Cart section */}
-            <div className="flex items-center space-x-3">
-              <p className="text-stone-300 berkshireSwashFont">Check</p>
-              <div className="relative">
-                <Link to="/checkout">
-                  <CartSVG count={cartCount} />
-                </Link>
+            <Link
+              to="/checkout"
+              className="flex items-center space-x-3 bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 shadow-md"
+              aria-label={`Cart: ${cartCount} items, $${cartTotal.toFixed(2)}`}
+            >
+              <div className="flex items-center space-x-2">
+                <span className="berkshireSwashFont text-lg font-bold leading-none mb-2">
+                  {cartCount}
+                </span>
+                <CartSVG count={0} size={22} />
               </div>
-              <p className="text-stone-300 berkshireSwashFont">Out</p>
-            </div>
+              <span className="berkshireSwashFont text-lg font-semibold leading-none">
+                $ {cartTotal.toFixed(2)}
+              </span>
+            </Link>
           </div>
         </div>
 
@@ -155,14 +156,16 @@ const Navbar = () => {
               className="berkshireSwashFont block px-3 py-2 text-xl rounded-md bg-green-700 text-white hover:bg-green-600"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              📧 Join Newsletter
+              Join Newsletter
             </a>
             <Link
               to="/checkout"
-              className="berkshireSwashFont block px-3 py-2 text-xl rounded-md hover:bg-red-700 text-white"
+              className="berkshireSwashFont flex items-center justify-between px-3 py-2 text-xl rounded-md hover:bg-red-700 text-white"
               onClick={() => setIsMobileMenuOpen(false)}
+              aria-label={`Cart: ${cartCount} items, $${cartTotal.toFixed(2)}`}
             >
-              Cart ({cartCount})
+              <span>Cart ({cartCount})</span>
+              <span className="font-bold">$ {cartTotal.toFixed(2)}</span>
             </Link>
           </div>
         </div>

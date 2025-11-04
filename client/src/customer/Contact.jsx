@@ -78,8 +78,9 @@ const Contact = () => {
             town.
           </p>
 
-          {/* Contact Info */}
-          <div className="mb-8 lg:mb-12 text-center">
+          {/* Contact Info & Newsletter Section */}
+          <div className="mb-8 lg:mb-12 flex flex-col lg:flex-row items-center justify-center gap-6">
+            {/* Email Contact Info */}
             <div className="inline-flex items-center justify-center bg-white/80 backdrop-blur rounded-xl px-6 py-4 shadow-lg border border-gray-200">
               <svg
                 className="w-10 h-10 text-teal-600 mr-3"
@@ -147,6 +148,42 @@ const Contact = () => {
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Newsletter QR Code - Desktop/Tablet */}
+            <div className="hidden md:block bg-white/80 backdrop-blur rounded-xl px-6 py-4 shadow-lg border border-gray-200 text-center">
+              <p className="text-gray-800 text-xs md:text-sm font-bold mb-1 md:mb-2 cursiveFont text-center">
+                Newsletter
+              </p>
+              <img
+                src={
+                  new URL("../assets/QRCode/QRcodeKit.png", import.meta.url)
+                    .href
+                }
+                alt="Newsletter signup QR code"
+                className="w-24 h-24 mx-auto rounded-lg mb-2"
+              />
+              <p className="text-gray-600 text-xs mt-1 md:mt-2 italic text-center">
+                Scan for updates!
+              </p>
+            </div>
+
+            {/* Mobile Newsletter Button */}
+            <div className="block md:hidden bg-white/80 backdrop-blur rounded-xl px-6 py-4 shadow-lg border border-gray-200 text-center">
+              <p className="text-gray-800 text-sm font-bold mb-3 cursiveFont text-center">
+                Subscribe
+              </p>
+              <a
+                href="https://otw-pizza.kit.com/07380be14d"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block bg-green-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md text-sm hover:bg-green-600 transition-colors cursiveFont"
+              >
+                Join Newsletter
+              </a>
+              <p className="text-gray-600 text-xs mt-2 italic text-center">
+                Get updates!
+              </p>
             </div>
           </div>
 
